@@ -24,12 +24,14 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+from qgis.core import *
 # Initialize Qt resources from file resources.py
 from .resources import *
-
+from .utils import AgraeUtils
 # Import the code for the DockWidget
 from .agrae_dockwidget import agraeDockWidget
 import os.path
+from qgis.core import QgsDataSourceUri
 
 
 class agrae:
@@ -45,6 +47,10 @@ class agrae:
         """
         # Save reference to the QGIS interface
         self.iface = iface
+
+        self.utils = AgraeUtils()
+
+
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
@@ -170,7 +176,7 @@ class agrae:
         icon_path = ':/plugins/agrae/icon.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'aGrae'),
+            text=self.tr(u'aGrae GIS'),
             callback=self.run,
             parent=self.iface.mainWindow())
 
@@ -210,6 +216,33 @@ class agrae:
 
     def run(self):
         """Run method that loads and starts the plugin"""
+        def listLayer():
+            if self.dockwidget.geom_check.isChecked():
+                self.dockwidget.layers_combo.clear()
+                layerList = self.utils.loadGeomLayers()
+                for i in layerList:
+                    self.dockwidget.layers_combo.addItem(i.upper())
+                    
+            else: 
+                self.dockwidget.layers_combo.clear()
+                layerList = self.utils.loadLayers()
+                for i in layerList:
+                    self.dockwidget.layers_combo.addItem(i.upper())
+
+        def addLayerToMap(layerName):
+            tablename = str(self.dockwidget.layers_combo.currentText()).lower()
+            dns = self.utils.ConnParams()
+            uri = QgsDataSourceUri()
+            uri.setConnection(dns['host'],dns['port'],dns['dbname'],dns['user'],dns['password'])
+            uri.setDataSource('public',tablename,'geometria')
+            layer = QgsVectorLayer(uri.uri(), tablename, 'postgres')
+            QgsProject.instance().addMapLayer(layer)
+
+
+            
+
+
+
 
         if not self.pluginIsActive:
             self.pluginIsActive = True
@@ -222,11 +255,24 @@ class agrae:
             if self.dockwidget == None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = agraeDockWidget()
+            
+            self.dockwidget.list_btn.clicked.connect(listLayer)
+            self.dockwidget.load_1_btn.clicked.connect(addLayerToMap)
+
+                
+            
+                        
+                
+
+                
+                
+
+
 
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
             # show the dockwidget
             # TODO: fix to allow choice of dock location
-            self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
+            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
             self.dockwidget.show()

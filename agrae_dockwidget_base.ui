@@ -6,9 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>232</width>
-    <height>141</height>
+    <width>300</width>
+    <height>500</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>300</width>
+    <height>163</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>aGrae GIS</string>
@@ -16,12 +28,98 @@
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="QLabel" name="label">
-      <property name="text">
-       <string>Replace this QLabel
-with the desired
-plugin content.</string>
+     <widget class="QToolBox" name="toolBox">
+      <property name="currentIndex">
+       <number>0</number>
       </property>
+      <widget class="QWidget" name="page">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>282</width>
+         <height>406</height>
+        </rect>
+       </property>
+       <attribute name="label">
+        <string>Cargar Capas</string>
+       </attribute>
+       <widget class="QCheckBox" name="geom_check">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>60</y>
+          <width>174</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Listar solo tablas con geometria</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="list_btn">
+        <property name="geometry">
+         <rect>
+          <x>180</x>
+          <y>29</y>
+          <width>89</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Listar</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="layers_combo">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>30</y>
+          <width>174</width>
+          <height>20</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="load_1_btn">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>220</y>
+          <width>261</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Anadir Capa al Mapa</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>10</y>
+          <width>171</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Lista de Tablas</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="page_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>282</width>
+         <height>406</height>
+        </rect>
+       </property>
+       <attribute name="label">
+        <string>Page 2</string>
+       </attribute>
+      </widget>
      </widget>
     </item>
    </layout>
