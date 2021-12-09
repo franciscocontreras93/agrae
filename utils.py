@@ -1,23 +1,31 @@
+from qgis.PyQt.QtCore import QSettings
+from qgis.gui import QgsMessageBar
 from .dbconn import DbConnection
 
-class AgraeUtils:
+class AgraeUtils():
+    
     def __init__(self):
+        
+        self.s = QSettings('agrae','dbConnection')
+        self.dns = {
+            'host': self.s.value('dbhost'),
+            'port': self.s.value('dbport'),
+            'dbname': self.s.value('dbname'),
+            'user': self.s.value('dbuser'),
+            'password': self.s.value('dbpass')
+        }
+        self.conn = DbConnection.connection(self.dns['dbname'], self.dns['user'], self.dns['password'], self.dns['host'])
 
         pass
 
     def ConnParams(self):
-        dns = {
-            'host':'localhost',
-            'port': '5432',
-            'dbname':'agrae',
-            'user': 'postgres',
-            'password':'23826405'
-                }
+        dns = self.dns
         return dns
+
     def loadGeomLayers(self):
-        conn = DbConnection.connection(
-            'agrae', 'postgres', '23826405', 'localhost')
-        with conn:
+        # dns = self.ConnParams()
+        # conn = DbConnection.connection(dns['dbname'], dns['user'], dns['password'], dns['host'])
+        with self.conn as conn:
             try:
                 cursor = conn.cursor()
                 cursor.execute(''' select table_name from information_schema.columns where column_name = 'geometria' ''')
@@ -30,9 +38,7 @@ class AgraeUtils:
             
         pass
     def loadLayers(self):
-        conn = DbConnection.connection(
-            'agrae', 'postgres', '23826405', 'localhost')
-        with conn:
+        with self.conn as conn: 
             try:
                 cursor = conn.cursor()
                 cursor.execute(
@@ -46,4 +52,47 @@ class AgraeUtils:
             
         pass
 
+        dbuser = self.configDialog.user.text()
+
+    def saveConfig(self,dbhost, dbname, dbuser, dbpass, dbport=5432):
+        self.settings = QSettings('agrae', 'dbConnection')
+        dbhost = dbhost
+        dbname = dbname
+        dbport = dbport
+        dbuser = dbuser
+        dbpass = dbpass
+        try:
+            self.settings.setValue('dbhost', dbhost)
+            self.settings.setValue('dbname', dbname)
+            self.settings.setValue('dbport', dbport)
+            self.settings.setValue('dbuser', dbuser)
+            self.settings.setValue('dbpass', dbpass)
+        
+        except: 
+            print('ERROR')
+
+    def dbTestConnection(self,dbname,dbuser,dbpass,dbhost,dbport=5432):     
+        conn = DbConnection.connection(
+            dbname, dbuser, dbpass, dbhost, dbport)
+        conn.close()
+
+    def insertFeatToDB(self):
+        with self.conn as conn:
+            try: 
+                cur = conn.cursor()
+                layer = iface.activeLayer()
+                print(layer.name())
+                feat = layer.selectedFeatures()
+                ls = feat[0].geometry().asWkt()
+                print(ls)
+                sql = f''' INSERT INTO parcela(geometria) VALUES(st_multi(st_geomfromtext('{ls}',4326)))'''
+                cur.execute(sql)
+                conn.commit()
+                print('agregado correctamente')
+            except:
+                print('error')
+
+
+
     
+

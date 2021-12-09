@@ -27,11 +27,13 @@ import os
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'agrae_dockwidget_base.ui'))
+agraeSidePanel, _ = uic.loadUiType(os.path.join(
+    os.path.dirname(__file__), 'ui/agrae_dockwidget_base.ui'))
+agraeConfigPanel, _ = uic.loadUiType(os.path.join(
+    os.path.dirname(__file__), 'ui/config_ui.ui'))
 
 
-class agraeDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
+class agraeDockWidget(QtWidgets.QDockWidget, agraeSidePanel):
 
     closingPlugin = pyqtSignal()
 
@@ -47,4 +49,23 @@ class agraeDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
+        event.accept()
+
+
+class agraeConfigWidget(QtWidgets.QDialog, agraeConfigPanel):
+
+    closingPlugin2 = pyqtSignal()
+
+    def __init__(self, parent=None):
+        """Constructor."""
+        super(agraeConfigWidget, self).__init__(parent)
+        # Set up the user interface from Designer.
+        # After setupUI you can access any designer object by doing
+        # self.<objectname>, and you can use autoconnect slots - see
+        # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
+        # #widgets-and-dialogs-with-auto-connect
+        self.setupUi(self)
+
+    def closeEvent(self, event):
+        self.closingPlugin2.emit()
         event.accept()

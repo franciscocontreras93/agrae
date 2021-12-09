@@ -27,9 +27,11 @@ from qgis.PyQt.QtWidgets import QAction
 from qgis.core import *
 # Initialize Qt resources from file resources.py
 from .resources import *
+from .dbconn import DbConnection
 from .utils import AgraeUtils
+
 # Import the code for the DockWidget
-from .agrae_dockwidget import agraeDockWidget
+from .agrae_dockwidget import agraeDockWidget,agraeConfigWidget
 import os.path
 from qgis.core import QgsDataSourceUri
 
@@ -78,6 +80,9 @@ class agrae:
 
         self.pluginIsActive = False
         self.dockwidget = None
+        self.configDialog = None
+
+        
 
 
     # noinspection PyMethodMayBeStatic
@@ -179,23 +184,26 @@ class agrae:
             text=self.tr(u'aGrae GIS'),
             callback=self.run,
             parent=self.iface.mainWindow())
+        self.add_action(
+            '',
+            text=self.tr(u'Ajustes'),
+            add_to_toolbar=False,
+            callback=self.runConfig,
+            parent=self.iface.mainWindow())
 
     #--------------------------------------------------------------------------
 
     def onClosePlugin(self):
-        """Cleanup necessary items here when plugin dockwidget is closed"""
-
-        #print "** CLOSING agrae"
 
         # disconnects
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
 
-        # remove this statement if dockwidget is to remain
-        # for reuse if plugin is reopened
-        # Commented next statement since it causes QGIS crashe
-        # when closing the docked window:
-        # self.dockwidget = None
 
+        self.pluginIsActive = False
+
+    def onClosePluginConfig(self):
+        # disconnects
+        self.configDialog.closingPlugin2.disconnect(self.onClosePluginConfig)
         self.pluginIsActive = False
 
 
@@ -230,13 +238,26 @@ class agrae:
                     self.dockwidget.layers_combo.addItem(i.upper())
 
         def addLayerToMap(layerName):
-            tablename = str(self.dockwidget.layers_combo.currentText()).lower()
-            dns = self.utils.ConnParams()
-            uri = QgsDataSourceUri()
-            uri.setConnection(dns['host'],dns['port'],dns['dbname'],dns['user'],dns['password'])
-            uri.setDataSource('public',tablename,'geometria')
-            layer = QgsVectorLayer(uri.uri(), tablename, 'postgres')
-            QgsProject.instance().addMapLayer(layer)
+            idx = 0
+            if idx < 1:
+                tablename = str(self.dockwidget.layers_combo.currentText()).lower()
+                dns = self.utils.ConnParams()
+                try: 
+                    uri = QgsDataSourceUri()
+                    uri.setConnection(dns['host'],dns['port'],dns['dbname'],dns['user'],dns['password'])
+                    uri.setDataSource('public',tablename,'geometria')
+                    layer = QgsVectorLayer(uri.uri(), tablename, 'postgres')
+                    if layer.isValid():
+                        QgsProject.instance().addMapLayer(layer)
+                        idx += 1
+                    else: 
+                        uri.setDataSource('public', tablename, None)
+                        layer = QgsVectorLayer(uri.uri(False), tablename, 'postgres')
+                        QgsProject.instance().addMapLayer(layer)
+                        idx += 1
+                        print("La capa es invalida")
+                except:
+                    print('Ocurrio un error!')
 
 
             
@@ -276,3 +297,43 @@ class agrae:
             # TODO: fix to allow choice of dock location
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
+
+    def runConfig(self): 
+        
+        def saveConn(): 
+
+            try: 
+                self.utils.saveConfig(
+                    self.configDialog.host.text(), self.configDialog.dbname.text(), self.configDialog.user.text(), self.configDialog.password.text(), self.configDialog.port.text())
+                self.iface.messageBar().pushMessage('aGraes GIS',
+                                                    'Ajustes aplicados correctamente, Reinicia el programa', level=3, duration=3)
+            except: 
+                self.iface.messageBar().pushMessage(
+                    'aGraes GIS', 'No se pudieron aplicar los cambios', level=1, duration=3)
+        def dbTestConn():
+                try: 
+                    self.utils.dbTestConnection(
+                        self.configDialog.dbname.text(), self.configDialog.user.text(), self.configDialog.password.text(), self.configDialog.host.text())
+                    self.iface.messageBar().pushMessage('aGraes GIS', 'Conexion a base de Datos Exitosa', level=3, duration=3)
+                except:           
+                    self.iface.messageBar().pushMessage(
+                        'aGraes GIS', 'Conexion a base de Datos Fallida', level=1, duration=3)
+               
+
+
+
+        if not self.pluginIsActive:
+            self.pluginIsActive = True
+        
+            if self.configDialog == None:
+                self.configDialog = agraeConfigWidget()
+                # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
+                
+
+                self.configDialog.test_btn.clicked.connect(dbTestConn)
+                self.configDialog.pushButton.clicked.connect(saveConn)
+            
+            self.configDialog.show()
+
+
+        pass
