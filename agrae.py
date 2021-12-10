@@ -285,6 +285,7 @@ class agrae:
                 try: 
                     cur = conn.cursor()
                     layer = self.iface.activeLayer() 
+                    field_names = [field.name() for field in layer.fields()]
                     selFeature = layer.selectedFeatures()
                     for e in selFeature: 
                         idfeat = e[1]
@@ -294,7 +295,7 @@ class agrae:
                         table = source[6][6:]
                         sql = f'''insert into reticulabase(geometria) 
                                 (SELECT (ST_Dump(makegrid(geometria, 121))).geom from {table}
-                                where idparcela = {idfeat}) '''
+                                where {field_names[1]} = {idfeat}) '''
                         cur.execute(sql)
                         conn.commit()
                         self.iface.messageBar().pushMessage(
