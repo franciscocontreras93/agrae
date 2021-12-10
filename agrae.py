@@ -49,8 +49,8 @@ class agrae:
         """
         # Save reference to the QGIS interface
         self.iface = iface
-
         self.utils = AgraeUtils()
+        self.conn = self.utils.Conn()
 
 
 
@@ -259,11 +259,50 @@ class agrae:
                 except:
                     print('Ocurrio un error!')
 
-
+        def loadFeatureToDB():
+            with self.conn as conn:
+                try:
+                    cur = conn.cursor()
+                    layer = self.iface.activeLayer()
+                    # print(layer.name())
+                    feat = layer.selectedFeatures()
+                    ls = feat[0].geometry().asWkt()
+                    srid = layer.crs().authid()[5:]
+                    # print(ls)
+                    sql = f''' INSERT INTO {self.dockwidget.combo_load_layers.currentText().lower()}(geometria) VALUES(st_multi(st_transform(st_geomfromtext('{ls}',{srid}),4326)))'''
+                    cur.execute(sql)
+                    conn.commit()
+                    # print('agregado correctamente')
+                    self.iface.messageBar().pushMessage(
+                        'aGraes GIS', 'Registro creado Correctamente', level=3, duration=3)
+                except:
+                    self.iface.messageBar().pushMessage(
+                        'aGraes GIS | ERROR: ', 'No se pudo almacenar el registro', level=1, duration=3)
             
+        
+        def createReticule():
+            with self.conn as conn:
+                try: 
+                    cur = conn.cursor()
+                    layer = self.iface.activeLayer() 
+                    selFeature = layer.selectedFeatures()
+                    for e in selFeature: 
+                        idfeat = e[1]
+                        sourceInfo = layer.publicSource().replace('=', ':')
+                        sourceInfo = sourceInfo.replace('"public".', '')
+                        source = sourceInfo.split(' ')
+                        table = source[6][6:]
+                        sql = f'''insert into reticulabase(geometria) 
+                                (SELECT (ST_Dump(makegrid(geometria, 121))).geom from {table}
+                                where idparcela = {idfeat}) '''
+                        cur.execute(sql)
+                        conn.commit()
+                        self.iface.messageBar().pushMessage(
+                            'aGraes GIS', 'Registro creado Correctamente', level=3, duration=3)
 
-
-
+                except:
+                    self.iface.messageBar().pushMessage(
+                        'aGraes GIS | ERROR: ', 'No se pudo almacenar el registro', level=1, duration=3)
 
         if not self.pluginIsActive:
             self.pluginIsActive = True
@@ -279,6 +318,14 @@ class agrae:
             
             self.dockwidget.list_btn.clicked.connect(listLayer)
             self.dockwidget.load_1_btn.clicked.connect(addLayerToMap)
+            self.dockwidget.create_reticule.clicked.connect(createReticule)
+            
+            for i in self.utils.loadGeomLayers():
+                self.dockwidget.combo_load_layers.addItem(i.upper())
+            
+            self.dockwidget.load_feat_btn.clicked.connect(loadFeatureToDB)
+
+
 
                 
             

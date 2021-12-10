@@ -1,78 +1,93 @@
 # -*- coding: utf-8 -*-
 
-################################################################################
-## Form generated from reading UI file 'agrae_dockwidget_base.ui'
-##
-## Created by: Qt User Interface Compiler version 6.1.1
-##
-## WARNING! All changes made in this file will be lost when recompiling UI file!
-################################################################################
+# Form implementation generated from reading ui file 'c:\Users\FRANCISCO\AppData\Roaming\QGIS\QGIS3\profiles\agrae\python\plugins\agrae\ui\agrae_dockwidget_base.ui'
+#
+# Created by: PyQt5 UI code generator 5.11.3
+#
+# WARNING! All changes made in this file will be lost!
 
-from PySide6.QtCore import *  # type: ignore
-from PySide6.QtGui import *  # type: ignore
-from PySide6.QtWidgets import *  # type: ignore
-
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_agraeDockWidgetBase(object):
     def setupUi(self, agraeDockWidgetBase):
-        if not agraeDockWidgetBase.objectName():
-            agraeDockWidgetBase.setObjectName(u"agraeDockWidgetBase")
+        agraeDockWidgetBase.setObjectName("agraeDockWidgetBase")
         agraeDockWidgetBase.resize(300, 500)
-        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(agraeDockWidgetBase.sizePolicy().hasHeightForWidth())
         agraeDockWidgetBase.setSizePolicy(sizePolicy)
-        agraeDockWidgetBase.setMinimumSize(QSize(300, 163))
-        self.dockWidgetContents = QWidget()
-        self.dockWidgetContents.setObjectName(u"dockWidgetContents")
-        self.gridLayout = QGridLayout(self.dockWidgetContents)
-        self.gridLayout.setObjectName(u"gridLayout")
-        self.toolBox = QToolBox(self.dockWidgetContents)
-        self.toolBox.setObjectName(u"toolBox")
-        self.page = QWidget()
-        self.page.setObjectName(u"page")
-        self.page.setGeometry(QRect(0, 0, 282, 406))
-        self.geom_check = QCheckBox(self.page)
-        self.geom_check.setObjectName(u"geom_check")
-        self.geom_check.setGeometry(QRect(0, 60, 174, 17))
-        self.list_btn = QPushButton(self.page)
-        self.list_btn.setObjectName(u"list_btn")
-        self.list_btn.setGeometry(QRect(180, 29, 89, 23))
-        self.layers_combo = QComboBox(self.page)
-        self.layers_combo.setObjectName(u"layers_combo")
-        self.layers_combo.setGeometry(QRect(0, 30, 174, 20))
-        self.load_1_btn = QPushButton(self.page)
-        self.load_1_btn.setObjectName(u"load_1_btn")
-        self.load_1_btn.setGeometry(QRect(0, 220, 261, 23))
-        self.label = QLabel(self.page)
-        self.label.setObjectName(u"label")
-        self.label.setGeometry(QRect(0, 10, 171, 16))
-        self.toolBox.addItem(self.page, u"Cargar Capas")
-        self.page_2 = QWidget()
-        self.page_2.setObjectName(u"page_2")
-        self.page_2.setGeometry(QRect(0, 0, 282, 406))
-        self.toolBox.addItem(self.page_2, u"Page 2")
-
+        agraeDockWidgetBase.setMinimumSize(QtCore.QSize(300, 163))
+        self.dockWidgetContents = QtWidgets.QWidget()
+        self.dockWidgetContents.setObjectName("dockWidgetContents")
+        self.gridLayout = QtWidgets.QGridLayout(self.dockWidgetContents)
+        self.gridLayout.setObjectName("gridLayout")
+        self.toolBox = QtWidgets.QToolBox(self.dockWidgetContents)
+        self.toolBox.setObjectName("toolBox")
+        self.page = QtWidgets.QWidget()
+        self.page.setGeometry(QtCore.QRect(0, 0, 282, 406))
+        self.page.setObjectName("page")
+        self.geom_check = QtWidgets.QCheckBox(self.page)
+        self.geom_check.setGeometry(QtCore.QRect(0, 60, 174, 17))
+        self.geom_check.setObjectName("geom_check")
+        self.list_btn = QtWidgets.QPushButton(self.page)
+        self.list_btn.setGeometry(QtCore.QRect(180, 29, 89, 23))
+        self.list_btn.setObjectName("list_btn")
+        self.layers_combo = QtWidgets.QComboBox(self.page)
+        self.layers_combo.setGeometry(QtCore.QRect(0, 30, 174, 20))
+        self.layers_combo.setObjectName("layers_combo")
+        self.load_1_btn = QtWidgets.QPushButton(self.page)
+        self.load_1_btn.setGeometry(QtCore.QRect(0, 100, 261, 23))
+        self.load_1_btn.setObjectName("load_1_btn")
+        self.label = QtWidgets.QLabel(self.page)
+        self.label.setGeometry(QtCore.QRect(0, 10, 171, 16))
+        self.label.setObjectName("label")
+        self.toolBox.addItem(self.page, "")
+        self.page_2 = QtWidgets.QWidget()
+        self.page_2.setGeometry(QtCore.QRect(0, 0, 282, 406))
+        self.page_2.setObjectName("page_2")
+        self.load_feat_btn = QtWidgets.QPushButton(self.page_2)
+        self.load_feat_btn.setGeometry(QtCore.QRect(200, 70, 75, 23))
+        self.load_feat_btn.setObjectName("load_feat_btn")
+        self.label_2 = QtWidgets.QLabel(self.page_2)
+        self.label_2.setGeometry(QtCore.QRect(0, 10, 231, 16))
+        self.label_2.setObjectName("label_2")
+        self.combo_load_layers = QtWidgets.QComboBox(self.page_2)
+        self.combo_load_layers.setGeometry(QtCore.QRect(130, 40, 141, 22))
+        self.combo_load_layers.setObjectName("combo_load_layers")
+        self.label_3 = QtWidgets.QLabel(self.page_2)
+        self.label_3.setGeometry(QtCore.QRect(20, 30, 101, 31))
+        self.label_3.setObjectName("label_3")
+        self.label_4 = QtWidgets.QLabel(self.page_2)
+        self.label_4.setGeometry(QtCore.QRect(0, 110, 231, 16))
+        self.label_4.setObjectName("label_4")
+        self.create_reticule = QtWidgets.QPushButton(self.page_2)
+        self.create_reticule.setGeometry(QtCore.QRect(180, 140, 91, 23))
+        self.create_reticule.setObjectName("create_reticule")
+        self.label_5 = QtWidgets.QLabel(self.page_2)
+        self.label_5.setGeometry(QtCore.QRect(10, 130, 161, 31))
+        self.label_5.setObjectName("label_5")
+        self.toolBox.addItem(self.page_2, "")
         self.gridLayout.addWidget(self.toolBox, 0, 0, 1, 1)
-
         agraeDockWidgetBase.setWidget(self.dockWidgetContents)
 
         self.retranslateUi(agraeDockWidgetBase)
-
-        self.toolBox.setCurrentIndex(0)
-
-
-        QMetaObject.connectSlotsByName(agraeDockWidgetBase)
-    # setupUi
+        self.toolBox.setCurrentIndex(1)
+        QtCore.QMetaObject.connectSlotsByName(agraeDockWidgetBase)
 
     def retranslateUi(self, agraeDockWidgetBase):
-        agraeDockWidgetBase.setWindowTitle(QCoreApplication.translate("agraeDockWidgetBase", u"aGrae GIS", None))
-        self.geom_check.setText(QCoreApplication.translate("agraeDockWidgetBase", u"Listar solo tablas con geometria", None))
-        self.list_btn.setText(QCoreApplication.translate("agraeDockWidgetBase", u"Listar", None))
-        self.load_1_btn.setText(QCoreApplication.translate("agraeDockWidgetBase", u"Anadir Capa al Mapa", None))
-        self.label.setText(QCoreApplication.translate("agraeDockWidgetBase", u"Lista de Tablas", None))
-        self.toolBox.setItemText(self.toolBox.indexOf(self.page), QCoreApplication.translate("agraeDockWidgetBase", u"Cargar Capas", None))
-        self.toolBox.setItemText(self.toolBox.indexOf(self.page_2), QCoreApplication.translate("agraeDockWidgetBase", u"Page 2", None))
-    # retranslateUi
+        _translate = QtCore.QCoreApplication.translate
+        agraeDockWidgetBase.setWindowTitle(_translate("agraeDockWidgetBase", "aGrae GIS"))
+        self.geom_check.setText(_translate("agraeDockWidgetBase", "Listar solo tablas con geometria"))
+        self.list_btn.setText(_translate("agraeDockWidgetBase", "Listar"))
+        self.load_1_btn.setText(_translate("agraeDockWidgetBase", "Anadir Capa al Mapa"))
+        self.label.setText(_translate("agraeDockWidgetBase", "Lista de Tablas"))
+        self.toolBox.setItemText(self.toolBox.indexOf(self.page), _translate("agraeDockWidgetBase", "Cargar Capas"))
+        self.load_feat_btn.setText(_translate("agraeDockWidgetBase", "Cargar"))
+        self.label_2.setText(_translate("agraeDockWidgetBase", "1) Añadir Objetos espaciales a la base de datos"))
+        self.label_3.setText(_translate("agraeDockWidgetBase", "<html><head/><body><p>Seleccionar tabla a <br> cargar información</p></body></html>"))
+        self.label_4.setText(_translate("agraeDockWidgetBase", "2) Crear Reticula Base"))
+        self.create_reticule.setText(_translate("agraeDockWidgetBase", "Crear Reticula"))
+        self.label_5.setText(_translate("agraeDockWidgetBase", "<html><head/><body><p>Seleccionar el lote o parcela <br> para crear la Reticula</p></body></html>"))
+        self.toolBox.setItemText(self.toolBox.indexOf(self.page_2), _translate("agraeDockWidgetBase", "Funciones Espaciales"))
 

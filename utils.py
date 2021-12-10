@@ -22,6 +22,11 @@ class AgraeUtils():
         dns = self.dns
         return dns
 
+    def Conn(self):
+        conn = self.conn = DbConnection.connection(
+            self.dns['dbname'], self.dns['user'], self.dns['password'], self.dns['host'])
+        return conn
+
     def loadGeomLayers(self):
         # dns = self.ConnParams()
         # conn = DbConnection.connection(dns['dbname'], dns['user'], dns['password'], dns['host'])
@@ -76,21 +81,8 @@ class AgraeUtils():
             dbname, dbuser, dbpass, dbhost, dbport)
         conn.close()
 
-    def insertFeatToDB(self):
-        with self.conn as conn:
-            try: 
-                cur = conn.cursor()
-                layer = iface.activeLayer()
-                print(layer.name())
-                feat = layer.selectedFeatures()
-                ls = feat[0].geometry().asWkt()
-                print(ls)
-                sql = f''' INSERT INTO parcela(geometria) VALUES(st_multi(st_geomfromtext('{ls}',4326)))'''
-                cur.execute(sql)
-                conn.commit()
-                print('agregado correctamente')
-            except:
-                print('error')
+ 
+            
 
 
 
