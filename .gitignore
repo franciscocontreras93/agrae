@@ -2,6 +2,9 @@
 
 /.qt_for_python
 
-.sql
+/sql
 
 .pyc 
+
+
+
