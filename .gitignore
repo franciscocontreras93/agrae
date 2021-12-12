@@ -1,6 +1,7 @@
-.__pycache__
+/__pycache__
 
-.qt_for_python
+/.qt_for_python
 
 .sql
 
+.pyc 
