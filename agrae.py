@@ -51,6 +51,7 @@ class agrae:
         self.iface = iface
         self.utils = AgraeUtils()
         self.conn = self.utils.Conn()
+        self.dbset = QSettings('agrae','dbConnection')
 
 
 
@@ -320,7 +321,7 @@ class agrae:
             self.dockwidget.list_btn.clicked.connect(listLayer)
             self.dockwidget.load_1_btn.clicked.connect(addLayerToMap)
             self.dockwidget.create_reticule.clicked.connect(createReticule)
-            
+            self.dockwidget.label_6.setText(self.dbset.value('dbhost'))
             for i in self.utils.loadGeomLayers():
                 self.dockwidget.combo_load_layers.addItem(i.upper())
             
@@ -381,6 +382,7 @@ class agrae:
                 self.configDialog.test_btn.clicked.connect(dbTestConn)
                 self.configDialog.pushButton.clicked.connect(saveConn)
             
+            self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
             self.configDialog.show()
 
 

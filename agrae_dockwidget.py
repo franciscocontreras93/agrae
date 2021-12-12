@@ -25,7 +25,7 @@
 import os
 
 from qgis.PyQt import QtGui, QtWidgets, uic
-from qgis.PyQt.QtCore import pyqtSignal
+from qgis.PyQt.QtCore import pyqtSignal, QSettings
 
 agraeSidePanel, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ui/agrae_dockwidget_base.ui'))
@@ -59,12 +59,15 @@ class agraeConfigWidget(QtWidgets.QDialog, agraeConfigPanel):
     def __init__(self, parent=None):
         """Constructor."""
         super(agraeConfigWidget, self).__init__(parent)
+
+        self.s = QSettings('agrae','dbhost')
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
         # self.<objectname>, and you can use autoconnect slots - see
         # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        
 
     def closeEvent(self, event):
         self.closingPlugin2.emit()
