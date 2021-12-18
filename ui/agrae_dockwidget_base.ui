@@ -19,7 +19,7 @@
   <property name="minimumSize">
    <size>
     <width>300</width>
-    <height>163</height>
+    <height>190</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -30,7 +30,7 @@
     <item row="0" column="0">
      <widget class="QToolBox" name="toolBox">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="page">
        <property name="geometry">
@@ -38,7 +38,7 @@
          <x>0</x>
          <y>0</y>
          <width>282</width>
-         <height>406</height>
+         <height>379</height>
         </rect>
        </property>
        <attribute name="label">
@@ -142,7 +142,7 @@
          <x>0</x>
          <y>0</y>
          <width>282</width>
-         <height>406</height>
+         <height>379</height>
         </rect>
        </property>
        <attribute name="label">
@@ -234,6 +234,63 @@
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seleccionar el lote o parcela &lt;br&gt; para crear la Reticula&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="page_3">
+       <attribute name="label">
+        <string>aGrae Procesos</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>261</width>
+          <height>111</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>Capa de Superposicion</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>Capa de Entrada</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="inputLay"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="superLay"/>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QPushButton" name="interButton">
+           <property name="text">
+            <string>Crear Interseccion</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QLabel" name="label_10">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>61</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Interseccion</string>
         </property>
        </widget>
       </widget>

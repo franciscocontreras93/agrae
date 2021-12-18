@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>331</width>
+    <height>430</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>331</width>
+    <height>430</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>331</width>
+    <height>430</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>aGrae GIS </string>
+  </property>
+  <widget class="QWidget" name="gridLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>40</y>
+     <width>291</width>
+     <height>371</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <property name="leftMargin">
+     <number>5</number>
+    </property>
+    <property name="topMargin">
+     <number>5</number>
+    </property>
+    <property name="rightMargin">
+     <number>5</number>
+    </property>
+    <property name="bottomMargin">
+     <number>5</number>
+    </property>
+    <item row="6" column="0">
+     <widget class="QLabel" name="label_8">
+      <property name="text">
+       <string>Parcela</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QLabel" name="label_6">
+      <property name="text">
+       <string>Zona</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="0">
+     <widget class="QLabel" name="label_7">
+      <property name="text">
+       <string>Poligono</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QLineEdit" name="line_Agregado"/>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLineEdit" name="line_Mcpo"/>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLineEdit" name="line_Nombre"/>
+    </item>
+    <item row="4" column="1">
+     <widget class="QLineEdit" name="line_Zona"/>
+    </item>
+    <item row="6" column="1">
+     <widget class="QLineEdit" name="line_Parcela"/>
+    </item>
+    <item row="5" column="1">
+     <widget class="QLineEdit" name="line_Poly"/>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label_3">
+      <property name="text">
+       <string>Provincia</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="label_4">
+      <property name="text">
+       <string>Municipio</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="label_5">
+      <property name="text">
+       <string>Agregado</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>Nombre</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="0">
+     <widget class="QLabel" name="label_9">
+      <property name="text">
+       <string>Recinto</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="1">
+     <widget class="QLineEdit" name="line_Recinto"/>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLineEdit" name="line_Prov"/>
+    </item>
+    <item row="8" column="1">
+     <widget class="QPushButton" name="pushButton">
+      <property name="text">
+       <string>Cargar Informacion</string>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="0">
+     <widget class="QPushButton" name="loadButton">
+      <property name="text">
+       <string>Guardar</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="gridLayoutWidget_2">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>311</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_2">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>Agregar Parcelas a la Base de Datos</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <tabstops>
+  <tabstop>line_Nombre</tabstop>
+  <tabstop>line_Prov</tabstop>
+  <tabstop>line_Mcpo</tabstop>
+  <tabstop>line_Agregado</tabstop>
+  <tabstop>line_Zona</tabstop>
+  <tabstop>line_Poly</tabstop>
+  <tabstop>line_Parcela</tabstop>
+  <tabstop>line_Recinto</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

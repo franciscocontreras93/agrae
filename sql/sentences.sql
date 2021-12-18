@@ -18,3 +18,8 @@ where idparcela = 30)
 
 
 -- 121 = 9.959 METROS
+
+
+
+select p1.idpunto, p1.geometria as punto , p2.nombre,p2.agregado from reticulabase p1 , parcela p2 
+where st_within (p1.geometria, p2.geometria) and p2.nombre = 'PARCELA1'

@@ -21,17 +21,18 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 from qgis.core import *
+from qgis import processing
 # Initialize Qt resources from file resources.py
 from .resources import *
 from .dbconn import DbConnection
 from .utils import AgraeUtils
 
 # Import the code for the DockWidget
-from .agrae_dockwidget import agraeDockWidget,agraeConfigWidget
+from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, addFeatureWidget
 import os.path
 from qgis.core import QgsDataSourceUri
 
@@ -82,6 +83,7 @@ class agrae:
         self.pluginIsActive = False
         self.dockwidget = None
         self.configDialog = None
+        self.addFeatureDialog = None
 
         
 
@@ -186,6 +188,11 @@ class agrae:
             callback=self.run,
             parent=self.iface.mainWindow())
         self.add_action(
+            icon_path,
+            text=self.tr(u'Agregar Objeto'),
+            callback=self.addFeature,
+            parent=self.iface.mainWindow())
+        self.add_action(
             '',
             text=self.tr(u'Ajustes'),
             add_to_toolbar=False,
@@ -195,7 +202,8 @@ class agrae:
     #--------------------------------------------------------------------------
 
     def onClosePlugin(self):
-
+        self.dockwidget.inputLay.clear()
+        self.dockwidget.superLay.clear()
         # disconnects
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
 
@@ -205,6 +213,21 @@ class agrae:
     def onClosePluginConfig(self):
         # disconnects
         self.configDialog.closingPlugin2.disconnect(self.onClosePluginConfig)
+        self.pluginIsActive = False
+    
+    def onClosePluginAddFeat(self):
+
+        self.addFeatureDialog.line_Nombre.setText('')
+        self.addFeatureDialog.line_Prov.setText('')
+        self.addFeatureDialog.line_Mcpo.setText('')
+        self.addFeatureDialog.line_Agregado.setText('')
+        self.addFeatureDialog.line_Zona.setText('')
+        self.addFeatureDialog.line_Poly.setText('')
+        self.addFeatureDialog.line_Parcela.setText('')
+        self.addFeatureDialog.line_Recinto.setText('')
+        # disconnects
+        self.addFeatureDialog.closingPlugin.disconnect(
+            self.onClosePluginAddFeat)
         self.pluginIsActive = False
 
 
@@ -228,15 +251,19 @@ class agrae:
         def listLayer():
             if self.dockwidget.geom_check.isChecked():
                 self.dockwidget.layers_combo.clear()
+                self.dockwidget.combo_load_layers.clear()
                 layerList = self.utils.loadGeomLayers()
                 for i in layerList:
                     self.dockwidget.layers_combo.addItem(i.upper())
+                    self.dockwidget.combo_load_layers.addItem(i.upper())
                     
             else: 
                 self.dockwidget.layers_combo.clear()
+                self.dockwidget.combo_load_layers.clear()
                 layerList = self.utils.loadLayers()
                 for i in layerList:
                     self.dockwidget.layers_combo.addItem(i.upper())
+                    self.dockwidget.combo_load_layers.addItem(i.upper())
 
         def addLayerToMap(layerName):
             idx = 0
@@ -250,6 +277,7 @@ class agrae:
                     layer = QgsVectorLayer(uri.uri(), tablename, 'postgres')
                     if layer.isValid():
                         QgsProject.instance().addMapLayer(layer)
+                        print(f"Capa añadida correctamente {idx}")
                         idx += 1
                     else: 
                         uri.setDataSource('public', tablename, None)
@@ -279,7 +307,9 @@ class agrae:
                 except:
                     self.iface.messageBar().pushMessage(
                         'aGraes GIS | ERROR: ', 'No se pudo almacenar el registro', level=1, duration=3)
-            
+        
+        
+
         
         def createReticule():
             with self.conn as conn:
@@ -295,7 +325,7 @@ class agrae:
                         source = sourceInfo.split(' ')
                         table = source[6][6:]
                         sql = f'''insert into reticulabase(geometria) 
-                                (SELECT (ST_Dump(makegrid(geometria, 121))).geom from {table}
+                                (SELECT (ST_Dump(makegrid(geometria, 85))).geom from {table}
                                 where {field_names[1]} = {idfeat}) '''
                         cur.execute(sql)
                         conn.commit()
@@ -305,6 +335,52 @@ class agrae:
                 except:
                     self.iface.messageBar().pushMessage(
                         'aGraes GIS | ERROR: ', 'No se pudo almacenar el registro', level=1, duration=3)
+                
+
+        def Intersection():
+            try: 
+                instance = QgsProject.instance()
+                inputLayer = instance.mapLayersByName(self.dockwidget.inputLay.currentText())[0]
+                superLayer = instance.mapLayersByName(self.dockwidget.superLay.currentText())[0]
+                params = {
+                    'INPUT': inputLayer.name(),
+                    'OVERLAY': superLayer.name(),
+                    #'INPUT_FIELDS':'amb',
+                    #'OVERLAY_FIELDS':'segm',
+                    'OUTPUT': 'memory:SIG'
+                }
+
+                intersect = processing.run('native:intersection', params)
+                #result = processing.runAndLoadResults('native:intersection',params)
+                layer = intersect['OUTPUT']
+                #resultLayer.setName('intersect')
+                print(layer)
+                ufField = QgsField('UF', QVariant.Int)
+                layer.dataProvider().addAttributes([ufField])
+                layer.updateFields()
+                exp = QgsExpression('"amb" + "segm"')
+                context = QgsExpressionContext()
+                scope = QgsExpressionContextScope()
+                context.appendScope(scope)
+                layer.startEditing()
+                for f in layer.getFeatures():
+                    scope.setFeature(f)
+                    f['UF'] = exp.evaluate(context)
+                    layer.updateFeature(f)
+                layer.commitChanges()
+
+
+                instance.addMapLayer(layer)
+                self.iface.messageBar().pushMessage(
+                    'aGraes GIS', 'Geoproceso Exitoso', level=3, duration=3)
+            except Exception as ERROR:
+                self.iface.messageBar().pushMessage(
+                    f'aGraes GIS | {ERROR}: ', 'No se pudo Ejecutar el Geoproceso', level=1, duration=3)
+
+
+
+
+
 
         if not self.pluginIsActive:
             self.pluginIsActive = True
@@ -322,11 +398,15 @@ class agrae:
             self.dockwidget.load_1_btn.clicked.connect(addLayerToMap)
             self.dockwidget.create_reticule.clicked.connect(createReticule)
             self.dockwidget.label_6.setText(self.dbset.value('dbhost'))
-            for i in self.utils.loadGeomLayers():
-                self.dockwidget.combo_load_layers.addItem(i.upper())
+            for lyr in QgsProject.instance().mapLayers().values():
+                if lyr.isValid():
+                    self.dockwidget.inputLay.addItem(lyr.name())
+                    self.dockwidget.superLay.addItem(lyr.name())
+            
+                
             
             self.dockwidget.load_feat_btn.clicked.connect(loadFeatureToDB)
-
+            self.dockwidget.interButton.clicked.connect(Intersection)
 
 
                 
@@ -386,4 +466,88 @@ class agrae:
             self.configDialog.show()
 
 
+        pass
+
+
+    def addFeature(self):
+        print('AGREGAR OBJETO A BD')
+        
+
+        def loadData():
+            layer = self.iface.activeLayer()
+            feature = layer.selectedFeatures()
+            print(len(feature))
+            try:
+                self.addFeatureDialog.line_Nombre.setText(
+                    str(feature[0]['name_parc']))
+                self.addFeatureDialog.line_Prov.setText(
+                    str(feature[0]['provincia']))
+                self.addFeatureDialog.line_Mcpo.setText(
+                    str(feature[0]['municipio']))
+                self.addFeatureDialog.line_Agregado.setText(
+                    str(feature[0]['agregado']))
+                self.addFeatureDialog.line_Zona.setText(
+                    str(feature[0]['zona']))
+                self.addFeatureDialog.line_Poly.setText(
+                    str(feature[0]['poligono']))
+                self.addFeatureDialog.line_Parcela.setText(
+                    str(feature[0]['parcela']))
+                self.addFeatureDialog.line_Recinto.setText(
+                    str(feature[0]['recinto']))
+            except Exception as ex:
+                if len(feature) == 0 or len(feature) >1: 
+                    self.iface.messageBar().pushMessage(
+                        f'aGraes GIS | {ex}: ', 'Debe seleccionar una Parcela', level=1, duration=3)
+                
+
+        def loadAllotmentToDB():
+            
+            with self.conn as conn:
+                try:
+                    
+                    cur = conn.cursor()
+                    layer = self.iface.activeLayer()
+                    # print(layer.name())
+                    feat = layer.selectedFeatures()
+                    ls = feat[0].geometry().asWkt()
+                    srid = layer.crs().authid()[5:]
+
+                    name = self.addFeatureDialog.line_Nombre.text()
+                    prov = self.addFeatureDialog.line_Prov.text()
+                    mcpo = self.addFeatureDialog.line_Mcpo.text()
+                    aggregate = self.addFeatureDialog.line_Agregado.text()
+                    zone = self.addFeatureDialog.line_Zona.text()
+                    poly = self.addFeatureDialog.line_Poly.text()
+                    allotment = self.addFeatureDialog.line_Parcela.text()
+                    inclosure = self.addFeatureDialog.line_Recinto.text()
+
+                    # print(ls)
+                    sql = f''' 
+                    INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria) 
+                    VALUES('{name}','{prov}','{mcpo}','{aggregate}','{zone}','{poly}','{allotment}','{inclosure}',st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))))'''
+                    cur.execute(sql)
+                    conn.commit()
+                    # print('agregado correctamente')
+                    self.iface.messageBar().pushMessage(
+                        'aGraes GIS', 'Registro creado Correctamente', level=3, duration=3)
+                        
+
+                except Exception as ex:
+                    print(ex)
+                    self.iface.messageBar().pushMessage(
+                        f'aGraes GIS | {ex}: ', 'No se pudo almacenar el registro', level=1, duration=3) 
+                
+                
+
+        if not self.pluginIsActive:
+            self.pluginIsActive = True
+
+            if self.addFeatureDialog == None:
+                self.addFeatureDialog = addFeatureWidget()
+                # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
+                self.addFeatureDialog.pushButton.clicked.connect(loadData)
+                self.addFeatureDialog.loadButton.clicked.connect(loadAllotmentToDB)
+
+            self.addFeatureDialog.closingPlugin.connect(self.onClosePluginAddFeat)
+            self.addFeatureDialog.show()
         pass
