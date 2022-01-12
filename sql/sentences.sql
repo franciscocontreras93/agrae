@@ -23,3 +23,12 @@ where idparcela = 30)
 
 select p1.idpunto, p1.geometria as punto , p2.nombre,p2.agregado from reticulabase p1 , parcela p2 
 where st_within (p1.geometria, p2.geometria) and p2.nombre = 'PARCELA1'
+
+
+
+create or replace view public.grilla as 
+select 
+(ST_Dump(makegrid(p.geometria, 121))).geom as punto, 
+uuid_generate_v4() AS id
+from parcela p
+where idparcela = 38

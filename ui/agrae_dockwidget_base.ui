@@ -37,8 +37,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>282</width>
-         <height>379</height>
+         <width>100</width>
+         <height>30</height>
         </rect>
        </property>
        <attribute name="label">
@@ -141,8 +141,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>282</width>
-         <height>379</height>
+         <width>100</width>
+         <height>30</height>
         </rect>
        </property>
        <attribute name="label">
@@ -238,6 +238,14 @@
        </widget>
       </widget>
       <widget class="QWidget" name="page_3">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>282</width>
+         <height>379</height>
+        </rect>
+       </property>
        <attribute name="label">
         <string>aGrae Procesos</string>
        </attribute>
@@ -247,7 +255,7 @@
           <x>10</x>
           <y>30</y>
           <width>261</width>
-          <height>111</height>
+          <height>151</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
@@ -265,16 +273,26 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QComboBox" name="inputLay"/>
-         </item>
          <item row="1" column="1">
           <widget class="QComboBox" name="superLay"/>
          </item>
-         <item row="2" column="0" colspan="2">
+         <item row="3" column="0" colspan="2">
           <widget class="QPushButton" name="interButton">
            <property name="text">
             <string>Crear Interseccion</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="inputLay"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLineEdit" name="lineEdit"/>
+         </item>
+         <item row="2" column="1">
+          <widget class="QPushButton" name="pushButton">
+           <property name="text">
+            <string>...</string>
            </property>
           </widget>
          </item>

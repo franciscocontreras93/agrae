@@ -188,7 +188,7 @@ class agrae:
             callback=self.run,
             parent=self.iface.mainWindow())
         self.add_action(
-            icon_path,
+            '',
             text=self.tr(u'Agregar Objeto'),
             callback=self.addFeature,
             parent=self.iface.mainWindow())
@@ -349,7 +349,6 @@ class agrae:
                     #'OVERLAY_FIELDS':'segm',
                     'OUTPUT': 'memory:SIG'
                 }
-
                 intersect = processing.run('native:intersection', params)
                 #result = processing.runAndLoadResults('native:intersection',params)
                 layer = intersect['OUTPUT']
@@ -368,7 +367,21 @@ class agrae:
                     f['UF'] = exp.evaluate(context)
                     layer.updateFeature(f)
                 layer.commitChanges()
-
+                csvFileName = self.dockwidget.lineEdit.text()
+                if len(csvFileName) > 0:
+                    uri = f'''file:///{csvFileName}?delimiter=;'''
+                    csv = QgsVectorLayer(uri, 'csv', 'delimitedtext')
+                    if csv.isValid():
+                        print('ok')
+                        instance.addMapLayer(csv)
+                        info = QgsVectorLayerJoinInfo()
+                        info.setJoinFieldName('CONTROL')
+                        info.setTargetFieldName('CONTROL')
+                        info.setPrefix('')
+                        info.setJoinLayerId(csv.id())
+                        info.setUsingMemoryCache(True)
+                        info.setJoinLayer(csv)
+                        layer.addJoin(info)
 
                 instance.addMapLayer(layer)
                 self.iface.messageBar().pushMessage(

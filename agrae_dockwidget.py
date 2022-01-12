@@ -24,6 +24,7 @@
 
 import os
 
+from PyQt5.QtWidgets import *
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QSettings
 
@@ -48,6 +49,13 @@ class agraeDockWidget(QtWidgets.QDockWidget, agraeSidePanel):
         # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        self.pushButton.clicked.connect(self.select_input_file)
+
+    def select_input_file(self):
+        filename = QFileDialog.getOpenFileName(None,'Seleccionar archivo')
+        # print(filename[0])
+        self.lineEdit.setText(filename[0])
+        print(len(self.lineEdit.text()))
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
