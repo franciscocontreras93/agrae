@@ -32,8 +32,8 @@ agraeSidePanel, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ui/agrae_dockwidget_base.ui'))
 agraeConfigPanel, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ui/config_ui.ui'))
-agraeAddFeaturePanel, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'ui/addFeature.ui'))
+agraeMainPanel, _ = uic.loadUiType(os.path.join(
+    os.path.dirname(__file__), 'ui/agrae_main.ui'))
 
 
 class agraeDockWidget(QtWidgets.QDockWidget, agraeSidePanel):
@@ -84,13 +84,13 @@ class agraeConfigWidget(QtWidgets.QDialog, agraeConfigPanel):
         event.accept()
 
 
-class addFeatureWidget(QtWidgets.QDialog, agraeAddFeaturePanel):
+class agraeMainWidget(QtWidgets.QDialog, agraeMainPanel):
 
     closingPlugin = pyqtSignal()
 
     def __init__(self, parent=None):
         """Constructor."""
-        super(addFeatureWidget, self).__init__(parent)
+        super(agraeMainWidget, self).__init__(parent)
 
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
@@ -102,3 +102,5 @@ class addFeatureWidget(QtWidgets.QDialog, agraeAddFeaturePanel):
     def closeEvent(self, event):
         self.closingPlugin.emit()
         event.accept()
+
+

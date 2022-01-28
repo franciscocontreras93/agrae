@@ -32,7 +32,7 @@ from .dbconn import DbConnection
 from .utils import AgraeUtils
 
 # Import the code for the DockWidget
-from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, addFeatureWidget
+from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget
 import os.path
 from qgis.core import QgsDataSourceUri
 
@@ -190,7 +190,7 @@ class agrae:
         self.add_action(
             '',
             text=self.tr(u'Agregar Objeto'),
-            callback=self.addFeature,
+            callback=self.runMain,
             parent=self.iface.mainWindow())
         self.add_action(
             '',
@@ -217,14 +217,6 @@ class agrae:
     
     def onClosePluginAddFeat(self):
 
-        self.addFeatureDialog.line_Nombre.setText('')
-        self.addFeatureDialog.line_Prov.setText('')
-        self.addFeatureDialog.line_Mcpo.setText('')
-        self.addFeatureDialog.line_Agregado.setText('')
-        self.addFeatureDialog.line_Zona.setText('')
-        self.addFeatureDialog.line_Poly.setText('')
-        self.addFeatureDialog.line_Parcela.setText('')
-        self.addFeatureDialog.line_Recinto.setText('')
         # disconnects
         self.addFeatureDialog.closingPlugin.disconnect(
             self.onClosePluginAddFeat)
@@ -307,10 +299,7 @@ class agrae:
                 except:
                     self.iface.messageBar().pushMessage(
                         'aGraes GIS | ERROR: ', 'No se pudo almacenar el registro', level=1, duration=3)
-        
-        
-
-        
+                
         def createReticule():
             with self.conn as conn:
                 try: 
@@ -335,8 +324,7 @@ class agrae:
                 except:
                     self.iface.messageBar().pushMessage(
                         'aGraes GIS | ERROR: ', 'No se pudo almacenar el registro', level=1, duration=3)
-                
-
+               
         def Intersection():
             try: 
                 instance = QgsProject.instance()
@@ -390,10 +378,18 @@ class agrae:
                 self.iface.messageBar().pushMessage(
                     f'aGraes GIS | {ERROR}: ', 'No se pudo Ejecutar el Geoproceso', level=1, duration=3)
 
+        def buscarPredio(predio):
+            with self.conn as conn:
+                
+                pass
+
+            
 
 
+            
 
-
+            
+            
 
         if not self.pluginIsActive:
             self.pluginIsActive = True
@@ -482,85 +478,24 @@ class agrae:
         pass
 
 
-    def addFeature(self):
-        print('AGREGAR OBJETO A BD')
+    def runMain(self):
+        print('runMain Working')
+
         
 
-        def loadData():
-            layer = self.iface.activeLayer()
-            feature = layer.selectedFeatures()
-            print(len(feature))
-            try:
-                self.addFeatureDialog.line_Nombre.setText(
-                    str(feature[0]['name_parc']))
-                self.addFeatureDialog.line_Prov.setText(
-                    str(feature[0]['provincia']))
-                self.addFeatureDialog.line_Mcpo.setText(
-                    str(feature[0]['municipio']))
-                self.addFeatureDialog.line_Agregado.setText(
-                    str(feature[0]['agregado']))
-                self.addFeatureDialog.line_Zona.setText(
-                    str(feature[0]['zona']))
-                self.addFeatureDialog.line_Poly.setText(
-                    str(feature[0]['poligono']))
-                self.addFeatureDialog.line_Parcela.setText(
-                    str(feature[0]['parcela']))
-                self.addFeatureDialog.line_Recinto.setText(
-                    str(feature[0]['recinto']))
-            except Exception as ex:
-                if len(feature) == 0 or len(feature) >1: 
-                    self.iface.messageBar().pushMessage(
-                        f'aGraes GIS | {ex}: ', 'Debe seleccionar una Parcela', level=1, duration=3)
-                
 
-        def loadAllotmentToDB():
-            
-            with self.conn as conn:
-                try:
-                    
-                    cur = conn.cursor()
-                    layer = self.iface.activeLayer()
-                    # print(layer.name())
-                    feat = layer.selectedFeatures()
-                    ls = feat[0].geometry().asWkt()
-                    srid = layer.crs().authid()[5:]
 
-                    name = self.addFeatureDialog.line_Nombre.text()
-                    prov = self.addFeatureDialog.line_Prov.text()
-                    mcpo = self.addFeatureDialog.line_Mcpo.text()
-                    aggregate = self.addFeatureDialog.line_Agregado.text()
-                    zone = self.addFeatureDialog.line_Zona.text()
-                    poly = self.addFeatureDialog.line_Poly.text()
-                    allotment = self.addFeatureDialog.line_Parcela.text()
-                    inclosure = self.addFeatureDialog.line_Recinto.text()
-
-                    # print(ls)
-                    sql = f''' 
-                    INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria) 
-                    VALUES('{name}','{prov}','{mcpo}','{aggregate}','{zone}','{poly}','{allotment}','{inclosure}',st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))))'''
-                    cur.execute(sql)
-                    conn.commit()
-                    # print('agregado correctamente')
-                    self.iface.messageBar().pushMessage(
-                        'aGraes GIS', 'Registro creado Correctamente', level=3, duration=3)
-                        
-
-                except Exception as ex:
-                    print(ex)
-                    self.iface.messageBar().pushMessage(
-                        f'aGraes GIS | {ex}: ', 'No se pudo almacenar el registro', level=1, duration=3) 
-                
-                
-
+        
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
             if self.addFeatureDialog == None:
-                self.addFeatureDialog = addFeatureWidget()
+                self.addFeatureDialog = agraeMainWidget()
                 # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
-                self.addFeatureDialog.pushButton.clicked.connect(loadData)
-                self.addFeatureDialog.loadButton.clicked.connect(loadAllotmentToDB)
+                # self.addFeatureDialog.pushButton.clicked.connect(loadData)
+                # self.addFeatureDialog.loadButton.clicked.connect(loadAllotmentToDB)
 
             self.addFeatureDialog.closingPlugin.connect(self.onClosePluginAddFeat)
             self.addFeatureDialog.show()
         pass
+    

@@ -32,3 +32,11 @@ select
 uuid_generate_v4() AS id
 from parcela p
 where idparcela = 38
+
+-- BUSQUEDA POR LOTE o parcela
+select lp.idlote, l.nombre as lote ,p.idparcela, p.nombre as parcela, c.nombre from parcela p
+left join loteparcela lp on p.idparcela = lp.idparcela 
+left join lote l on l.idlote = lp.idlote 
+left join cultivo c on c.idcultivo = l.idcultivo 
+where p.idparcela = 39
+
