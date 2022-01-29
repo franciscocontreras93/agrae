@@ -23,8 +23,9 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
 from qgis.core import *
+
 from qgis import processing
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -83,7 +84,7 @@ class agrae:
         self.pluginIsActive = False
         self.dockwidget = None
         self.configDialog = None
-        self.addFeatureDialog = None
+        self.mainWindowDialog = None
 
         
 
@@ -218,7 +219,7 @@ class agrae:
     def onClosePluginAddFeat(self):
 
         # disconnects
-        self.addFeatureDialog.closingPlugin.disconnect(
+        self.mainWindowDialog.closingPlugin.disconnect(
             self.onClosePluginAddFeat)
         self.pluginIsActive = False
 
@@ -377,18 +378,6 @@ class agrae:
             except Exception as ERROR:
                 self.iface.messageBar().pushMessage(
                     f'aGraes GIS | {ERROR}: ', 'No se pudo Ejecutar el Geoproceso', level=1, duration=3)
-
-        def buscarPredio(predio):
-            with self.conn as conn:
-                
-                pass
-
-            
-
-
-            
-
-            
             
 
         if not self.pluginIsActive:
@@ -416,17 +405,6 @@ class agrae:
             
             self.dockwidget.load_feat_btn.clicked.connect(loadFeatureToDB)
             self.dockwidget.interButton.clicked.connect(Intersection)
-
-
-                
-            
-                        
-                
-
-                
-                
-
-
 
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
@@ -481,21 +459,114 @@ class agrae:
     def runMain(self):
         print('runMain Working')
 
-        
 
+
+
+        def cargarLotesParcelas():
+            def loadLayer(sql,nombre='parcela'):
+                dns = self.utils.ConnParams()
+                try:
+                    uri = QgsDataSourceUri()
+                    uri.setConnection(
+                        dns['host'], dns['port'], dns['dbname'], dns['user'], dns['password'])
+                    uri.setDataSource('', f'({sql})','geom','','idparcela')
+                    # uri.setKeyColumn('idparcela')
+                    layer = self.iface.addVectorLayer(uri.uri(),nombre,'postgres')
+                    if layer.isValid():
+                        QgsProject.instance().addMapLayer(layer)
+                        print(f"Capa añadida correctamente ")
+                        # print(sql)
+                        layer.startEditing()
+                        
+                    else:
+                        uri.setDataSource('public', tablename, None)
+                        layer = QgsVectorLayer(
+                            uri.uri(False), tablename, 'postgres')
+                        QgsProject.instance().addMapLayer(layer)
+                        print("La capa es invalida")
+                except:
+                    print('Ocurrio un error!')
+            param = self.mainWindowDialog.line_buscar.text()
+            sqlQuery = ''
+            try: 
+                with self.conn as conn:
+                    if self.mainWindowDialog.radio_id.isChecked():
+                        sqlQuery = f'''select p.idparcela, lp.idlote, l.nombre as lote , p.nombre as parcela, c.nombre, p.geometria as geom from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo where p.idparcela = {param} or l.idlote = {param}'''
+                    elif self.mainWindowDialog.radio_nombre.isChecked():
+                        sqlQuery = f"""select p.idparcela, lp.idlote, l.nombre as lote , p.nombre as parcela, c.nombre, p.geometria as geom from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo where p.nombre ilike '%{param}%' or l.nombre ilike '%{param}%'"""
+                    cursor = conn.cursor()
+                    cursor.execute(sqlQuery)
+                    data = cursor.fetchall()
+                    if len(data) == 0:
+                        self.iface.messageBar().pushMessage(
+                            "aGrae GIS", "No Existen Lotes ni Parcelas asociadas a la busqueda", level=1, duration=5)
+                    else: 
+                        a = len(data)
+                        b = len(data[0])
+                        i = 1
+                        j = 1
+                        self.mainWindowDialog.tableWidget.setRowCount(a)
+                        self.mainWindowDialog.tableWidget.setColumnCount(b)
+                        for j in range(a):
+                            for i in range(b):
+                                item = QTableWidgetItem(str(data[j][i]))
+                                self.mainWindowDialog.tableWidget.setItem(j,i,item)
+                        # print(data)
+                        funct = loadLayer(sqlQuery)
+            
+            except: 
+                
+                print('ERROR')
+
+
+        def buscarLote():
+            row = self.mainWindowDialog.tableWidget.currentRow()
+            column = self.mainWindowDialog.tableWidget.currentColumn()
+            param = self.mainWindowDialog.tableWidget.item(row,column).text()
+            sqlQuery = f"""select * from lote where nombre ilike '{param}' """
+            
+            conn = self.conn
+            cursor = conn.cursor()
+            cursor.execute(sqlQuery)
+            data = cursor.fetchone()
+
+            self.mainWindowDialog.cl_id_explotacion.setText(str(data[1]))
+            self.mainWindowDialog.cl_id_cultivo.setText(str(data[2]))
+            self.mainWindowDialog.cl_name_lote.setText(data[3])
+            # print(data)
+            # print(data[2])
+            # print(param)
+            
+           
+
+                    
+
+
+
+               
+                    
+
+
+               
+            
+        
 
 
         
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
-            if self.addFeatureDialog == None:
-                self.addFeatureDialog = agraeMainWidget()
-                # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
-                # self.addFeatureDialog.pushButton.clicked.connect(loadData)
-                # self.addFeatureDialog.loadButton.clicked.connect(loadAllotmentToDB)
+            if self.mainWindowDialog == None:
+                self.mainWindowDialog = agraeMainWidget()
 
-            self.addFeatureDialog.closingPlugin.connect(self.onClosePluginAddFeat)
-            self.addFeatureDialog.show()
+                self.mainWindowDialog.btn_buscar1.clicked.connect(cargarLotesParcelas)
+                self.mainWindowDialog.btn_buscar2.clicked.connect(buscarLote)
+                self.mainWindowDialog.tableWidget.setColumnHidden(0, True)
+                self.mainWindowDialog.tableWidget.setColumnHidden(5, True)
+                # self.mainWindowDialog.loadButton.clicked.connect(loadAllotmentToDB)
+
+            self.mainWindowDialog.closingPlugin.connect(self.onClosePluginAddFeat)
+
+            self.mainWindowDialog.show()
         pass
     

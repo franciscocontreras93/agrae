@@ -97,6 +97,7 @@ class agraeMainWidget(QtWidgets.QDialog, agraeMainPanel):
         # self.<objectname>, and you can use autoconnect slots - see
         # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
+        
         self.setupUi(self)
 
     def closeEvent(self, event):

@@ -70,18 +70,17 @@
       </property>
       <layout class="QGridLayout" name="gridLayout" columnstretch="0,2,0,0,0">
        <item row="0" column="2">
-        <widget class="QRadioButton" name="radioButton">
+        <widget class="QRadioButton" name="radio_id">
          <property name="text">
           <string>ID</string>
          </property>
-        </widget>
-       </item>
-       <item row="0" column="3">
-        <widget class="QRadioButton" name="radioButton_2">
-         <property name="text">
-          <string>Nombre</string>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="line_buscar"/>
        </item>
        <item row="0" column="0">
         <widget class="QLabel" name="label">
@@ -90,19 +89,23 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
-        <widget class="QLineEdit" name="lineEdit"/>
-       </item>
        <item row="0" column="4">
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="btn_buscar1">
          <property name="text">
           <string>Buscar</string>
          </property>
         </widget>
        </item>
+       <item row="0" column="3">
+        <widget class="QRadioButton" name="radio_nombre">
+         <property name="text">
+          <string>Nombre</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="verticalLayoutWidget">
+     <widget class="QWidget" name="gridLayoutWidget_4">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -111,8 +114,8 @@
         <height>111</height>
        </rect>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
+      <layout class="QGridLayout" name="gridLayout_4" rowstretch="0,0,0" columnstretch="2,0">
+       <item row="0" column="0" rowspan="3">
         <widget class="QTableWidget" name="tableWidget">
          <column>
           <property name="text">
@@ -139,6 +142,25 @@
            <string>cultivo</string>
           </property>
          </column>
+         <column>
+          <property name="text">
+           <string>accion</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="pushButton">
+         <property name="text">
+          <string>Editar</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="pushButton_3">
+         <property name="text">
+          <string>Cargar Capa</string>
+         </property>
         </widget>
        </item>
       </layout>
@@ -148,7 +170,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>220</y>
+       <y>230</y>
        <width>751</width>
        <height>321</height>
       </rect>
@@ -169,69 +191,10 @@
          <height>103</height>
         </rect>
        </property>
-       <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,0,0,0">
+       <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,1,0,0,0,1,0">
         <property name="sizeConstraint">
          <enum>QLayout::SetDefaultConstraint</enum>
         </property>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="lineEdit_3"/>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLineEdit" name="cl_id_exp"/>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
-          <property name="text">
-           <string>Id. Explotacion:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
-         <widget class="QLabel" name="label_5">
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
-          <property name="text">
-           <string>Fecha Siembra:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="3">
-         <widget class="QDateEdit" name="cl_date_siembra">
-          <property name="dateTime">
-           <datetime>
-            <hour>0</hour>
-            <minute>0</minute>
-            <second>0</second>
-            <year>2022</year>
-            <month>1</month>
-            <day>28</day>
-           </datetime>
-          </property>
-          <property name="minimumDate">
-           <date>
-            <year>1960</year>
-            <month>9</month>
-            <day>14</day>
-           </date>
-          </property>
-          <property name="currentSection">
-           <enum>QDateTimeEdit::DaySection</enum>
-          </property>
-          <property name="calendarPopup">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="2">
          <widget class="QLabel" name="label_6">
           <property name="layoutDirection">
@@ -245,30 +208,32 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="3">
-         <widget class="QDateEdit" name="cl_date_cosecha">
-          <property name="dateTime">
-           <datetime>
-            <hour>0</hour>
-            <minute>0</minute>
-            <second>0</second>
-            <year>2022</year>
-            <month>1</month>
-            <day>28</day>
-           </datetime>
+        <item row="2" column="2">
+         <widget class="QPushButton" name="btn_buscar2">
+          <property name="text">
+           <string>Buscar Lote</string>
           </property>
-          <property name="minimumDate">
-           <date>
-            <year>1960</year>
-            <month>9</month>
-            <day>14</day>
-           </date>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="cl_name_lote"/>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="cl_id_cultivo"/>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="cl_id_explotacion"/>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
           </property>
-          <property name="currentSection">
-           <enum>QDateTimeEdit::DaySection</enum>
+          <property name="text">
+           <string>Id. Explotacion:</string>
           </property>
-          <property name="calendarPopup">
-           <bool>true</bool>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -298,13 +263,84 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="1" colspan="2">
-         <widget class="QLineEdit" name="cl_name_lote"/>
-        </item>
-        <item row="2" column="3">
-         <widget class="QPushButton" name="pushButton_2">
+        <item row="0" column="2">
+         <widget class="QLabel" name="label_5">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
           <property name="text">
-           <string>Buscar Lote</string>
+           <string>Fecha Siembra:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="4">
+         <widget class="QPushButton" name="btn_actualizar">
+          <property name="text">
+           <string>Actualizar</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="3" colspan="4">
+         <widget class="QDateEdit" name="cl_date_cosecha">
+          <property name="dateTime">
+           <datetime>
+            <hour>0</hour>
+            <minute>0</minute>
+            <second>0</second>
+            <year>2022</year>
+            <month>1</month>
+            <day>28</day>
+           </datetime>
+          </property>
+          <property name="minimumDate">
+           <date>
+            <year>1960</year>
+            <month>9</month>
+            <day>14</day>
+           </date>
+          </property>
+          <property name="currentSection">
+           <enum>QDateTimeEdit::DaySection</enum>
+          </property>
+          <property name="calendarPopup">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3" colspan="4">
+         <widget class="QDateEdit" name="cl_date_siembra">
+          <property name="dateTime">
+           <datetime>
+            <hour>0</hour>
+            <minute>0</minute>
+            <second>0</second>
+            <year>2022</year>
+            <month>1</month>
+            <day>28</day>
+           </datetime>
+          </property>
+          <property name="minimumDate">
+           <date>
+            <year>1960</year>
+            <month>9</month>
+            <day>14</day>
+           </date>
+          </property>
+          <property name="currentSection">
+           <enum>QDateTimeEdit::DaySection</enum>
+          </property>
+          <property name="calendarPopup">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="5">
+         <widget class="QPushButton" name="btn_crear">
+          <property name="text">
+           <string>Crear</string>
           </property>
          </widget>
         </item>
@@ -316,8 +352,17 @@
          <x>10</x>
          <y>120</y>
          <width>721</width>
-         <height>161</height>
+         <height>171</height>
         </rect>
+       </property>
+       <property name="tabPosition">
+        <enum>QTabWidget::North</enum>
+       </property>
+       <property name="tabShape">
+        <enum>QTabWidget::Rounded</enum>
+       </property>
+       <property name="currentIndex">
+        <number>3</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -328,34 +373,34 @@
           <rect>
            <x>10</x>
            <y>10</y>
-           <width>691</width>
-           <height>111</height>
+           <width>681</width>
+           <height>131</height>
           </rect>
          </property>
-         <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,1,0,1">
+         <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,0,0,0,0,0,0,0">
           <property name="sizeConstraint">
            <enum>QLayout::SetDefaultConstraint</enum>
           </property>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_13">
-            <property name="layoutDirection">
-             <enum>Qt::LeftToRight</enum>
-            </property>
-            <property name="text">
-             <string>Fecha Fert. Fondo:</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="2">
            <widget class="QLabel" name="label_12">
             <property name="layoutDirection">
              <enum>Qt::LeftToRight</enum>
             </property>
             <property name="text">
-             <string>Formula Fert. Fondo:</string>
+             <string>Formula:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_13">
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>Fecha:</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -363,7 +408,7 @@
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QDateEdit" name="dateEdit_6">
+           <widget class="QDateEdit" name="date_fondo">
             <property name="dateTime">
              <datetime>
               <hour>0</hour>
@@ -389,22 +434,405 @@
             </property>
            </widget>
           </item>
+          <item row="0" column="5">
+           <widget class="QLineEdit" name="line_fondo_precio"/>
+          </item>
           <item row="0" column="3">
-           <widget class="QLineEdit" name="lineEdit_5"/>
+           <widget class="QLineEdit" name="line_fondo_formula"/>
+          </item>
+          <item row="0" column="4">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>Precio:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>Calculado:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="line_fondo_calculado"/>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_9">
+            <property name="text">
+             <string>Ajustado:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QLineEdit" name="line_fondo_ajustado"/>
+          </item>
+          <item row="1" column="4">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>Aplicado:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="5">
+           <widget class="QLineEdit" name="line_fondo_aplicado"/>
           </item>
          </layout>
         </widget>
        </widget>
        <widget class="QWidget" name="tab_3">
         <attribute name="title">
-         <string>Tab 2</string>
+         <string>Fertilizante CBO1</string>
         </attribute>
+        <widget class="QWidget" name="gridLayoutWidget_5">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>681</width>
+           <height>131</height>
+          </rect>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0,0,0,0,0">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetDefaultConstraint</enum>
+          </property>
+          <item row="0" column="2">
+           <widget class="QLabel" name="label_14">
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>Formula:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_15">
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>Fecha:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QDateEdit" name="date_cbo">
+            <property name="dateTime">
+             <datetime>
+              <hour>0</hour>
+              <minute>0</minute>
+              <second>0</second>
+              <year>2022</year>
+              <month>1</month>
+              <day>28</day>
+             </datetime>
+            </property>
+            <property name="minimumDate">
+             <date>
+              <year>1960</year>
+              <month>9</month>
+              <day>14</day>
+             </date>
+            </property>
+            <property name="currentSection">
+             <enum>QDateTimeEdit::DaySection</enum>
+            </property>
+            <property name="calendarPopup">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="5">
+           <widget class="QLineEdit" name="line_cbo_precio"/>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLineEdit" name="line_cbo_formula"/>
+          </item>
+          <item row="0" column="4">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Precio:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>Calculado:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="line_cbo_calculado"/>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>Ajustado:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QLineEdit" name="line_cbo_ajustado"/>
+          </item>
+          <item row="1" column="4">
+           <widget class="QLabel" name="label_18">
+            <property name="text">
+             <string>Aplicado:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="5">
+           <widget class="QLineEdit" name="line_cbo_aplicado"/>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="tab_4">
+        <attribute name="title">
+         <string>Fertilizante CBO2</string>
+        </attribute>
+        <widget class="QWidget" name="gridLayoutWidget_6">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>681</width>
+           <height>131</height>
+          </rect>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_6" columnstretch="0,0,0,0,0,0">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetDefaultConstraint</enum>
+          </property>
+          <item row="0" column="2">
+           <widget class="QLabel" name="label_19">
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>Formula:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_20">
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>Fecha:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QDateEdit" name="date_cbo_2">
+            <property name="dateTime">
+             <datetime>
+              <hour>0</hour>
+              <minute>0</minute>
+              <second>0</second>
+              <year>2022</year>
+              <month>1</month>
+              <day>28</day>
+             </datetime>
+            </property>
+            <property name="minimumDate">
+             <date>
+              <year>1960</year>
+              <month>9</month>
+              <day>14</day>
+             </date>
+            </property>
+            <property name="currentSection">
+             <enum>QDateTimeEdit::DaySection</enum>
+            </property>
+            <property name="calendarPopup">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="5">
+           <widget class="QLineEdit" name="line_cbo_precio_2"/>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLineEdit" name="line_cbo_formula_2"/>
+          </item>
+          <item row="0" column="4">
+           <widget class="QLabel" name="label_21">
+            <property name="text">
+             <string>Precio:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_22">
+            <property name="text">
+             <string>Calculado:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="line_cbo_calculado_2"/>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_23">
+            <property name="text">
+             <string>Ajustado:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QLineEdit" name="line_cbo_ajustado_2"/>
+          </item>
+          <item row="1" column="4">
+           <widget class="QLabel" name="label_24">
+            <property name="text">
+             <string>Aplicado:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="5">
+           <widget class="QLineEdit" name="line_cbo_aplicado_2"/>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="tab_5">
+        <attribute name="title">
+         <string>Fertilizante CBO3</string>
+        </attribute>
+        <widget class="QWidget" name="gridLayoutWidget_7">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>681</width>
+           <height>131</height>
+          </rect>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_7" columnstretch="0,0,0,0,0,0">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetDefaultConstraint</enum>
+          </property>
+          <item row="0" column="2">
+           <widget class="QLabel" name="label_25">
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>Formula:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_26">
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>Fecha:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QDateEdit" name="date_cbo_3">
+            <property name="dateTime">
+             <datetime>
+              <hour>0</hour>
+              <minute>0</minute>
+              <second>0</second>
+              <year>2022</year>
+              <month>1</month>
+              <day>28</day>
+             </datetime>
+            </property>
+            <property name="minimumDate">
+             <date>
+              <year>1960</year>
+              <month>9</month>
+              <day>14</day>
+             </date>
+            </property>
+            <property name="currentSection">
+             <enum>QDateTimeEdit::DaySection</enum>
+            </property>
+            <property name="calendarPopup">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="5">
+           <widget class="QLineEdit" name="line_cbo_precio_3"/>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLineEdit" name="line_cbo_formula_3"/>
+          </item>
+          <item row="0" column="4">
+           <widget class="QLabel" name="label_27">
+            <property name="text">
+             <string>Precio:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_28">
+            <property name="text">
+             <string>Calculado:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="line_cbo_calculado_3"/>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_29">
+            <property name="text">
+             <string>Ajustado:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QLineEdit" name="line_cbo_ajustado_3"/>
+          </item>
+          <item row="1" column="4">
+           <widget class="QLabel" name="label_30">
+            <property name="text">
+             <string>Aplicado:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="5">
+           <widget class="QLineEdit" name="line_cbo_aplicado_3"/>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </widget>
      </widget>
      <widget class="QWidget" name="tab_admin_pl">
       <attribute name="title">
-       <string>Administrar Parcelas y Lotes</string>
+       <string>Administrar Parcelas </string>
       </attribute>
      </widget>
     </widget>
@@ -416,6 +844,50 @@
    </widget>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>line_buscar</tabstop>
+  <tabstop>radio_id</tabstop>
+  <tabstop>radio_nombre</tabstop>
+  <tabstop>btn_buscar1</tabstop>
+  <tabstop>tableWidget</tabstop>
+  <tabstop>pushButton</tabstop>
+  <tabstop>pushButton_3</tabstop>
+  <tabstop>tabWidget_2</tabstop>
+  <tabstop>cl_id_explotacion</tabstop>
+  <tabstop>cl_id_cultivo</tabstop>
+  <tabstop>btn_buscar2</tabstop>
+  <tabstop>cl_date_siembra</tabstop>
+  <tabstop>cl_date_cosecha</tabstop>
+  <tabstop>cl_name_lote</tabstop>
+  <tabstop>tabWidget_3</tabstop>
+  <tabstop>date_fondo</tabstop>
+  <tabstop>line_fondo_formula</tabstop>
+  <tabstop>btn_actualizar</tabstop>
+  <tabstop>btn_crear</tabstop>
+  <tabstop>line_fondo_precio</tabstop>
+  <tabstop>line_fondo_calculado</tabstop>
+  <tabstop>line_fondo_ajustado</tabstop>
+  <tabstop>line_fondo_aplicado</tabstop>
+  <tabstop>date_cbo</tabstop>
+  <tabstop>line_cbo_precio</tabstop>
+  <tabstop>line_cbo_formula</tabstop>
+  <tabstop>line_cbo_calculado</tabstop>
+  <tabstop>line_cbo_ajustado</tabstop>
+  <tabstop>line_cbo_aplicado</tabstop>
+  <tabstop>date_cbo_2</tabstop>
+  <tabstop>line_cbo_precio_2</tabstop>
+  <tabstop>line_cbo_formula_2</tabstop>
+  <tabstop>line_cbo_calculado_2</tabstop>
+  <tabstop>line_cbo_ajustado_2</tabstop>
+  <tabstop>line_cbo_aplicado_2</tabstop>
+  <tabstop>line_cbo_precio_3</tabstop>
+  <tabstop>line_cbo_formula_3</tabstop>
+  <tabstop>date_cbo_3</tabstop>
+  <tabstop>line_cbo_calculado_3</tabstop>
+  <tabstop>line_cbo_ajustado_3</tabstop>
+  <tabstop>line_cbo_aplicado_3</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
