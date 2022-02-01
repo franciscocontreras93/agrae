@@ -81,6 +81,12 @@ class AgraeUtils():
             dbname, dbuser, dbpass, dbhost, dbport)
         conn.close()
 
+    def styleSheet(self):
+        style = '''QTabBar::tab:selected {background : green ; color : white ; border-color : white }
+                   QTabBar::tab {padding : 4px ; margin : 2px ;  border-radius : 2px  ; border: 1px solid #000 ; heigth: 15px }
+                   '''
+        return style
+
     
 
 

@@ -21,6 +21,7 @@
  *                                                                         *
  ***************************************************************************/
 """
+from PyQt5.QtWidgets import QMessageBox
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
@@ -78,6 +79,7 @@ class agrae:
         # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'agrae')
         self.toolbar.setObjectName(u'agrae')
+        self.queryCapaLotes = ''
 
         #print "** INITIALIZING agrae"
 
@@ -216,11 +218,11 @@ class agrae:
         self.configDialog.closingPlugin2.disconnect(self.onClosePluginConfig)
         self.pluginIsActive = False
     
-    def onClosePluginAddFeat(self):
+    def onClosePluginMain(self):
 
         # disconnects
         self.mainWindowDialog.closingPlugin.disconnect(
-            self.onClosePluginAddFeat)
+            self.onClosePluginMain)
         self.pluginIsActive = False
 
 
@@ -457,50 +459,66 @@ class agrae:
 
 
     def runMain(self):
-        print('runMain Working')
+        def loadLayer():
+            sql = self.queryCapaLotes
+            dns = self.utils.ConnParams()
+            row = self.mainWindowDialog.tableWidget.currentRow()
+            column = self.mainWindowDialog.tableWidget.currentColumn()
+           
 
+            try:
+                uri = QgsDataSourceUri()
+                uri.setConnection(dns['host'], dns['port'], dns['dbname'], dns['user'], dns['password'])
+                uri.setDataSource('', f'({sql})', 'geometria', '', 'idparcela')
+                nombre = self.mainWindowDialog.tableWidget.item(row, column)
+                if nombre.text() == None:
+                    nombre = self.mainWindowDialog.tableWidget.item(0, 1)
+                    layer = self.iface.addVectorLayer(uri.uri(False), nombre.text(), 'postgres')
+                else: 
+                    layer = self.iface.addVectorLayer(uri.uri(False), nombre.text(), 'postgres')
+                    
+                if layer.isValid():
+                    QgsProject.instance().addMapLayer(layer)
+                    print(f"Capa añadida correctamente ")
+                    layer.startEditing()
 
-
-
+                else:
+                    # uri.setDataSource('public', tablename, None)
+                    # layer = QgsVectorLayer(
+                    #     uri.uri(False), tablename, 'postgres')
+                    # QgsProject.instance().addMapLayer(layer)
+                    QMessageBox.about(self, "aGrae GIS:", "La capa no es Valida")
+            
+            except Exception as ex:
+                QMessageBox.about(self.mainWindowDialog, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
+        
         def cargarLotesParcelas():
-            def loadLayer(sql,nombre='parcela'):
-                dns = self.utils.ConnParams()
-                try:
-                    uri = QgsDataSourceUri()
-                    uri.setConnection(
-                        dns['host'], dns['port'], dns['dbname'], dns['user'], dns['password'])
-                    uri.setDataSource('', f'({sql})','geom','','idparcela')
-                    # uri.setKeyColumn('idparcela')
-                    layer = self.iface.addVectorLayer(uri.uri(),nombre,'postgres')
-                    if layer.isValid():
-                        QgsProject.instance().addMapLayer(layer)
-                        print(f"Capa añadida correctamente ")
-                        # print(sql)
-                        layer.startEditing()
-                        
-                    else:
-                        uri.setDataSource('public', tablename, None)
-                        layer = QgsVectorLayer(
-                            uri.uri(False), tablename, 'postgres')
-                        QgsProject.instance().addMapLayer(layer)
-                        print("La capa es invalida")
-                except:
-                    print('Ocurrio un error!')
+            
             param = self.mainWindowDialog.line_buscar.text()
             sqlQuery = ''
             try: 
                 with self.conn as conn:
                     if self.mainWindowDialog.radio_id.isChecked():
-                        sqlQuery = f'''select p.idparcela, lp.idlote, l.nombre as lote , p.nombre as parcela, c.nombre, p.geometria as geom from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo where p.idparcela = {param} or l.idlote = {param}'''
+                        sqlQuery = f'''select p.idparcela , l.idlote, l.nombre lote, p.nombre parcela, c.nombre cultivo, p.geometria from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo  where p.idparcela = {param} or l.idlote = {param}'''
+
+                        # sqlQuery = f'select * from rel_parcelas_lote where idparcela = {param} or idlote = {param}'
+                        
                     elif self.mainWindowDialog.radio_nombre.isChecked():
-                        sqlQuery = f"""select p.idparcela, lp.idlote, l.nombre as lote , p.nombre as parcela, c.nombre, p.geometria as geom from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo where p.nombre ilike '%{param}%' or l.nombre ilike '%{param}%'"""
+                        sqlQuery = f"""select p.idparcela , l.idlote, l.nombre lote, p.nombre parcela, c.nombre cultivo, p.geometria from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo  where p.nombre ilike '%{param}%' or l.nombre ilike '%{param}%' or c.nombre ilike '%{param}%'"""
+                    
+                    
                     cursor = conn.cursor()
                     cursor.execute(sqlQuery)
                     data = cursor.fetchall()
                     if len(data) == 0:
-                        self.iface.messageBar().pushMessage(
-                            "aGrae GIS", "No Existen Lotes ni Parcelas asociadas a la busqueda", level=1, duration=5)
-                    else: 
+                        QMessageBox.about(
+                            self.mainWindowDialog, "aGrae GIS:", "No Existe la relacion de lotes y parcelas.\nDebes crear una nueva relacion")
+            
+                        # self.iface.messageBar().pushMessage(
+                        #     "aGrae GIS", "No Existe la relacion de lotes y parcelas.\nDebes crear una nueva relacion", level=1, duration=5)
+                    else:
+                        self.mainWindowDialog.btn_add_layer.setEnabled(True)
+                        self.queryCapaLotes = sqlQuery
                         a = len(data)
                         b = len(data[0])
                         i = 1
@@ -512,60 +530,113 @@ class agrae:
                                 item = QTableWidgetItem(str(data[j][i]))
                                 self.mainWindowDialog.tableWidget.setItem(j,i,item)
                         # print(data)
-                        funct = loadLayer(sqlQuery)
+                        # funct = loadLayer(sqlQuery)
             
-            except: 
-                
-                print('ERROR')
+            except Exception as ex: 
+                QMessageBox.about(self.mainWindowDialog, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")
 
+        def crearParcela():
+            try:
+                with self.conn as conn:
+                    cur = conn.cursor()
+                layer = self.iface.activeLayer()
+                # print(layer.name())
+                feat = layer.selectedFeatures()
+                ls = feat[0].geometry().asWkt()
+                srid = layer.crs().authid()[5:]
 
-        def buscarLote():
-            row = self.mainWindowDialog.tableWidget.currentRow()
-            column = self.mainWindowDialog.tableWidget.currentColumn()
-            param = self.mainWindowDialog.tableWidget.item(row,column).text()
-            sqlQuery = f"""select * from lote where nombre ilike '{param}' """
-            
-            conn = self.conn
-            cursor = conn.cursor()
-            cursor.execute(sqlQuery)
-            data = cursor.fetchone()
+                name = str(self.mainWindowDialog.ln_par_nombre.text())
+                prov = str(self.mainWindowDialog.ln_par_provincia.text())
+                mcpo = str(self.mainWindowDialog.ln_par_mcpo.text())
+                aggregate = str(self.mainWindowDialog.ln_par_agg.text())
+                zone = str(self.mainWindowDialog.ln_par_zona.text())
+                poly = str(self.mainWindowDialog.ln_par_poly.text())
+                allotment = str(self.mainWindowDialog.ln_par_parcela.text())
+                inclosure = str(self.mainWindowDialog.ln_par_recinto.text())
 
-            self.mainWindowDialog.cl_id_explotacion.setText(str(data[1]))
-            self.mainWindowDialog.cl_id_cultivo.setText(str(data[2]))
-            self.mainWindowDialog.cl_name_lote.setText(data[3])
+                # print(ls)
+                sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria) VALUES('{name}','{prov}','{mcpo}','{aggregate}','{zone}','{poly}','{allotment}','{inclosure}',st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))))'''
+                cur.execute(sql)
+                conn.commit()
+                # print('agregado correctamente')
+                QMessageBox.about(self.mainWindowDialog,'aGrae GIS' ,f"aGrae GIS:", "Parcela *-- {name} --* Creada Correctamente.\nCrear Relacion Lote Parcelas.")
+
+            except Exception as ex:
+                print(ex)
+                QMessageBox.about(self.mainWindowDialog, 'aGrae GIS', f"aGrae GIS",f"No se pudo almacenar el registro {ex}")
+
+            finally: 
+                self.mainWindowDialog.ln_par_nombre.setText('')
+                self.mainWindowDialog.ln_par_provincia.setText('')
+                self.mainWindowDialog.ln_par_mcpo.setText('')
+                self.mainWindowDialog.ln_par_agg.setText('')
+                self.mainWindowDialog.ln_par_zona.setText('')
+                self.mainWindowDialog.ln_par_poly.setText('')
+                self.mainWindowDialog.ln_par_parcela.setText('')
+                self.mainWindowDialog.ln_par_recinto.setText('')
+        
+        # TODO
+        def populate(inicial=True):
+            # self.mainWindowDialog.btn_add_layer.setEnabled(True)
+            # self.queryCapaLotes = sqlQuery
+            # a = len(data)
+            # b = len(data[0])
+            # i = 1
+            # j = 1
+            # self.mainWindowDialog.tableWidget.setRowCount(a)
+            # self.mainWindowDialog.tableWidget.setColumnCount(b)
+            # for j in range(a):
+            #     for i in range(b):
+            #         item = QTableWidgetItem(str(data[j][i]))
+            #         self.mainWindowDialog.tableWidget.setItem(j, i,item)
             # print(data)
-            # print(data[2])
-            # print(param)
-            
-           
+            # funct = loadLayer(sqlQuery)
+            pass
 
+        # TODO       
+        def dataLoteParcela(param='',inicial=False):
+            with self.conn as conn:
+                if inicial == False:
+                    if self.mainWindowDialog.radio_id.isChecked():
+                        sqlQuery = f'''select p.idparcela , l.idlote, l.nombre lote, p.nombre parcela, c.nombre cultivo, p.geometria from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo  where p.idparcela = {param} or l.idlote = {param}'''
+
+                        # sqlQuery = f'select * from rel_parcelas_lote where idparcela = {param} or idlote = {param}'
+
+                    elif self.mainWindowDialog.radio_nombre.isChecked():
+                        sqlQuery = f"""select p.idparcela , l.idlote, l.nombre lote, p.nombre parcela, c.nombre cultivo, p.geometria from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo  where p.nombre ilike '%{param}%' or l.nombre ilike '%{param}%' or c.nombre ilike '%{param}%'"""
+
+                elif inicial == True:                    
+                    sqlQuery = f'''select p.idparcela , l.idlote, l.nombre lote, p.nombre parcela, c.nombre cultivo, p.geometria from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo'''
+
+                cursor = conn.cursor()
+                cursor.execute(sqlQuery)
+                data = cursor.fetchall()
+                if len(data) == 0:
+                    QMessageBox.about(
+                        self.mainWindowDialog, "aGrae GIS:", "No Existe la relacion de lotes y parcelas.\nDebes crear una nueva relacion")
+
+                else:
+                    return data
+            
                     
 
 
-
-               
-                    
-
-
-               
-            
-        
-
-
-        
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
             if self.mainWindowDialog == None:
                 self.mainWindowDialog = agraeMainWidget()
-
+                # cargar = loadLayer(self.queryCapaLotes)
                 self.mainWindowDialog.btn_buscar1.clicked.connect(cargarLotesParcelas)
-                self.mainWindowDialog.btn_buscar2.clicked.connect(buscarLote)
-                self.mainWindowDialog.tableWidget.setColumnHidden(0, True)
-                self.mainWindowDialog.tableWidget.setColumnHidden(5, True)
+                # self.mainWindowDialog.btn_buscar2.clicked.connect(buscarLote)
+                self.mainWindowDialog.btn_add_layer.clicked.connect(loadLayer)
+                self.mainWindowDialog.btn_par_create.clicked.connect(crearParcela)
+                # self.mainWindowDialog.tableWidget.setColumnHidden(0, True)
+                # self.mainWindowDialog.tableWidget.setColumnHidden(5, True)
                 # self.mainWindowDialog.loadButton.clicked.connect(loadAllotmentToDB)
+                self.mainWindowDialog.btn_actualizar.setEnabled(False)
 
-            self.mainWindowDialog.closingPlugin.connect(self.onClosePluginAddFeat)
+            self.mainWindowDialog.closingPlugin.connect(self.onClosePluginMain)
 
             self.mainWindowDialog.show()
         pass

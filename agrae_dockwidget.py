@@ -22,11 +22,15 @@
  ***************************************************************************/
 """
 
+
 import os
 
 from PyQt5.QtWidgets import *
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QSettings
+from .utils import AgraeUtils
+
+
 
 agraeSidePanel, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ui/agrae_dockwidget_base.ui'))
@@ -34,6 +38,15 @@ agraeConfigPanel, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ui/config_ui.ui'))
 agraeMainPanel, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ui/agrae_main.ui'))
+
+agraeParcelaDialog, _ = uic.loadUiType(os.path.join(
+    os.path.dirname(__file__), 'ui/dialogs/parcela_dialog.ui'))
+agraeLoteDialog, _ = uic.loadUiType(os.path.join(
+    os.path.dirname(__file__), 'ui/dialogs/lote_dialog.ui'))
+agraeExpDialog, _ = uic.loadUiType(os.path.join(
+    os.path.dirname(__file__), 'ui/dialogs/exp_dialog.ui'))
+agraeCultivoDialog, _ = uic.loadUiType(os.path.join(
+    os.path.dirname(__file__), 'ui/dialogs/cultivo_dialog.ui'))
 
 
 class agraeDockWidget(QtWidgets.QDockWidget, agraeSidePanel):
@@ -78,19 +91,462 @@ class agraeConfigWidget(QtWidgets.QDialog, agraeConfigPanel):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         
+    
 
     def closeEvent(self, event):
         self.closingPlugin2.emit()
         event.accept()
 
 
-class agraeMainWidget(QtWidgets.QDialog, agraeMainPanel):
+class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
+
+    closingPlugin = pyqtSignal()
+    actualizar = pyqtSignal(list)
+    actualizarRel = pyqtSignal(str)
+    
+
+    def __init__(self, parent=None):
+        """Constructor."""
+        super(parcelaFindDialog, self).__init__(parent)
+
+        self.utils = AgraeUtils()
+        self.conn = self.utils.Conn()
+        
+        data = self.dataAuto()
+        lista = [e[0] for e in data]
+        completer = QCompleter(lista)
+        completer.setCaseSensitivity(False)
+
+        # self.s = QSettings('agrae', 'dbhost')
+        # Set up the user interface from Designer.
+        # After setupUI you can access any designer object by doing
+        # self.<objectname>, and you can use autoconnect slots - see
+        # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
+        # #widgets-and-dialogs-with-auto-connect
+        self.setupUi(self)
+        self.btn_buscar.clicked.connect(self.buscar)
+        self.lineEdit.setCompleter(completer)
+        self.tableWidget.horizontalHeader().setStretchLastSection(True)
+        self.pushButton.clicked.connect(self.cargarParcela)
+        self.pushButton_2.clicked.connect(self.insertarIdRelacion)
+
+    def closeEvent(self, event):
+        self.closingPlugin.emit()
+        event.accept()
+
+    def data(self, filtro=None):
+        if filtro == None:
+            cursor = self.conn.cursor()
+            sql = "select idparcela,nombre,provincia, municipio , agregado , zona , poligono , parcela , recinto from parcela order by idparcela  "
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        else:
+            cursor = self.conn.cursor()
+            sql = f"select idparcela,nombre,provincia, municipio , agregado , zona , poligono , parcela , recinto from parcela where nombre ilike '%{filtro}%' or provincia ilike '%{filtro}%' or  municipio ilike '%{filtro}%' or agregado ilike '%{filtro}%' or zona ilike '%{filtro}%' or poligono ilike '%{filtro}%' or parcela ilike '%{filtro}%' or recinto ilike '%{filtro}%' order by idparcela "
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        if len(data) >= 1:
+            return data
+        elif len(data) == 0:
+            data = [0, 0]
+            return data
+
+    def dataAuto(self):
+        cursor = self.conn.cursor()
+        sql = "select distinct unnest(array[nombre, provincia, municipio, agregado, zona, poligono, parcela, recinto]) from parcela"
+
+
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        return data
+
+
+    def populate(self,data):
+        try:
+            a = len(data)
+            b = len(data[0])
+            i = 1
+            j = 1
+            self.tableWidget.setRowCount(a)
+            self.tableWidget.setColumnCount(b)
+            for j in range(a):
+                for i in range(b):
+                    item = QTableWidgetItem(str(data[j][i]))
+                    self.tableWidget.setItem(j, i, item)
+        except:
+            QMessageBox.about(self, "Error:", "No Existen Registros")
+            print('error')
+
+    def loadData(self,param=None):
+        
+        
+             
+        if param == None:  
+            data = self.data()
+            # print(data[0][1])
+            self.populate(data)
+        else:
+            data = self.data(param)
+            # print(data[0][1])
+            self.populate(data)
+        pass
+    
+    def buscar(self):
+        filtro = self.lineEdit.text()
+        self.loadData(filtro)
+
+        pass
+
+    def cargarParcela(self):
+        # value = self.tableWidget.item(0, 1).text()
+        # print(str(value))
+        try:
+            row = self.tableWidget.currentRow()
+            # column = self.tableWidget.currentColumn()
+            param = self.tableWidget.item(row, 0).text()
+            sqlQuery = f"""select * from parcela where idparcela = {param} """
+
+            conn = self.conn
+            cursor = conn.cursor()
+            cursor.execute(sqlQuery)
+            data = cursor.fetchone()
+            dataLista = list(data)
+            self.actualizar.emit(dataLista)
+            self.close()
+          
+        except Exception as ex:
+            QMessageBox.about(self,'aGrae GIS', 'Debe Seleccionar una parcela para agregar') 
+
+        pass
+    
+    def insertarIdRelacion(self):
+        try:
+            row = self.tableWidget.currentRow()
+            idRel = self.tableWidget.item(row, 0).text()
+            self.actualizarRel.emit(idRel)
+            self.close()
+        except Exception as ex:
+            QMessageBox.about(self,'aGrae GIS', 'Debe Seleccionar una parcela para agregar a la relacion') 
+        
+            
+        
+           
+class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
+
+    closingPlugin = pyqtSignal()
+    actualizar = pyqtSignal(list)
+    actualizarRel = pyqtSignal(str)
+    
+
+    def __init__(self, parent=None):
+        """Constructor."""
+        super(loteFindDialog, self).__init__(parent)
+
+        self.utils = AgraeUtils()
+        self.conn = self.utils.Conn()
+        
+        data = self.data()
+        lista = [e[1] for e in data]
+        completer = QCompleter(lista)
+        completer.setCaseSensitivity(False)
+
+        # self.s = QSettings('agrae', 'dbhost')
+        # Set up the user interface from Designer.
+        # After setupUI you can access any designer object by doing
+        # self.<objectname>, and you can use autoconnect slots - see
+        # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
+        # #widgets-and-dialogs-with-auto-connect
+        self.setupUi(self)
+        self.btn_buscar.clicked.connect(self.buscar)
+        self.lineEdit.setCompleter(completer)
+        self.tableWidget.horizontalHeader().setStretchLastSection(True)
+        self.btn_cargar_lote.clicked.connect(self.cargarLote)
+        self.pushButton_2.clicked.connect(self.insertarIdRelacion)
+
+    def closeEvent(self, event):
+        self.closingPlugin.emit()
+        event.accept()
+
+    def data(self, filtro=None):
+        if filtro == None:
+            cursor = self.conn.cursor()
+            sql = "select idlote,nombre from lote order by idlote "
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        else:
+            cursor = self.conn.cursor()
+            sql = f"select idlote,nombre from lote where nombre ilike '%{filtro}%' order by idlote "
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        if len(data) >= 1:
+            return data
+        elif len(data) == 0:
+            data = [0, 0]
+            return data
+
+    def populate(self,data):
+        try:
+            a = len(data)
+            b = len(data[0])
+            i = 1
+            j = 1
+            self.tableWidget.setRowCount(a)
+            self.tableWidget.setColumnCount(b)
+            for j in range(a):
+                for i in range(b):
+                    item = QTableWidgetItem(str(data[j][i]))
+                    self.tableWidget.setItem(j, i, item)
+        except:
+            QMessageBox.about(self, "Error:", "No Existen Registros")
+            print('error')
+
+    def loadData(self,param=None):
+        
+        
+             
+        if param == None:  
+            data = self.data()
+            # print(data[0][1])
+            self.populate(data)
+        else:
+            data = self.data(param)
+            # print(data[0][1])
+            self.populate(data)
+        pass
+    
+    def buscar(self):
+        filtro = self.lineEdit.text()
+        self.loadData(filtro)
+
+        pass
+
+    def cargarLote(self):
+        # value = self.tableWidget.item(0, 1).text()
+        # print(str(value))
+        try:
+            row = self.tableWidget.currentRow()
+            column = self.tableWidget.currentColumn()
+            param = self.tableWidget.item(row, 0).text()
+            sqlQuery = f"""select * from lote where idlote = {param} """
+
+            conn = self.conn
+            cursor = conn.cursor()
+            cursor.execute(sqlQuery)
+            data = cursor.fetchone()
+            dataLita = list(data)
+            self.actualizar.emit(dataLita)
+            self.close()
+            
+        except:
+            QMessageBox.about(self, 'aGrae GIS',
+                              'Debe Seleccionar un lote de la Lista')
+            pass
+       
+    def insertarIdRelacion(self):
+        try:
+            row = self.tableWidget.currentRow()
+            column = self.tableWidget.currentColumn()
+            idRel = self.tableWidget.item(row, 0).text()
+            self.actualizarRel.emit(idRel)
+            self.close()
+        except Exception as ex:
+            QMessageBox.about(self, 'aGrae GIS',
+                              'Debe Seleccionar un lote de la Lista para agregar a la relacion')
+       
+            
+class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
 
     closingPlugin = pyqtSignal()
 
     def __init__(self, parent=None):
         """Constructor."""
-        super(agraeMainWidget, self).__init__(parent)
+        super(expFindDialog, self).__init__(parent)
+
+        self.utils = AgraeUtils()
+        self.conn = self.utils.Conn()
+
+        data = self.dataAuto()
+        lista = [e[0] for e in data]
+        # print(lista)
+        completer = QCompleter(lista)
+        completer.setCaseSensitivity(False)
+
+        # Set up the user interface from Designer.
+        # After setupUI you can access any designer object by doing
+        # self.<objectname>, and you can use autoconnect slots - see
+        # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
+        # #widgets-and-dialogs-with-auto-connect
+
+        self.setupUi(self)
+        self.btn_buscar.clicked.connect(self.buscar)
+        self.lineEdit.setCompleter(completer)
+        self.tableWidget.horizontalHeader().setStretchLastSection(True)
+
+    def closeEvent(self, event):
+        self.closingPlugin.emit()
+        event.accept()
+
+    def data(self, filtro=None):
+        if filtro == None:
+            cursor = self.conn.cursor()
+            sql = "select idexplotacion,nombre, direccion from explotacion order by idexplotacion"
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        else:
+            cursor = self.conn.cursor()
+            sql = f"select idexplotacion,nombre, direccion from explotacion where nombre ilike '%{filtro}%' or direccion ilike '%{filtro}%' order by idexplotacion "
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        if len(data) >= 1:
+            return data
+        elif len(data) == 0:
+            data = [0, 0]
+            return data
+
+    def dataAuto(self):
+        cursor = self.conn.cursor()
+        sql = "select nombre from explotacion union select direccion from explotacion"
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        return data
+
+
+    def populate(self, data):
+        try:
+            a = len(data)
+            b = len(data[0])
+            i = 1
+            j = 1
+            self.tableWidget.setRowCount(a)
+            self.tableWidget.setColumnCount(b)
+            for j in range(a):
+                for i in range(b):
+                    item = QTableWidgetItem(str(data[j][i]))
+                    self.tableWidget.setItem(j, i, item)
+        except:
+            QMessageBox.about(self, "Error:", "No Existen Registros")
+            print('error')
+
+    def loadData(self, param=None):
+
+        if param == None:
+            data = self.data()
+            self.populate(data)
+        else:
+            data = self.data(param)
+            self.populate(data)
+        pass
+
+    def buscar(self):
+        filtro = self.lineEdit.text()
+        self.loadData(filtro)
+
+        pass
+
+class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
+
+    closingPlugin = pyqtSignal()
+
+    def __init__(self, parent=None):
+        """Constructor."""
+        super(cultivoFindDialog, self).__init__(parent)
+
+        self.utils = AgraeUtils()
+        self.conn = self.utils.Conn()
+
+        data = self.dataAuto()
+        lista = [e[0] for e in data]
+        # print(lista)
+        completer = QCompleter(lista)
+        completer.setCaseSensitivity(False)
+
+        self.setupUi(self)
+        self.btn_buscar.clicked.connect(self.buscar)
+        self.lineEdit.setCompleter(completer)
+        self.tableWidget.horizontalHeader().setStretchLastSection(True)
+
+    def closeEvent(self, event):
+        self.closingPlugin.emit()
+        event.accept()
+
+    def data(self, filtro=None):
+        if filtro == None:
+            cursor = self.conn.cursor()
+            sql = "select idcultivo,nombre from cultivo order by idcultivo"
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        else:
+            cursor = self.conn.cursor()
+            sql = f"select idcultivo,nombre from cultivo where nombre ilike '%{filtro}%' order by idcultivo"
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        if len(data) >= 1:
+            return data
+        elif len(data) == 0:
+            data = [0, 0]
+            return data
+
+    def dataAuto(self):
+        cursor = self.conn.cursor()
+        sql = "select nombre from cultivo"
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        return data
+
+
+    def populate(self, data):
+        try:
+            a = len(data)
+            b = len(data[0])
+            i = 1
+            j = 1
+            self.tableWidget.setRowCount(a)
+            self.tableWidget.setColumnCount(b)
+            for j in range(a):
+                for i in range(b):
+                    item = QTableWidgetItem(str(data[j][i]))
+                    self.tableWidget.setItem(j, i, item)
+        except:
+            QMessageBox.about(self, "Error:", "No Existen Registros")
+            print('error')
+
+    def loadData(self, param=None):
+
+        if param == None:
+            data = self.data()
+            self.populate(data)
+        else:
+            data = self.data(param)
+            self.populate(data)
+        pass
+
+    def buscar(self):
+        filtro = self.lineEdit.text()
+        self.loadData(filtro)
+
+        pass
+
+
+
+
+
+class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
+
+    closingPlugin = pyqtSignal()
+
+    def __init__(self, parent=None):
+        """Constructor."""
+        super(agraeMainWidget, self).__init__(parent)   
+
+        self.utils = AgraeUtils()
+        self.conn = self.utils.Conn()
+        self.style = self.utils.styleSheet()
+
+        data = self.dataAuto()
+        lista = [e[0] for e in data]
+        # print(lista)
+        completer = QCompleter(lista)
+        completer.setCaseSensitivity(False)
 
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
@@ -100,8 +556,210 @@ class agraeMainWidget(QtWidgets.QDialog, agraeMainPanel):
         
         self.setupUi(self)
 
+        self.tableWidget.horizontalHeader().setStretchLastSection(True)
+        self.tableWidget.setColumnHidden(5, True)
+        self.btn_par_update.clicked.connect(self.actualizarParcela)
+        self.btn_buscar_parcela.clicked.connect(self.parcelaDialog)
+        self.btn_buscar_parcela_2.clicked.connect(self.parcelaDialog)
+        self.btn_buscar_lote.clicked.connect(self.loteDialog)
+        self.btn_buscar_lote_2.clicked.connect(self.loteDialog)
+        self.btn_buscar_exp.clicked.connect(self.expDialog)
+        self.btn_buscar_cult.clicked.connect(self.cultivoDialog)
+        self.btn_rel_create.clicked.connect(self.crearRelacionLoteParcela)
+        
+        self.setStyleSheet(self.style)
+        self.line_buscar.setCompleter(completer)
+
     def closeEvent(self, event):
         self.closingPlugin.emit()
         event.accept()
+
+    def dataAuto(self): 
+        cursor = self.conn.cursor()
+        sql = '''select distinct nombre from lote 
+                union
+                select distinct nombre from parcela
+                union 
+                select distinct nombre from cultivo
+                order by nombre'''
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        return data
+
+    def actualizarParcela(self):
+        idParcela = self.lbl_id_parcela.text()
+        name = self.ln_par_nombre.text()
+        prov = self.ln_par_provincia.text()
+        mcpo = self.ln_par_mcpo.text()
+        aggregate = self.ln_par_agg.text()
+        zone = self.ln_par_zona.text()
+        poly = self.ln_par_poly.text()
+        allotment = self.ln_par_parcela.text()
+        inclosure = self.ln_par_recinto.text()
+
+        confirm = QMessageBox.question(
+               self, 'aGrae GIS', f"Seguro quiere Actualizar la parcela:\n--- ID: {idParcela}\n--- Nombre: {name.upper()}?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if confirm == QMessageBox.Yes:
+            with self.conn as conn:
+                try:
+                    sql = f'''update parcela set nombre = '{name}', provincia = '{prov}', municipio = '{mcpo}', agregado = '{aggregate}', zona = '{zone}', poligono = '{poly}', parcela = '{allotment}', recinto = '{inclosure}' where idparcela = '{idParcela}' '''
+                    cursor = conn.cursor()
+                    cursor.execute(sql)
+                    conn.commit()
+                    QMessageBox.about(self, f"aGrae GIS:",
+                                        f"Parcela *-- {name} --* Se modifico Correctamente.")
+                    self.btn_par_update.setEnabled(False)
+
+                except Exception as ex:
+                    QMessageBox.about(self, f"Error:",
+                                        f"{ex} \nHa ocurrido un Error por favor, verifique los datos o contacese con soporte tecnico")
+
+        else:
+            pass
+
+            # print(name,prov,mcpo,aggregate,zone,poly,allotment,inclosure)
+
+            pass
+            
+            #todo
+    def actualizarLote(self):
+        sql = f'''update lote 
+                    set 
+                    idexplotacion = null,
+                    idcultivo = null,
+                    nombre = null,
+                    fechasiembra = null,
+                    fechacosecha = null,
+                    fechafertilizacionfondo = null,
+                    fertilizantefondoformula = null,
+                    fertilizantefondoprecio = null,
+                    fertilizantefondocalculado = null,
+                    fertilizantefondoajustado = null,
+                    fertilizantefondoaplicado = null,
+                    fechafertilizacioncbo1 = null,
+                    fertilizantecob1formula = null,
+                    fertilizantecob1precio = null,
+                    fertilizantecob1calculado = null,
+                    fertilizantecob1ajustado = null,
+                    fertilizantecob1aplicado = null,
+                    fechafertilizacioncbo2 = null,
+                    fertilizantecob2formula = null,
+                    fertilizantecob2precio = null,
+                    fertilizantecob2calculado = null,
+                    fertilizantecob2ajustado = null,
+                    fertilizantecob2aplicado = null,
+                    fechafertilizacioncbo3 = null,
+                    fertilizantecob3formula = null,
+                    fertilizantecob3precio = null,
+                    fertilizantecob3calculado = null,
+                    fertilizantecob3ajustado = null,
+                    fertilizantecob3aplicado = null,
+                    where idlote = '''''
+        pass
+
+    def populateParcela(self,data):
+        dataStr = [str(e) for e in data]
+        try:
+            self.lbl_id_parcela.setText(dataStr[1])
+            self.ln_par_nombre.setText(dataStr[2])
+            self.ln_par_provincia.setText(dataStr[3])
+            self.ln_par_mcpo.setText(dataStr[4])
+            self.ln_par_agg.setText(dataStr[5])
+            self.ln_par_zona.setText(dataStr[6])
+            self.ln_par_poly.setText(dataStr[7])
+            self.ln_par_parcela.setText(dataStr[8])
+            self.ln_par_recinto.setText(dataStr[9])
+
+            self.btn_par_update.setEnabled(True)
+        except:
+            pass
+    def populateRelPar(self,idPar):
+        self.ln_rel_parcela.setText(idPar)
+    def populateRelLote(self,idLote):
+        self.ln_rel_lote.setText(idLote)
+    def populateLote(self,data):
+        # print(data)
+        style = "font-weigth : bold; color : red"
+        
+        if data[1] != None:
+            self.lbl_id_lote.setText(str(data[0]))
+        if data[2] != None:
+            self.cl_id_exp.setText(str(data[1]))        
+        if data[2] != None:
+            self.cl_id_cultivo.setText(str(data[2]))
+        if data[3] != None:
+            self.cl_name_lote.setText(str(data[3]))        
+        if data[4] != None:
+            self.cl_date_siembra.setDate(data[4])
+        if data[4] == None:
+            self.label_5.setStyleSheet(style)
+        if data[5] != None:
+            self.cl_date_cosecha.setDate(data[5])
+        if data[5] == None:
+            self.label_6.setStyleSheet(style)
+        if data[6] != None:
+            self.date_fondo.setDate(data[6])
+        if data[6] == None:
+            self.label_13.setStyleSheet(style)
+            # self.label_13.setBold(True)
+        if data[7] != None:
+            self.line_fondo_formula.setText(str(data[7]))
+        if data[7] == None:
+            self.label_12.setStyleSheet(style)
+        
+
+        self.btn_actualizar.setEnabled(True)
+            
+        
+            
+
+        pass
+        
+    def parcelaDialog(self):
+        
+        dialog = parcelaFindDialog()
+        dialog.loadData()
+        dialog.actualizar.connect(self.populateParcela)
+        dialog.actualizarRel.connect(self.populateRelPar)
+        dialog.exec_()
+    
+    def loteDialog(self):
+        
+        dialog = loteFindDialog()
+        dialog.loadData()
+        dialog.actualizar.connect(self.populateLote)
+        dialog.actualizarRel.connect(self.populateRelLote)
+        dialog.exec_()
+    
+    def expDialog(self):
+
+        dialog = expFindDialog()
+        dialog.loadData()
+        dialog.exec_()
+    def cultivoDialog(self):
+
+        dialog = cultivoFindDialog()
+        dialog.loadData()
+        dialog.exec_()
+
+    def crearRelacionLoteParcela(self):
+        idParcela = int(self.ln_rel_parcela.text())
+        idLote = int(self.ln_rel_lote.text())
+        
+        sql = f''' insert into loteparcela(idparcela,idlote) 
+                values({idParcela},{idLote}) '''
+        cursor = self.conn.cursor()
+        cursor.execute(sql)
+        QMessageBox.about(self, 'aGrae GIS','Se creo la Relacion')
+        self.conn.commit()            
+        
+            # QMessageBox.about(self, 'aGrae GIS',
+            #                   'No se pudo crear la Relacion')
+
+    
+
+
+
 
 
