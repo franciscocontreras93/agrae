@@ -8,13 +8,13 @@ class AgraeUtils():
         
         self.s = QSettings('agrae','dbConnection')
         self.dns = {
-            'host': self.s.value('dbhost'),
-            'port': self.s.value('dbport'),
             'dbname': self.s.value('dbname'),
             'user': self.s.value('dbuser'),
-            'password': self.s.value('dbpass')
+            'password': self.s.value('dbpass'),
+            'host': self.s.value('dbhost'),
+            'port': self.s.value('dbport')
         }
-        self.conn = DbConnection.connection(self.dns['dbname'], self.dns['user'], self.dns['password'], self.dns['host'])
+        self.conn = DbConnection.connection(self.dns['dbname'], self.dns['user'], self.dns['password'], self.dns['host'], self.dns['port'])
 
         pass
 
@@ -24,7 +24,7 @@ class AgraeUtils():
 
     def Conn(self):
         conn = self.conn = DbConnection.connection(
-            self.dns['dbname'], self.dns['user'], self.dns['password'], self.dns['host'])
+            self.dns['dbname'], self.dns['user'], self.dns['password'], self.dns['host'], self.dns['port'])
         return conn
 
     def loadGeomLayers(self):
@@ -76,9 +76,8 @@ class AgraeUtils():
         except: 
             print('ERROR')
 
-    def dbTestConnection(self,dbname,dbuser,dbpass,dbhost,dbport=5432):     
-        conn = DbConnection.connection(
-            dbname, dbuser, dbpass, dbhost, dbport)
+    def dbTestConnection(self,dbname,dbuser,dbpass,dbhost,dbport):     
+        conn = DbConnection.connection(dbname, dbuser, dbpass, dbhost, dbport)
         conn.close()
 
     def styleSheet(self):
@@ -87,8 +86,10 @@ class AgraeUtils():
                    '''
         return style
 
-    
+    def actualizarQueryLote(idlote, idexp=None, idcult=None, nombre=None, dateSiembra=None, dateCosecha=None, dateFertFondo=None, fondoFormula=None, fondoPrecio=None, fondoCalculado=None, fondoAjustado=None, fondoAplicado=None, dateFertCob1=None, cob1Formula=None, cob1Precio=None, cob1Calculado=None, cob1Ajustado=None, cob1Aplicado=None, dateFertCob2=None, cob2Formula=None, cob2Precio=None, cob2Calculado=None, cob2Ajustado=None, cob2Aplicado=None, dateFertCob3=None, cob3Formula=None, cob3Precio=None, cob3Calculado=None, cob3Ajustado=None, cob3Aplicado=None):
+        sql = f'''update lote set  idexplotacion = {idexp}, idcultivo = {idcult}, nombre = {nombre},             fechasiembra = {dateSiembra},fechacosecha = {dateCosecha},fechafertilizacionfondo = {dateFertFondo},    fertilizantefondoformula = {fondoFormula},fertilizantefondoprecio = {fondoPrecio},                fertilizantefondocalculado = {fondoCalculado},fertilizantefondoajustado = {fondoAjustado},            fertilizantefondoaplicado = {fondoAplicado},fechafertilizacioncbo1 = {dateFertCob1},              fertilizantecob1formula = {cob1Formula},fertilizantecob1precio = {cob1Precio},                  fertilizantecob1calculado = {cob1Calculado},fertilizantecob1ajustado = {cob1Ajustado},                fertilizantecob1aplicado = {cob1Aplicado},fechafertilizacioncbo2 = {dateFertCob2},              fertilizantecob2formula = {cob2Formula}, fertilizantecob2precio = {cob2Precio},                   fertilizantecob2calculado = {cob2Calculado},   fertilizantecob2ajustado = {cob2Ajustado},         fertilizantecob2aplicado = {cob2Aplicado},fechafertilizacioncbo3 = {dateFertCob3},                   fertilizantecob3formula = {cob3Formula},fertilizantecob3precio = {cob3Precio},                  fertilizantecob3calculado = {cob3Calculado},fertilizantecob3ajustado = {cob3Ajustado},                 fertilizantecob3aplicado = {cob3Aplicado}, where idlote = '{idlote}' '''
 
+        return sql 
 
 
 
@@ -118,45 +119,3 @@ class AgraeUtils():
         #         if len(feature) == 0 or len(feature) >1:
         #             self.iface.messageBar().pushMessage(
         #                 f'aGraes GIS | {ex}: ', 'Debe seleccionar una Parcela', level=1, duration=3)
-
-    #  def loadAllotmentToDB():
-
-        # with self.conn as conn:
-        #     try:
-
-        #         cur = conn.cursor()
-        #         layer = self.iface.activeLayer()
-        #         # print(layer.name())
-        #         feat = layer.selectedFeatures()
-        #         ls = feat[0].geometry().asWkt()
-        #         srid = layer.crs().authid()[5:]
-
-        #         name = self.addFeatureDialog.line_Nombre.text()
-        #         prov = self.addFeatureDialog.line_Prov.text()
-        #         mcpo = self.addFeatureDialog.line_Mcpo.text()
-        #         aggregate = self.addFeatureDialog.line_Agregado.text()
-        #         zone = self.addFeatureDialog.line_Zona.text()
-        #         poly = self.addFeatureDialog.line_Poly.text()
-        #         allotment = self.addFeatureDialog.line_Parcela.text()
-        #         inclosure = self.addFeatureDialog.line_Recinto.text()
-
-        #         # print(ls)
-        #         sql = f'''
-        #         INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria)
-        #         VALUES('{name}','{prov}','{mcpo}','{aggregate}','{zone}','{poly}','{allotment}','{inclosure}',st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))))'''
-        #         cur.execute(sql)
-        #         conn.commit()
-        #         # print('agregado correctamente')
-        #         self.iface.messageBar().pushMessage(
-        #             'aGraes GIS', 'Registro creado Correctamente', level=3, duration=3)
-
-        #     except Exception as ex:
-        #         print(ex)
-        #         self.iface.messageBar().pushMessage(
-        #             f'aGraes GIS | {ex}: ', 'No se pudo almacenar el registro', level=1, duration=3)
-
-
-
-
-    
-

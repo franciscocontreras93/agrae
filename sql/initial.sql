@@ -1,3 +1,5 @@
+
+
 CREATE TABLE persona (
 	idpersona serial NOT NULL PRIMARY KEY,
 	dni text,
@@ -102,6 +104,40 @@ CREATE TABLE cultivoagricultor (
 ALTER TABLE cultivoagricultor
 	ALTER COLUMN borradologico SET DEFAULT false
 
+
+create table ambiente (
+	pk_uid bigserial not null,
+	idambiente bigserial not null  primary key,
+	idparcela integer not null references parcela (idparcela)
+	obj_amb integer,
+	ambiente integer,
+	ndvimax numeric,
+	atlas varchar,
+	geometria geometry(MultiPolygon,4326)
+
+)
+
+create table segmento (
+	pk_uid bigserial not null,
+	idsegmento bigserial not null primary key,
+	idparcela integer not null references parcela (idparcela),
+	segmento integer,
+	atlas varchar,
+	cod_control varchar(10),
+	cod varchar (10),
+	geometria geometry(MultiPolygon,4326)
+)
+
+create table unidades ( 
+	pk_uid bigserial not null,
+	idunidad bigserial not null primary key,
+	idparcela integer references parcela (idparcela),
+	segmento integer,
+	ambiente integer,
+	uf integer,
+	geometria geometry(MultiPolygon,4326)
+
+)
 
 CREATE TABLE parcela (
 	pk_uid bigserial NOT NULL ,

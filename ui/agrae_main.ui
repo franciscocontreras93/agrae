@@ -74,14 +74,18 @@
         <height>41</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="gridLayout" columnstretch="0,2,0,0,0">
-       <item row="0" column="2">
-        <widget class="QRadioButton" name="radio_id">
+      <layout class="QGridLayout" name="gridLayout" columnstretch="0,2,0,0,0,0">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
          <property name="text">
-          <string>ID</string>
+          <string>Buscar Lote o Parcela</string>
          </property>
-         <property name="checked">
-          <bool>true</bool>
+        </widget>
+       </item>
+       <item row="0" column="5">
+        <widget class="QPushButton" name="btn_buscar1">
+         <property name="text">
+          <string>Buscar</string>
          </property>
         </widget>
        </item>
@@ -92,24 +96,23 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label">
+       <item row="0" column="2">
+        <widget class="QRadioButton" name="radio_nombre">
          <property name="text">
-          <string>Buscar Lote o Parcela</string>
+          <string>Nombre</string>
          </property>
-        </widget>
-       </item>
-       <item row="0" column="4">
-        <widget class="QPushButton" name="btn_buscar1">
-         <property name="text">
-          <string>Buscar</string>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
        <item row="0" column="3">
-        <widget class="QRadioButton" name="radio_nombre">
+        <widget class="QRadioButton" name="radio_id">
          <property name="text">
-          <string>Nombre</string>
+          <string>ID</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -209,7 +212,7 @@
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">::pane{border: 0}</string>
+      <string notr="true">#tabWidget_2::pane{border: 0}</string>
      </property>
      <property name="currentIndex">
       <number>1</number>
@@ -519,7 +522,7 @@
          </widget>
         </item>
         <item row="1" column="4" colspan="4">
-         <widget class="QDateEdit" name="cl_date_cosecha">
+         <widget class="QDateEdit" name="lote_dateCosecha">
           <property name="dateTime">
            <datetime>
             <hour>0</hour>
@@ -559,7 +562,7 @@
          </widget>
         </item>
         <item row="0" column="4" colspan="4">
-         <widget class="QDateEdit" name="cl_date_siembra">
+         <widget class="QDateEdit" name="lote_dateSiembra">
           <property name="dateTime">
            <datetime>
             <hour>0</hour>
@@ -586,7 +589,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLineEdit" name="cl_name_lote"/>
+         <widget class="QLineEdit" name="line_lote_nombre"/>
         </item>
         <item row="1" column="2">
          <widget class="QPushButton" name="btn_buscar_exp">
@@ -629,14 +632,14 @@
          </widget>
         </item>
         <item row="2" column="4" colspan="4">
-         <widget class="QPushButton" name="btn_crear">
+         <widget class="QPushButton" name="btn_lote_create">
           <property name="text">
            <string>Crear</string>
           </property>
          </widget>
         </item>
         <item row="2" column="3">
-         <widget class="QPushButton" name="btn_actualizar">
+         <widget class="QPushButton" name="btn_lote_update">
           <property name="enabled">
            <bool>false</bool>
           </property>
@@ -646,10 +649,10 @@
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QLineEdit" name="cl_id_cultivo"/>
+         <widget class="QLineEdit" name="line_lote_idcultivo"/>
         </item>
         <item row="1" column="1">
-         <widget class="QLineEdit" name="cl_id_exp"/>
+         <widget class="QLineEdit" name="line_lote_idexp"/>
         </item>
        </layout>
       </widget>
@@ -659,7 +662,7 @@
          <x>10</x>
          <y>130</y>
          <width>721</width>
-         <height>161</height>
+         <height>141</height>
         </rect>
        </property>
        <property name="styleSheet">
@@ -672,7 +675,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -684,7 +687,7 @@
            <x>10</x>
            <y>10</y>
            <width>691</width>
-           <height>111</height>
+           <height>91</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,0,0,0,0,0">
@@ -800,7 +803,7 @@
            <x>10</x>
            <y>10</y>
            <width>691</width>
-           <height>111</height>
+           <height>91</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0,0,0,0,0">
@@ -916,7 +919,7 @@
            <x>10</x>
            <y>10</y>
            <width>691</width>
-           <height>111</height>
+           <height>91</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout_6" columnstretch="0,0,0,0,0,0">
@@ -1032,7 +1035,7 @@
            <x>10</x>
            <y>10</y>
            <width>691</width>
-           <height>111</height>
+           <height>91</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout_7" columnstretch="0,0,0,0,0,0">
@@ -1166,14 +1169,12 @@
  <tabstops>
   <tabstop>tabWidget</tabstop>
   <tabstop>line_buscar</tabstop>
-  <tabstop>radio_id</tabstop>
-  <tabstop>radio_nombre</tabstop>
   <tabstop>btn_buscar1</tabstop>
   <tabstop>tableWidget</tabstop>
   <tabstop>btn_add_layer</tabstop>
   <tabstop>tabWidget_2</tabstop>
-  <tabstop>cl_date_siembra</tabstop>
-  <tabstop>cl_date_cosecha</tabstop>
+  <tabstop>lote_dateSiembra</tabstop>
+  <tabstop>lote_dateCosecha</tabstop>
   <tabstop>tabWidget_3</tabstop>
   <tabstop>date_fondo</tabstop>
   <tabstop>line_fondo_formula</tabstop>

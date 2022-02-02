@@ -76,7 +76,17 @@
        </column>
        <column>
         <property name="text">
-         <string>Nombre</string>
+         <string>Nombre Parcela</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Relacion</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Nombre Lote</string>
         </property>
        </column>
        <column>

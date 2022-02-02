@@ -24,7 +24,7 @@
 
 
 import os
-
+from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel
 from PyQt5.QtWidgets import *
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QSettings
@@ -98,6 +98,29 @@ class agraeConfigWidget(QtWidgets.QDialog, agraeConfigPanel):
         event.accept()
 
 
+class TableModel(QAbstractTableModel):
+    def __init__(self, data):
+        super().__init__()
+        self._data = data
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            # See below for the nested-list data structure.
+            # .row() indexes into the outer list,
+            # .column() indexes into the sub-list
+            return self._data[index.row()][index.column()]
+
+    def rowCount(self, index):
+        # The length of the outer list.
+        return len(self._data)
+
+    def columnCount(self, index):
+        # The following takes the first sub-list, and returns
+        # the length (only works if all rows are an equal length)
+        return len(self._data[0])
+
+
+
 class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
 
     closingPlugin = pyqtSignal()
@@ -111,6 +134,10 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
 
         self.utils = AgraeUtils()
         self.conn = self.utils.Conn()
+
+        # TODO FILTER TABLE 
+
+        
         
         data = self.dataAuto()
         lista = [e[0] for e in data]
@@ -137,12 +164,12 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
     def data(self, filtro=None):
         if filtro == None:
             cursor = self.conn.cursor()
-            sql = "select idparcela,nombre,provincia, municipio , agregado , zona , poligono , parcela , recinto from parcela order by idparcela  "
+            sql = '''select p.idparcela,p.nombre, (case when lp.parcela = 1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion,p.provincia, p.municipio , p.agregado , p.zona , p.poligono , p.parcela , p.recinto from parcela p left join (select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela  = p.idparcela left join lote l on lp2.idlote = l.idlote order by idparcela  '''
             cursor.execute(sql)
             data = cursor.fetchall()
         else:
             cursor = self.conn.cursor()
-            sql = f"select idparcela,nombre,provincia, municipio , agregado , zona , poligono , parcela , recinto from parcela where nombre ilike '%{filtro}%' or provincia ilike '%{filtro}%' or  municipio ilike '%{filtro}%' or agregado ilike '%{filtro}%' or zona ilike '%{filtro}%' or poligono ilike '%{filtro}%' or parcela ilike '%{filtro}%' or recinto ilike '%{filtro}%' order by idparcela "
+            sql = f"select p.idparcela,p.nombre, (case when lp.parcela = 1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion,p.provincia, p.municipio , p.agregado , p.zona , p.poligono , p.parcela , p.recinto from parcela p left join (select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela  = p.idparcela left join lote l on lp2.idlote = l.idlote where p.nombre ilike '%{filtro}%' or p.provincia ilike '%{filtro}%' or  p.municipio ilike '%{filtro}%' or p.agregado ilike '%{filtro}%' or p.zona ilike '%{filtro}%' or p.poligono ilike '%{filtro}%' or p.parcela ilike '%{filtro}%' or p.recinto ilike '%{filtro}%' order by p.idparcela "
             cursor.execute(sql)
             data = cursor.fetchall()
         if len(data) >= 1:
@@ -160,7 +187,6 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
         data = cursor.fetchall()
         return data
 
-
     def populate(self,data):
         try:
             a = len(data)
@@ -173,6 +199,7 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
                 for i in range(b):
                     item = QTableWidgetItem(str(data[j][i]))
                     self.tableWidget.setItem(j, i, item)
+                    
         except:
             QMessageBox.about(self, "Error:", "No Existen Registros")
             print('error')
@@ -226,10 +253,7 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
             self.actualizarRel.emit(idRel)
             self.close()
         except Exception as ex:
-            QMessageBox.about(self,'aGrae GIS', 'Debe Seleccionar una parcela para agregar a la relacion') 
-        
-            
-        
+            QMessageBox.about(self,'aGrae GIS', 'Debe Seleccionar una parcela para agregar a la relacion')     
            
 class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
 
@@ -270,12 +294,12 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
     def data(self, filtro=None):
         if filtro == None:
             cursor = self.conn.cursor()
-            sql = "select idlote,nombre from lote order by idlote "
+            sql = "select l.idlote ,l.nombre, coalesce(lp.parcelas,0) from lote l left join (select lp.idlote, count(*) as parcelas from loteparcela as lp group by lp.idlote) as lp on lp.idlote = l.idlote order by l.idlote"
             cursor.execute(sql)
             data = cursor.fetchall()
         else:
             cursor = self.conn.cursor()
-            sql = f"select idlote,nombre from lote where nombre ilike '%{filtro}%' order by idlote "
+            sql = f"select l.idlote ,l.nombre, coalesce(lp.parcelas,0) from lote l left join (select lp.idlote, count(*) as parcelas from loteparcela as lp group by lp.idlote) as lp on lp.idlote = l.idlote where l.nombre ilike '%{filtro}%' order by l.idlote "
             cursor.execute(sql)
             data = cursor.fetchall()
         if len(data) >= 1:
@@ -325,7 +349,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         # print(str(value))
         try:
             row = self.tableWidget.currentRow()
-            column = self.tableWidget.currentColumn()
+            # column = self.tableWidget.currentColumn()
             param = self.tableWidget.item(row, 0).text()
             sqlQuery = f"""select * from lote where idlote = {param} """
 
@@ -333,8 +357,8 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             cursor = conn.cursor()
             cursor.execute(sqlQuery)
             data = cursor.fetchone()
-            dataLita = list(data)
-            self.actualizar.emit(dataLita)
+            dataLista = list(data)
+            self.actualizar.emit(dataLista)
             self.close()
             
         except:
@@ -352,8 +376,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         except Exception as ex:
             QMessageBox.about(self, 'aGrae GIS',
                               'Debe Seleccionar un lote de la Lista para agregar a la relacion')
-       
-            
+                  
 class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
 
     closingPlugin = pyqtSignal()
@@ -526,10 +549,6 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
 
         pass
 
-
-
-
-
 class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     closingPlugin = pyqtSignal()
@@ -566,6 +585,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_buscar_exp.clicked.connect(self.expDialog)
         self.btn_buscar_cult.clicked.connect(self.cultivoDialog)
         self.btn_rel_create.clicked.connect(self.crearRelacionLoteParcela)
+        # self.btn_lote_update.clicked.connect(self.actualizarLote)
         
         self.setStyleSheet(self.style)
         self.line_buscar.setCompleter(completer)
@@ -624,38 +644,42 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             
             #todo
     def actualizarLote(self):
-        sql = f'''update lote 
-                    set 
-                    idexplotacion = null,
-                    idcultivo = null,
-                    nombre = null,
-                    fechasiembra = null,
-                    fechacosecha = null,
-                    fechafertilizacionfondo = null,
-                    fertilizantefondoformula = null,
-                    fertilizantefondoprecio = null,
-                    fertilizantefondocalculado = null,
-                    fertilizantefondoajustado = null,
-                    fertilizantefondoaplicado = null,
-                    fechafertilizacioncbo1 = null,
-                    fertilizantecob1formula = null,
-                    fertilizantecob1precio = null,
-                    fertilizantecob1calculado = null,
-                    fertilizantecob1ajustado = null,
-                    fertilizantecob1aplicado = null,
-                    fechafertilizacioncbo2 = null,
-                    fertilizantecob2formula = null,
-                    fertilizantecob2precio = null,
-                    fertilizantecob2calculado = null,
-                    fertilizantecob2ajustado = null,
-                    fertilizantecob2aplicado = null,
-                    fechafertilizacioncbo3 = null,
-                    fertilizantecob3formula = null,
-                    fertilizantecob3precio = null,
-                    fertilizantecob3calculado = null,
-                    fertilizantecob3ajustado = null,
-                    fertilizantecob3aplicado = null,
-                    where idlote = '''''
+        idlote = self.lbl_id_lote.text()
+        nombre = self.line_lote_nombre.text()
+        idexp = self.line_lote_idexp.text()
+        idcult = self.line_lote_idcultivo.text()
+        dateSiembra = self.lote_dateSiembra.date()
+        dateCosecha = self.lote_dateCosecha.date()
+        dateFondo = self.date_fondo.date()
+        fondoFormula = self.line_fondo_formula.text()
+        fondoPrecio = self.line_fondo_precio.text()
+        fondoCalculado = self.line_fondo_calculado.text()
+        fondoAjustado = self.line_fondo_ajustado.text()
+        fondoAplicado = self.line_fondo_Aplicado.text()
+        dateCob1 = self.date_cob.date()
+        cob1Formula = self.line_cob_formula.text()
+        cob1Precio = self.line_cob_precio.text()
+        cob1Calculado = self.line_cob_calculado.text()
+        cob1Ajustado = self.line_cob_ajustado.text()
+        cob1Aplicado = self.line_cob_Aplicado.text()
+        dateCob2 = self.date_cob_2.date()
+        cob2Formula = self.line_cob_formula_2.text()
+        cob2Precio = self.line_cob_precio_2.text()
+        cob2Calculado = self.line_cob_calculado_2.text()
+        cob2Ajustado = self.line_cob_ajustado_2.text()
+        cob2Aplicado = self.line_cob_Aplicado_2.text()
+        dateCob3 = self.date_cob_3.date()
+        cob3Formula = self.line_cob_formula_3.text()
+        cob3Precio = self.line_cob_precio_3.text()
+        cob3Calculado = self.line_cob_calculado_3.text()
+        cob3Ajustado = self.line_cob_ajustado_3.text()
+        cob3Aplicado = self.line_cob_Aplicado_3.text()
+
+
+        sql = self.utils.actualizarQueryLote(idlote,idcult,nombre,dateSiembra,dateCosecha,dateFondo,fondoFormula,fondoPrecio,fondoCalculado,fondoAjustado,fondoAplicado,dateCob1,cob1Formula,cob1Precio,cob1Calculado,cob1Ajustado,cob1Aplicado,dateCob2,cob2Formula,cob2Precio,cob2Calculado,cob2Ajustado,cob2Aplicado,dateCob2,cob2Formula,cob2Precio,cob2Calculado,cob2Ajustado,cob2Aplicado,dateCob3,cob3Formula,cob3Precio,cob3Calculado,cob3Ajustado,cob3Aplicado)
+
+        print(sql)
+
         pass
 
     def populateParcela(self,data):
@@ -674,47 +698,83 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             self.btn_par_update.setEnabled(True)
         except:
             pass
+    def populateLote(self, data):
+        # print(data)
+        self.resetStyleLabels()
+        data2 = []
+        style = "font-weight: bold ; color : red"
+        for e in data:
+            if e == None:
+                data2.append(e)
+            else:
+                data2.append(str(e))
+
+        try:
+            self.lbl_id_lote.setText(data2[0])
+            self.line_lote_idexp.setText(data2[1])
+            self.line_lote_idcultivo.setText(data2[2])
+            self.line_lote_nombre.setText(data2[3])
+            try:
+                self.lote_dateSiembra.setDate(data[4])
+            except:
+                self.label_5.setStyleSheet(style)
+                pass
+            try:
+                self.lote_dateCosecha.setDate(data[5])
+            except:
+                self.label_6.setStyleSheet(style)
+                pass
+            try:
+                self.lote_dateFondo.setDate(data[6])
+            except:
+                self.label_13.setStyleSheet(style)
+                pass
+            self.line_fondo_formula.setText(data2[7])
+            self.line_fondo_precio.setText(data2[8])
+            self.line_fondo_calculado.setText(data2[9])
+            self.line_fondo_ajustado.setText(data2[10])
+            self.line_fondo_aplicado.setText(data2[11])
+            try:
+                self.date_cob.setDate(data[12])
+            except:
+                self.label_15.setStyleSheet(style)
+                pass
+            self.line_cob_formula.setText(data2[13])
+            self.line_cob_precio.setText(data2[14])
+            self.line_cob_calculado.setText(data2[15])
+            self.line_cob_ajustado.setText(data2[16])
+            self.line_cob_aplicado.setText(data2[17])
+            try:
+                self.date_cob_2.setDate(data[18])
+            except:
+                self.label_20.setStyleSheet(style)
+                pass
+            self.line_cob_formula_2.setText(data2[19])
+            self.line_cob_precio_2.setText(data2[20])
+            self.line_cob_calculado_2.setText(data2[21])
+            self.line_cob_ajustado_2.setText(data2[22])
+            self.line_cob_aplicado_2.setText(data2[23])
+            try:
+                self.date_cob_3.setDate(data[24])
+            except:
+                self.label_26.setStyleSheet(style)
+                pass
+            self.line_cob_formula_3.setText(data2[25])
+            self.line_cob_precio_3.setText(data2[26])
+            self.line_cob_calculado_3.setText(data2[27])
+            self.line_cob_ajustado_3.setText(data2[28])
+            self.line_cob_aplicado_3.setText(data2[29])
+            self.btn_lote_update.setEnabled(True)
+
+        except Exception as ex:
+            print(ex)
+            pass
+
     def populateRelPar(self,idPar):
         self.ln_rel_parcela.setText(idPar)
     def populateRelLote(self,idLote):
         self.ln_rel_lote.setText(idLote)
-    def populateLote(self,data):
-        # print(data)
-        style = "font-weigth : bold; color : red"
-        
-        if data[1] != None:
-            self.lbl_id_lote.setText(str(data[0]))
-        if data[2] != None:
-            self.cl_id_exp.setText(str(data[1]))        
-        if data[2] != None:
-            self.cl_id_cultivo.setText(str(data[2]))
-        if data[3] != None:
-            self.cl_name_lote.setText(str(data[3]))        
-        if data[4] != None:
-            self.cl_date_siembra.setDate(data[4])
-        if data[4] == None:
-            self.label_5.setStyleSheet(style)
-        if data[5] != None:
-            self.cl_date_cosecha.setDate(data[5])
-        if data[5] == None:
-            self.label_6.setStyleSheet(style)
-        if data[6] != None:
-            self.date_fondo.setDate(data[6])
-        if data[6] == None:
-            self.label_13.setStyleSheet(style)
-            # self.label_13.setBold(True)
-        if data[7] != None:
-            self.line_fondo_formula.setText(str(data[7]))
-        if data[7] == None:
-            self.label_12.setStyleSheet(style)
-        
-
-        self.btn_actualizar.setEnabled(True)
-            
-        
-            
-
-        pass
+    
         
     def parcelaDialog(self):
         
@@ -758,7 +818,14 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             #                   'No se pudo crear la Relacion')
 
     
-
+    def resetStyleLabels(self):
+        style = 'font-weight: normal ; color : black'
+        self.label_5.setStyleSheet(style)
+        self.label_6.setStyleSheet(style)
+        self.label_13.setStyleSheet(style)
+        self.label_15.setStyleSheet(style)
+        self.label_20.setStyleSheet(style)
+        self.label_26.setStyleSheet(style)
 
 
 

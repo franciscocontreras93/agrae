@@ -188,13 +188,13 @@ class agrae:
         self.add_action(
             icon_path,
             text=self.tr(u'aGrae GIS'),
-            callback=self.run,
-            parent=self.iface.mainWindow())
-        self.add_action(
-            '',
-            text=self.tr(u'Agregar Objeto'),
             callback=self.runMain,
             parent=self.iface.mainWindow())
+        # self.add_action(
+        #     '',
+        #     text=self.tr(u'Agregar Objeto'),
+        #     callback=self.runMain,
+        #     parent=self.iface.mainWindow())
         self.add_action(
             '',
             text=self.tr(u'Ajustes'),
@@ -431,7 +431,7 @@ class agrae:
         def dbTestConn():
                 try: 
                     self.utils.dbTestConnection(
-                        self.configDialog.dbname.text(), self.configDialog.user.text(), self.configDialog.password.text(), self.configDialog.host.text())
+                        self.configDialog.dbname.text(), self.configDialog.user.text(), self.configDialog.password.text(), self.configDialog.host.text(), self.configDialog.port.text())
                     self.iface.messageBar().pushMessage('aGraes GIS', 'Conexion a base de Datos Exitosa', level=3, duration=3)
                 except:           
                     self.iface.messageBar().pushMessage(
@@ -498,13 +498,19 @@ class agrae:
             sqlQuery = ''
             try: 
                 with self.conn as conn:
-                    if self.mainWindowDialog.radio_id.isChecked():
-                        sqlQuery = f'''select p.idparcela , l.idlote, l.nombre lote, p.nombre parcela, c.nombre cultivo, p.geometria from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo  where p.idparcela = {param} or l.idlote = {param}'''
+                    if param == '':
+                        sqlQuery = f'''select p.idparcela , l.idlote, l.nombre lote, p.nombre parcela, c.nombre cultivo, p.geometria from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo where p.idparcela in(lp.idparcela) order by l.idlote'''
+                        self.mainWindowDialog.btn_add_layer.setEnabled(False)
+
+                    elif self.mainWindowDialog.radio_id.isChecked() and param != '':
+                        sqlQuery = f'''select p.idparcela , l.idlote, l.nombre lote, p.nombre parcela, c.nombre cultivo, p.geometria from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo  where p.idparcela in(lp.idparcela) and p.idparcela = {param} or l.idlote = {param} order by p.idparcela'''
+                        self.mainWindowDialog.btn_add_layer.setEnabled(True)
 
                         # sqlQuery = f'select * from rel_parcelas_lote where idparcela = {param} or idlote = {param}'
                         
-                    elif self.mainWindowDialog.radio_nombre.isChecked():
-                        sqlQuery = f"""select p.idparcela , l.idlote, l.nombre lote, p.nombre parcela, c.nombre cultivo, p.geometria from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo  where p.nombre ilike '%{param}%' or l.nombre ilike '%{param}%' or c.nombre ilike '%{param}%'"""
+                    elif self.mainWindowDialog.radio_nombre.isChecked() and param != '':
+                        sqlQuery = f"""select p.idparcela , l.idlote, l.nombre lote, p.nombre parcela, c.nombre cultivo, p.geometria from parcela p left join loteparcela lp on p.idparcela = lp.idparcela left join lote l on l.idlote = lp.idlote left join cultivo c on c.idcultivo = l.idcultivo  where p.idparcela in(lp.idparcela) and p.nombre ilike '%{param}%' or l.nombre ilike '%{param}%' or c.nombre ilike '%{param}%' order by p.idparcela"""
+                        self.mainWindowDialog.btn_add_layer.setEnabled(True)
                     
                     
                     cursor = conn.cursor()
@@ -517,7 +523,7 @@ class agrae:
                         # self.iface.messageBar().pushMessage(
                         #     "aGrae GIS", "No Existe la relacion de lotes y parcelas.\nDebes crear una nueva relacion", level=1, duration=5)
                     else:
-                        self.mainWindowDialog.btn_add_layer.setEnabled(True)
+                        # self.mainWindowDialog.btn_add_layer.setEnabled(True)
                         self.queryCapaLotes = sqlQuery
                         a = len(data)
                         b = len(data[0])
@@ -559,11 +565,11 @@ class agrae:
                 cur.execute(sql)
                 conn.commit()
                 # print('agregado correctamente')
-                QMessageBox.about(self.mainWindowDialog,'aGrae GIS' ,f"aGrae GIS:", "Parcela *-- {name} --* Creada Correctamente.\nCrear Relacion Lote Parcelas.")
+                QMessageBox.about(self.mainWindowDialog,f"aGrae GIS:", "Parcela *-- {name} --* Creada Correctamente.\nCrear Relacion Lote Parcelas.")
 
             except Exception as ex:
                 print(ex)
-                QMessageBox.about(self.mainWindowDialog, 'aGrae GIS', f"aGrae GIS",f"No se pudo almacenar el registro {ex}")
+                QMessageBox.about(self.mainWindowDialog, f"aGrae GIS",f"No se pudo almacenar el registro {ex}")
 
             finally: 
                 self.mainWindowDialog.ln_par_nombre.setText('')
@@ -634,7 +640,7 @@ class agrae:
                 # self.mainWindowDialog.tableWidget.setColumnHidden(0, True)
                 # self.mainWindowDialog.tableWidget.setColumnHidden(5, True)
                 # self.mainWindowDialog.loadButton.clicked.connect(loadAllotmentToDB)
-                self.mainWindowDialog.btn_actualizar.setEnabled(False)
+                self.mainWindowDialog.btn_lote_update.setEnabled(False)
 
             self.mainWindowDialog.closingPlugin.connect(self.onClosePluginMain)
 
