@@ -518,7 +518,7 @@ class agrae:
                     data = cursor.fetchall()
                     if len(data) == 0:
                         QMessageBox.about(
-                            self.mainWindowDialog, "aGrae GIS:", "No Existe la relacion de lotes y parcelas.\nDebes crear una nueva relacion")
+                            self.mainWindowDialog, "aGrae GIS:", "La Parcela o el Lote que buscas no se encuentra relacionado.\nDebes crear una nueva relacion")
             
                         # self.iface.messageBar().pushMessage(
                         #     "aGrae GIS", "No Existe la relacion de lotes y parcelas.\nDebes crear una nueva relacion", level=1, duration=5)

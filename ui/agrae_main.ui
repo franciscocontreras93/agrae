@@ -215,7 +215,7 @@
       <string notr="true">#tabWidget_2::pane{border: 0}</string>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_admin_pl">
       <attribute name="title">
@@ -227,98 +227,13 @@
          <x>10</x>
          <y>20</y>
          <width>721</width>
-         <height>106</height>
+         <height>132</height>
         </rect>
        </property>
-       <layout class="QGridLayout" name="gridLayout_8" columnstretch="0,0,0,0,0,0,0">
+       <layout class="QGridLayout" name="gridLayout_8" columnstretch="0,0,0,0,0,0,0,0,0,0">
         <property name="sizeConstraint">
          <enum>QLayout::SetDefaultConstraint</enum>
         </property>
-        <item row="1" column="2">
-         <widget class="QLabel" name="label_35">
-          <property name="text">
-           <string>Municipio:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="3">
-         <widget class="QLineEdit" name="ln_par_mcpo"/>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="ln_par_provincia"/>
-        </item>
-        <item row="1" column="4">
-         <widget class="QLabel" name="label_60">
-          <property name="text">
-           <string>Agregado:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_34">
-          <property name="text">
-           <string>Provincia:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="3">
-         <widget class="QLineEdit" name="ln_par_poly"/>
-        </item>
-        <item row="2" column="1">
-         <widget class="QLineEdit" name="ln_par_zona"/>
-        </item>
-        <item row="3" column="6">
-         <widget class="QPushButton" name="btn_par_create">
-          <property name="text">
-           <string>Crear</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QLineEdit" name="ln_par_recinto"/>
-        </item>
-        <item row="2" column="2">
-         <widget class="QLabel" name="label_33">
-          <property name="text">
-           <string>Poligono:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_32">
-          <property name="text">
-           <string>Zona:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="4">
-         <widget class="QLabel" name="label_61">
-          <property name="text">
-           <string>Parcela:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1" colspan="3">
-         <widget class="QLineEdit" name="ln_par_nombre"/>
-        </item>
         <item row="0" column="0">
          <widget class="QLabel" name="label_31">
           <property name="text">
@@ -326,34 +241,17 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="label_62">
-          <property name="text">
-           <string>Recinto</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
+        <item row="0" column="1" colspan="4">
+         <widget class="QLineEdit" name="ln_par_nombre"/>
         </item>
-        <item row="0" column="4">
+        <item row="0" column="6">
          <widget class="QPushButton" name="btn_buscar_parcela">
           <property name="text">
            <string>Buscar</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="3">
-         <widget class="QPushButton" name="btn_par_update">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Actualizar</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="6">
+        <item row="0" column="8">
          <widget class="QLabel" name="lbl_id_parcela">
           <property name="text">
            <string/>
@@ -363,18 +261,191 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="5">
+        <item row="2" column="6">
+         <widget class="QLabel" name="label_60">
+          <property name="text">
+           <string>Agregado:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="8">
+         <widget class="QPushButton" name="btn_par_create">
+          <property name="text">
+           <string>Crear</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QLineEdit" name="ln_par_zona"/>
+        </item>
+        <item row="2" column="3">
+         <widget class="QLabel" name="label_35">
+          <property name="text">
+           <string>Municipio:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="4">
+         <widget class="QLineEdit" name="ln_par_poly"/>
+        </item>
+        <item row="5" column="1">
+         <widget class="QLineEdit" name="ln_par_recinto"/>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_34">
+          <property name="text">
+           <string>Provincia:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_32">
+          <property name="text">
+           <string>Zona:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="6">
+         <widget class="QLabel" name="label_61">
+          <property name="text">
+           <string>Parcela:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="3">
+         <widget class="QLabel" name="label_33">
+          <property name="text">
+           <string>Poligono:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="4">
+         <widget class="QPushButton" name="btn_par_update">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Actualizar</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_62">
+          <property name="text">
+           <string>Recinto</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="7" colspan="2">
+         <widget class="QLineEdit" name="ln_par_parcela"/>
+        </item>
+        <item row="2" column="2">
+         <widget class="QLabel" name="lbl_idprov">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="7">
          <widget class="QLabel" name="label_37">
           <property name="text">
            <string>Id Parcela:</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="5" colspan="2">
+        <item row="4" column="9">
+         <widget class="QLabel" name="lbl_idparcela">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="5">
+         <widget class="QLabel" name="lbl_idpoly">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="2">
+         <widget class="QLabel" name="lbl_idzona">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="5">
+         <widget class="QLabel" name="lbl_idmcpo">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="7" colspan="2">
          <widget class="QLineEdit" name="ln_par_agg"/>
         </item>
-        <item row="2" column="5" colspan="2">
-         <widget class="QLineEdit" name="ln_par_parcela"/>
+        <item row="5" column="2">
+         <widget class="QLabel" name="lbl_idrecinto">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="9">
+         <widget class="QLabel" name="lbl_idagg">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QComboBox" name="prov_combo">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QComboBox::drop-down
+{
+     subcontrol-origin: padding;
+     subcontrol-position: top right;
+     width: 15px;
+     color: white;
+     border-left-width: 0px;
+     border-left-color: darkgray;
+     border-left-style: solid; /* just a single line */
+     border-top-right-radius: 3px; /* same radius as the QComboBox */
+     border-bottom-right-radius: 3px;
+     padding-left: 10px;
+ }</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="4">
+         <widget class="QComboBox" name="mcpo_combo"/>
         </item>
        </layout>
       </widget>
@@ -382,9 +453,9 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>140</y>
+         <y>150</y>
          <width>721</width>
-         <height>141</height>
+         <height>131</height>
         </rect>
        </property>
        <property name="title">
@@ -396,7 +467,7 @@
           <x>10</x>
           <y>30</y>
           <width>701</width>
-          <height>71</height>
+          <height>51</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_9" columnstretch="0,0,0,0,0,0">
@@ -460,7 +531,7 @@
         <property name="geometry">
          <rect>
           <x>550</x>
-          <y>110</y>
+          <y>90</y>
           <width>161</width>
           <height>23</height>
          </rect>
@@ -675,7 +746,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -748,7 +819,11 @@
            </widget>
           </item>
           <item row="0" column="5">
-           <widget class="QLineEdit" name="line_fondo_precio"/>
+           <widget class="QLineEdit" name="line_fondo_precio">
+            <property name="toolTip">
+             <string/>
+            </property>
+           </widget>
           </item>
           <item row="0" column="3">
            <widget class="QLineEdit" name="line_fondo_formula"/>
@@ -1159,6 +1234,19 @@
        </property>
        <property name="text">
         <string/>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_39">
+       <property name="geometry">
+        <rect>
+         <x>620</x>
+         <y>0</y>
+         <width>47</width>
+         <height>13</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Id Lote:</string>
        </property>
       </widget>
      </widget>

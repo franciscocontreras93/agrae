@@ -140,16 +140,16 @@ create table unidades (
 )
 
 CREATE TABLE parcela (
-	pk_uid bigserial NOT NULL ,
+	pk_uid uuid DEFAULT uuid_generate_v4 NOT NULL ,
 	idparcela bigserial NOT NULL PRIMARY KEY,
 	nombre text,
-	provincia text,
-	municipio text,
-	agregado text,
-	zona text,
-	poligono text,
-	parcela text,
-	recinto text,
+	provincia integer references public.pronvia (idprovincia),
+	municipio integer references public.municipio (idmunicipio),
+	agregado integer,
+	zona integer,
+	poligono integer,
+	parcela integer,
+	recinto integer,
 	geometria geometry(MultiPolygon,4326),
 	borradologico boolean ) 
 
