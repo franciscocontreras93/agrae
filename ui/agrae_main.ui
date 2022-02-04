@@ -279,7 +279,11 @@
          </widget>
         </item>
         <item row="4" column="1">
-         <widget class="QLineEdit" name="ln_par_zona"/>
+         <widget class="QLineEdit" name="ln_par_zona">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
         </item>
         <item row="2" column="3">
          <widget class="QLabel" name="label_35">
@@ -292,10 +296,18 @@
          </widget>
         </item>
         <item row="4" column="4">
-         <widget class="QLineEdit" name="ln_par_poly"/>
+         <widget class="QLineEdit" name="ln_par_poly">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
         </item>
         <item row="5" column="1">
-         <widget class="QLineEdit" name="ln_par_recinto"/>
+         <widget class="QLineEdit" name="ln_par_recinto">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
         </item>
         <item row="2" column="0">
          <widget class="QLabel" name="label_34">
@@ -358,7 +370,11 @@
          </widget>
         </item>
         <item row="4" column="7" colspan="2">
-         <widget class="QLineEdit" name="ln_par_parcela"/>
+         <widget class="QLineEdit" name="ln_par_parcela">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
         </item>
         <item row="2" column="2">
          <widget class="QLabel" name="lbl_idprov">
@@ -403,7 +419,11 @@
          </widget>
         </item>
         <item row="2" column="7" colspan="2">
-         <widget class="QLineEdit" name="ln_par_agg"/>
+         <widget class="QLineEdit" name="ln_par_agg">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
         </item>
         <item row="5" column="2">
          <widget class="QLabel" name="lbl_idrecinto">

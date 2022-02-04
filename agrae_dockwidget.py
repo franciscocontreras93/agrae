@@ -1109,7 +1109,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         if confirm == QMessageBox.Yes:
             with self.conn as conn:
                 try:
-                    sql = f'''update parcela set nombre = '{name}', provincia = {prov}, municipio = {mcpo}, agregado = '{aggregate}', zona = '{zone}', poligono = '{poly}', parcela = '{allotment}', recinto = '{inclosure}' where idparcela = '{idParcela}' '''
+                    # sql = f'''update parcela set nombre = '{name}', provincia = {prov}, municipio = {mcpo}, agregado = '{aggregate}', zona = '{zone}', poligono = '{poly}', parcela = '{allotment}', recinto = '{inclosure}' where idparcela = '{idParcela}' '''
+                 
+                    sql = f'''update parcela set nombre = '{name}', provincia = {prov}, municipio = {mcpo}  where idparcela = '{idParcela}' '''  # ! SENTENCIA TEMPORAL
                     cursor = conn.cursor()
                     cursor.execute(sql)
                     conn.commit()
