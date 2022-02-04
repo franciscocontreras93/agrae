@@ -266,122 +266,40 @@ class agraeConfigWidget(QtWidgets.QDialog, agraeConfigPanel):
 
 
 class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
-
-
-
     closingPlugin = pyqtSignal()
-
-
     actualizar = pyqtSignal(list)
-
-
-    actualizarRel = pyqtSignal(str)
-    
+    actualizarRel = pyqtSignal(str)  
 
 
 
     def __init__(self, parent=None):
-
-
         """Constructor."""
-
-
         super(parcelaFindDialog, self).__init__(parent)
-
-
-
         self.utils = AgraeUtils()
-
-
-        self.conn = self.utils.Conn()
-
-
-
-        # TODO FILTER TABLE 
-
-        
-
-        
-        
-
+        self.conn = self.utils.Conn()     
 
         data = self.dataAuto()
-
-
         lista = [e[0] for e in data]
-
-
         completer = QCompleter(lista)
-
-
         completer.setCaseSensitivity(False)
-        
-        
-
-
-
-        # self.s = QSettings('agrae', 'dbhost')
-
-
-        # Set up the user interface from Designer.
-
-
-        # After setupUI you can access any designer object by doing
-
-
-        # self.<objectname>, and you can use autoconnect slots - see
-
-
-        # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
-
-
-        # #widgets-and-dialogs-with-auto-connect
-
 
         self.setupUi(self)
-
-
         self.btn_buscar.clicked.connect(self.buscar)
-
-
         self.lineEdit.setCompleter(completer)
         
-        
-
-
-
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
-
-
         self.pushButton.clicked.connect(self.cargarParcela)
-
-
         self.pushButton_2.clicked.connect(self.insertarIdRelacion)
 
 
-
     def closeEvent(self, event):
-
-
         self.closingPlugin.emit()
-
-
         event.accept()
 
-
-
     def data(self, filtro=None):
-
-
         if filtro == None:
-
-
             cursor = self.conn.cursor()
-
-
-            sql = '''select p.idparcela,p.nombre, (case when lp.parcela = 1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion,p.provincia, p.municipio , p.agregado , p.zona , p.poligono , p.parcela , p.recinto from parcela p left join (select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela  = p.idparcela left join lote l on lp2.idlote = l.idlote order by idparcela  '''
-
-
+            sql = '''select p.idparcela,p.nombre, (case when lp.parcela = 1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion,prov.nombre provincia, mcpo.nombre municipio , p.agregado , p.zona , p.poligono , p.parcela , p.recinto from parcela p left join (select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela  = p.idparcela left join lote l on lp2.idlote = l.idlote left join datos.provincia prov on p.provincia = prov.idprovincia left join datos.municipio mcpo on p.municipio = mcpo.idmunicipio order by idparcela  '''
             cursor.execute(sql)
 
 
@@ -394,7 +312,9 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
             cursor = self.conn.cursor()
 
 
-            sql = f"select p.idparcela, p.nombre, (case when lp.parcela=1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion, prov.nombre, p.municipio, p.agregado, p.zona, p.poligono, p.parcela, p.recinto from parcela p left join(select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela = p.idparcela left join lote l on lp2.idlote = l.idlote left join (select idprovincia, nombre from datos.provincia) as prov on p.provincia = prov.idprovincia  where p.nombre ilike '%{filtro}%' or prov.nombre ilike '%{filtro}%' or p.municipio ilike '%{filtro}%' or p.agregado ilike '%{filtro}%' or p.zona ilike '%{filtro}%' or p.poligono ilike '%{filtro}%' or p.parcela ilike '%{filtro}%' or p.recinto ilike '%{filtro}%' order by p.idparcela "
+            sql = f"select p.idparcela, p.nombre, (case when lp.parcela=1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion, prov.nombre provincia, mcpo.nombre municipio, p.agregado, p.zona, p.poligono, p.parcela, p.recinto from parcela p left join(select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela = p.idparcela left join lote l on lp2.idlote = l.idlote left join (select idprovincia, nombre from datos.provincia) as prov on p.provincia = prov.idprovincia left join (select idmunicipio , nombre from datos.municipio) as mcpo on p.municipio = mcpo.idmunicipio where p.nombre ilike '%{filtro}%' or prov.nombre ilike '%{filtro}%' or mcpo.nombre ilike '%{filtro}%' order by p.idparcela "
+            
+            # or p.agregado ilike '%{filtro}%' or p.zona ilike '%{filtro}%' or p.poligono ilike '%{filtro}%' or p.parcela ilike '%{filtro}%' or p.recinto ilike '%{filtro}%' order by p.idparcela " 
 
 
             cursor.execute(sql)
@@ -421,7 +341,8 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
         cursor = self.conn.cursor()
 
 
-        sql = "select distinct unnest(array[p.nombre, prov.nombre, mcpo.nombre]) from parcela p left join datos.provincia prov on p.provincia = prov.idprovincia left join datos.municipio mcpo on prov.idprovincia = mcpo.idprovincia "
+        sql = "select distinct unnest(array[p.nombre, prov.nombre, mcpo.nombre]) from parcela p left join datos.provincia prov on p.provincia = prov.idprovincia left join datos.municipio mcpo on p.municipio = mcpo.idmunicipio "
+        
 
 
 
@@ -464,7 +385,7 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
                 for i in range(b):
 
 
-                    item = QTableWidgetItem(str(data[j][i]))
+                    item = QTableWidgetItem(str(data[j][i]).upper())
 
 
                     self.tableWidget.setItem(j, i, item)
@@ -506,21 +427,10 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
             # print(data[0][1])
             self.populate(data)
         pass
-    
-
-
     def buscar(self):
-
-
         filtro = self.lineEdit.text()
-
-
         self.loadData(filtro)
-
         pass
-
-
-
     def cargarParcela(self):
         # value = self.tableWidget.item(0, 1).text()
         # print(str(value))
@@ -540,9 +450,6 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
         except Exception as ex:
             QMessageBox.about(self,'aGrae GIS', 'Debe Seleccionar una parcela para agregar') 
         pass
-    
-
-
     def insertarIdRelacion(self):
 
 
