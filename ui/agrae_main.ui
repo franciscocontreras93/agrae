@@ -142,11 +142,17 @@
          <property name="sizeAdjustPolicy">
           <enum>QAbstractScrollArea::AdjustToContents</enum>
          </property>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
          <property name="dragDropOverwriteMode">
           <bool>false</bool>
          </property>
          <property name="alternatingRowColors">
           <bool>true</bool>
+         </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
          </property>
          <property name="showGrid">
           <bool>true</bool>
@@ -531,32 +537,49 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>20</y>
+         <y>10</y>
          <width>721</width>
-         <height>101</height>
+         <height>102</height>
         </rect>
        </property>
-       <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,0,0,0,0,0,0,0,0,0,0">
+       <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,0,0,0,0,0,0,0,0">
         <property name="sizeConstraint">
          <enum>QLayout::SetDefaultConstraint</enum>
         </property>
-        <item row="0" column="1" colspan="4">
+        <item row="1" column="1" colspan="4">
          <widget class="QLineEdit" name="line_lote_nombre"/>
         </item>
-        <item row="2" column="1">
-         <widget class="QLineEdit" name="line_lote_idcultivo"/>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="line_lote_idexp"/>
-        </item>
-        <item row="2" column="7" colspan="4">
-         <widget class="QPushButton" name="btn_lote_create">
+        <item row="1" column="5">
+         <widget class="QPushButton" name="btn_buscar_lote">
           <property name="text">
-           <string>Crear</string>
+           <string>Buscar Lote</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
+        <item row="2" column="5">
+         <widget class="QLineEdit" name="lineEdit"/>
+        </item>
+        <item row="2" column="4">
+         <widget class="QLabel" name="label_40">
+          <property name="text">
+           <string>Und. Precio</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="6">
+         <widget class="QPushButton" name="btn_crear_lote">
+          <property name="text">
+           <string>crear</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLineEdit" name="line_lote_idcultivo"/>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="line_lote_idexp"/>
+        </item>
+        <item row="3" column="0">
          <widget class="QLabel" name="label_3">
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
@@ -569,14 +592,14 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="2">
+        <item row="3" column="2">
          <widget class="QPushButton" name="btn_buscar_cult">
           <property name="text">
            <string>Buscar Cult.</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="0">
+        <item row="1" column="0">
          <widget class="QLabel" name="label_4">
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
@@ -589,7 +612,7 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="6">
+        <item row="1" column="6">
          <widget class="QLabel" name="label_5">
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
@@ -602,7 +625,7 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
+        <item row="2" column="0">
          <widget class="QLabel" name="label_2">
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
@@ -615,7 +638,7 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="6">
+        <item row="2" column="6">
          <widget class="QLabel" name="label_6">
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
@@ -628,7 +651,7 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="7" colspan="4">
+        <item row="2" column="7" colspan="2">
          <widget class="QDateEdit" name="lote_dateCosecha">
           <property name="dateTime">
            <datetime>
@@ -655,7 +678,7 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="7" colspan="4">
+        <item row="1" column="7" colspan="2">
          <widget class="QDateEdit" name="lote_dateSiembra">
           <property name="dateTime">
            <datetime>
@@ -682,37 +705,40 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="2">
+        <item row="2" column="2">
          <widget class="QPushButton" name="btn_buscar_exp">
           <property name="text">
            <string>Buscar Exp.</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="5">
-         <widget class="QPushButton" name="btn_buscar_lote">
-          <property name="text">
-           <string>Buscar Lote</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="5">
-         <widget class="QLineEdit" name="lineEdit"/>
-        </item>
-        <item row="1" column="4">
-         <widget class="QLabel" name="label_40">
-          <property name="text">
-           <string>Und. Precio</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="5">
+        <item row="3" column="5">
          <widget class="QPushButton" name="btn_lote_update">
           <property name="enabled">
            <bool>false</bool>
           </property>
           <property name="text">
            <string>Actualizar</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="7">
+         <widget class="QLabel" name="lbl_id_lote">
+          <property name="font">
+           <font>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="6">
+         <widget class="QLabel" name="label_39">
+          <property name="text">
+           <string>Id Lote:</string>
           </property>
          </widget>
         </item>
@@ -1270,38 +1296,6 @@
          </layout>
         </widget>
        </widget>
-      </widget>
-      <widget class="QLabel" name="lbl_id_lote">
-       <property name="geometry">
-        <rect>
-         <x>680</x>
-         <y>0</y>
-         <width>47</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_39">
-       <property name="geometry">
-        <rect>
-         <x>620</x>
-         <y>0</y>
-         <width>47</width>
-         <height>13</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Id Lote:</string>
-       </property>
       </widget>
      </widget>
     </widget>

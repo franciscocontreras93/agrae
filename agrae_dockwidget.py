@@ -1053,7 +1053,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.prov_combo.currentTextChanged.connect(self.indexProvUpdate)
         self.setStyleSheet(self.style)
         self.line_buscar.setCompleter(completer)
-        self.btn_lote_create.clicked.connect(self.crearLote)
+        self.btn_crear_lote.clicked.connect(self.saludar)
 
 
 
@@ -1170,10 +1170,15 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 QMessageBox.about(self,'aGrae GIS:',f'Ocurrio un Error. \n {e}')
         else:
             pass
-    def crearLote(self):
+
+
+    
+    def saludar(self):
+        print('Hola!')
+        idlote = self.idlote
         nombre = self.line_lote_nombre.text()
-        idexp = int(self.line_lote_idexp.text())
-        idcult = int(self.line_lote_idcultivo.text())
+        idexp = self.line_lote_idexp.text()
+        idcult = self.line_lote_idcultivo.text()
         dateSiembra = self.lote_dateSiembra.date().toString('yyyy.MM.dd')
         dateCosecha = self.lote_dateCosecha.date().toString('yyyy.MM.dd')
         dateFondo = self.date_fondo.date().toString('yyyy.MM.dd')
@@ -1200,19 +1205,23 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         cob3Calculado = float(self.line_cob_calculado_3.text())
         cob3Ajustado = float(self.line_cob_ajustado_3.text())
         cob3Aplicado = float(self.line_cob_aplicado_3.text())
-        try:             
-            sql = f'''insert into lote (idexplotacion,idcultivo,nombre,fechasiembra,fechacosecha, fechafertilizacionfondo,fertilizantefondoformula,fertilizantefondoprecio,ertilizantefondocalculado,fertilizantefondoajustado,fertilizantefondoaplicado,fechafertilizacioncbo1 ,fertilizantecob1formula,fertilizantecob1precio,fertilizantecob1calculado,fertilizantecob1ajustado,fertilizantecob1aplicado,fechafertilizacioncbo2 ,fertilizantecbo2formula,fertilizantecbo2precio,fertilizantecbo2calculado,fertilizantecbo2ajustado,fertilizantecbo2aplicado,fechafertilizacioncbo3 ,fertilizantecbo3formula,fertilizantecbo3precio,fertilizantecbo3calculado,fertilizantecbo3ajustado,fertilizantecbo3aplicado) values ('{idexp}', '{idcult}',  '{nombre}','{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, {fondoAjustado},  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, {cob1Ajustado},  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  {cob2Ajustado}, {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, {cob3Ajustado},  {cob3Aplicado}) '''
+        
+        sql = f'''insert into lote values (nextval('lote_idlote_seq'),{idexp}, {idcult},  '{nombre}','{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, {fondoAjustado},  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, {cob1Ajustado},  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  {cob2Ajustado}, {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, {cob3Ajustado},  {cob3Aplicado}) '''
+        
 
-            print(sql)
-            conn = self.conn
-            cursor = conn.cursor()
-            cursor.execute(sql)
-            conn.commit()
-            QMessageBox.about(self.mainWindowDialog, f"aGrae GIS:",
-                              "Lote: *-- {name} --* Creado Correctamente.\nCrear Relacion Lote Parcelas.")
-        except Exception as e: 
-            QMessageBox.about(self,'aGrae GIS:',f'Ocurrio un Error. \n {e}')
-      
+
+        with self.conn as conn:
+            try: 
+                cursor = conn.cursor()
+                cursor.execute(sql)
+                conn.commit()
+                QMessageBox.about(self, f"aGrae GIS:",f"Lote: *--  --* Creado Correctamente.\nCrear Relacion Lote Parcelas.")
+            except Exception as e: 
+                QMessageBox.about(self, f"Error: ",f"{e}")
+
+
+           
+        
 
 
     def populateParcela(self,data):
