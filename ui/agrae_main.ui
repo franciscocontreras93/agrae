@@ -128,16 +128,6 @@
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_4" rowstretch="0,0,0" columnstretch="2,0">
-       <item row="1" column="1">
-        <widget class="QPushButton" name="btn_add_layer">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Cargar Capa</string>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="0" rowspan="3">
         <widget class="QTableWidget" name="tableWidget">
          <property name="contextMenuPolicy">
@@ -199,6 +189,16 @@
          </column>
         </widget>
        </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="btn_add_layer">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Cargar Capa</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>
@@ -215,7 +215,7 @@
       <string notr="true">#tabWidget_2::pane{border: 0}</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab_admin_pl">
       <attribute name="title">
@@ -227,13 +227,33 @@
          <x>10</x>
          <y>20</y>
          <width>721</width>
-         <height>132</height>
+         <height>121</height>
         </rect>
        </property>
-       <layout class="QGridLayout" name="gridLayout_8" columnstretch="0,0,0,0,0,0,0,0,0,0">
+       <layout class="QGridLayout" name="gridLayout_8" columnstretch="0,0,0,0,0,0,0,0">
         <property name="sizeConstraint">
          <enum>QLayout::SetDefaultConstraint</enum>
         </property>
+        <item row="5" column="5">
+         <widget class="QPushButton" name="btn_par_update">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Actualizar</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="4">
+         <widget class="QPushButton" name="pushButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Limpiar</string>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="0">
          <widget class="QLabel" name="label_31">
           <property name="text">
@@ -241,17 +261,17 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="1" colspan="4">
+        <item row="0" column="1" colspan="3">
          <widget class="QLineEdit" name="ln_par_nombre"/>
         </item>
-        <item row="0" column="6">
+        <item row="0" column="4">
          <widget class="QPushButton" name="btn_buscar_parcela">
           <property name="text">
            <string>Buscar</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="8">
+        <item row="0" column="6">
          <widget class="QLabel" name="lbl_id_parcela">
           <property name="text">
            <string/>
@@ -261,7 +281,7 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="6">
+        <item row="2" column="4">
          <widget class="QLabel" name="label_60">
           <property name="text">
            <string>Agregado:</string>
@@ -271,7 +291,7 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="8">
+        <item row="5" column="6">
          <widget class="QPushButton" name="btn_par_create">
           <property name="text">
            <string>Crear</string>
@@ -285,7 +305,7 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="3">
+        <item row="2" column="2">
          <widget class="QLabel" name="label_35">
           <property name="text">
            <string>Municipio:</string>
@@ -295,7 +315,7 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="4">
+        <item row="4" column="3">
          <widget class="QLineEdit" name="ln_par_poly">
           <property name="enabled">
            <bool>false</bool>
@@ -329,7 +349,7 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="6">
+        <item row="4" column="4">
          <widget class="QLabel" name="label_61">
           <property name="text">
            <string>Parcela:</string>
@@ -339,23 +359,13 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="3">
+        <item row="4" column="2">
          <widget class="QLabel" name="label_33">
           <property name="text">
            <string>Poligono:</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="4">
-         <widget class="QPushButton" name="btn_par_update">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Actualizar</string>
           </property>
          </widget>
         </item>
@@ -369,75 +379,22 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="7" colspan="2">
+        <item row="4" column="5" colspan="2">
          <widget class="QLineEdit" name="ln_par_parcela">
           <property name="enabled">
            <bool>false</bool>
           </property>
          </widget>
         </item>
-        <item row="2" column="2">
-         <widget class="QLabel" name="lbl_idprov">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="7">
+        <item row="0" column="5">
          <widget class="QLabel" name="label_37">
           <property name="text">
            <string>Id Parcela:</string>
           </property>
          </widget>
         </item>
-        <item row="4" column="9">
-         <widget class="QLabel" name="lbl_idparcela">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="5">
-         <widget class="QLabel" name="lbl_idpoly">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="2">
-         <widget class="QLabel" name="lbl_idzona">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="5">
-         <widget class="QLabel" name="lbl_idmcpo">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="7" colspan="2">
-         <widget class="QLineEdit" name="ln_par_agg">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="2">
-         <widget class="QLabel" name="lbl_idrecinto">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="9">
-         <widget class="QLabel" name="lbl_idagg">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
+        <item row="2" column="3">
+         <widget class="QComboBox" name="mcpo_combo"/>
         </item>
         <item row="2" column="1">
          <widget class="QComboBox" name="prov_combo">
@@ -464,8 +421,12 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="4">
-         <widget class="QComboBox" name="mcpo_combo"/>
+        <item row="2" column="5" colspan="3">
+         <widget class="QLineEdit" name="ln_par_agg">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -575,11 +536,60 @@
          <height>101</height>
         </rect>
        </property>
-       <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,0,0,0,0,0,0,0">
+       <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,0,0,0,0,0,0,0,0,0,0">
         <property name="sizeConstraint">
          <enum>QLayout::SetDefaultConstraint</enum>
         </property>
-        <item row="0" column="3">
+        <item row="0" column="1" colspan="4">
+         <widget class="QLineEdit" name="line_lote_nombre"/>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="line_lote_idcultivo"/>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="line_lote_idexp"/>
+        </item>
+        <item row="2" column="7" colspan="4">
+         <widget class="QPushButton" name="btn_lote_create">
+          <property name="text">
+           <string>Crear</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>Id. Cultivo:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QPushButton" name="btn_buscar_cult">
+          <property name="text">
+           <string>Buscar Cult.</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_4">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>Nombre Lote:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="6">
          <widget class="QLabel" name="label_5">
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
@@ -589,13 +599,6 @@
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
-         <widget class="QPushButton" name="btn_buscar_lote">
-          <property name="text">
-           <string>Buscar Lote</string>
           </property>
          </widget>
         </item>
@@ -612,7 +615,20 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="4" colspan="4">
+        <item row="1" column="6">
+         <widget class="QLabel" name="label_6">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>Fecha Cosecha:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="7" colspan="4">
          <widget class="QDateEdit" name="lote_dateCosecha">
           <property name="dateTime">
            <datetime>
@@ -639,20 +655,7 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="3">
-         <widget class="QLabel" name="label_6">
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
-          <property name="text">
-           <string>Fecha Cosecha:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="4" colspan="4">
+        <item row="0" column="7" colspan="4">
          <widget class="QDateEdit" name="lote_dateSiembra">
           <property name="dateTime">
            <datetime>
@@ -679,9 +682,6 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
-         <widget class="QLineEdit" name="line_lote_nombre"/>
-        </item>
         <item row="1" column="2">
          <widget class="QPushButton" name="btn_buscar_exp">
           <property name="text">
@@ -689,47 +689,24 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_3">
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
+        <item row="0" column="5">
+         <widget class="QPushButton" name="btn_buscar_lote">
           <property name="text">
-           <string>Id. Cultivo:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           <string>Buscar Lote</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_4">
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
+        <item row="1" column="5">
+         <widget class="QLineEdit" name="lineEdit"/>
+        </item>
+        <item row="1" column="4">
+         <widget class="QLabel" name="label_40">
           <property name="text">
-           <string>Nombre Lote:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           <string>Und. Precio</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="2">
-         <widget class="QPushButton" name="btn_buscar_cult">
-          <property name="text">
-           <string>Buscar Cult.</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="4" colspan="4">
-         <widget class="QPushButton" name="btn_lote_create">
-          <property name="text">
-           <string>Crear</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="3">
+        <item row="2" column="5">
          <widget class="QPushButton" name="btn_lote_update">
           <property name="enabled">
            <bool>false</bool>
@@ -738,12 +715,6 @@
            <string>Actualizar</string>
           </property>
          </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QLineEdit" name="line_lote_idcultivo"/>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="line_lote_idexp"/>
         </item>
        </layout>
       </widget>
@@ -843,6 +814,9 @@
             <property name="toolTip">
              <string/>
             </property>
+            <property name="text">
+             <string>0</string>
+            </property>
            </widget>
           </item>
           <item row="0" column="3">
@@ -863,7 +837,11 @@
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QLineEdit" name="line_fondo_calculado"/>
+           <widget class="QLineEdit" name="line_fondo_calculado">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="2">
            <widget class="QLabel" name="label_9">
@@ -873,7 +851,11 @@
            </widget>
           </item>
           <item row="1" column="3">
-           <widget class="QLineEdit" name="line_fondo_ajustado"/>
+           <widget class="QLineEdit" name="line_fondo_ajustado">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="4">
            <widget class="QLabel" name="label_10">
@@ -883,7 +865,11 @@
            </widget>
           </item>
           <item row="1" column="5">
-           <widget class="QLineEdit" name="line_fondo_aplicado"/>
+           <widget class="QLineEdit" name="line_fondo_aplicado">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -959,7 +945,11 @@
            </widget>
           </item>
           <item row="0" column="5">
-           <widget class="QLineEdit" name="line_cob_precio"/>
+           <widget class="QLineEdit" name="line_cob_precio">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
           <item row="0" column="3">
            <widget class="QLineEdit" name="line_cob_formula"/>
@@ -979,7 +969,11 @@
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QLineEdit" name="line_cob_calculado"/>
+           <widget class="QLineEdit" name="line_cob_calculado">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="2">
            <widget class="QLabel" name="label_17">
@@ -989,7 +983,11 @@
            </widget>
           </item>
           <item row="1" column="3">
-           <widget class="QLineEdit" name="line_cob_ajustado"/>
+           <widget class="QLineEdit" name="line_cob_ajustado">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="4">
            <widget class="QLabel" name="label_18">
@@ -999,7 +997,11 @@
            </widget>
           </item>
           <item row="1" column="5">
-           <widget class="QLineEdit" name="line_cob_aplicado"/>
+           <widget class="QLineEdit" name="line_cob_aplicado">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -1075,7 +1077,11 @@
            </widget>
           </item>
           <item row="0" column="5">
-           <widget class="QLineEdit" name="line_cob_precio_2"/>
+           <widget class="QLineEdit" name="line_cob_precio_2">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
           <item row="0" column="3">
            <widget class="QLineEdit" name="line_cob_formula_2"/>
@@ -1095,7 +1101,11 @@
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QLineEdit" name="line_cob_calculado_2"/>
+           <widget class="QLineEdit" name="line_cob_calculado_2">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="2">
            <widget class="QLabel" name="label_23">
@@ -1105,7 +1115,11 @@
            </widget>
           </item>
           <item row="1" column="3">
-           <widget class="QLineEdit" name="line_cob_ajustado_2"/>
+           <widget class="QLineEdit" name="line_cob_ajustado_2">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="4">
            <widget class="QLabel" name="label_24">
@@ -1115,7 +1129,11 @@
            </widget>
           </item>
           <item row="1" column="5">
-           <widget class="QLineEdit" name="line_cob_aplicado_2"/>
+           <widget class="QLineEdit" name="line_cob_aplicado_2">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -1191,7 +1209,11 @@
            </widget>
           </item>
           <item row="0" column="5">
-           <widget class="QLineEdit" name="line_cob_precio_3"/>
+           <widget class="QLineEdit" name="line_cob_precio_3">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
           <item row="0" column="3">
            <widget class="QLineEdit" name="line_cob_formula_3"/>
@@ -1211,7 +1233,11 @@
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QLineEdit" name="line_cob_calculado_3"/>
+           <widget class="QLineEdit" name="line_cob_calculado_3">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="2">
            <widget class="QLabel" name="label_29">
@@ -1221,7 +1247,11 @@
            </widget>
           </item>
           <item row="1" column="3">
-           <widget class="QLineEdit" name="line_cob_ajustado_3"/>
+           <widget class="QLineEdit" name="line_cob_ajustado_3">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="4">
            <widget class="QLabel" name="label_30">
@@ -1231,7 +1261,11 @@
            </widget>
           </item>
           <item row="1" column="5">
-           <widget class="QLineEdit" name="line_cob_aplicado_3"/>
+           <widget class="QLineEdit" name="line_cob_aplicado_3">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -1279,7 +1313,6 @@
   <tabstop>line_buscar</tabstop>
   <tabstop>btn_buscar1</tabstop>
   <tabstop>tableWidget</tabstop>
-  <tabstop>btn_add_layer</tabstop>
   <tabstop>tabWidget_2</tabstop>
   <tabstop>lote_dateSiembra</tabstop>
   <tabstop>lote_dateCosecha</tabstop>

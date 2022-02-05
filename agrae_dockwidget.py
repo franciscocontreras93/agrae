@@ -1018,7 +1018,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.utils = AgraeUtils()
         self.conn = self.utils.Conn()
         self.style = self.utils.styleSheet()       
-        self.idprov = None
+        self.idlote = None
         self.idmcpo = None
         self.idAgg = None
         self.idZona = None
@@ -1053,6 +1053,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.prov_combo.currentTextChanged.connect(self.indexProvUpdate)
         self.setStyleSheet(self.style)
         self.line_buscar.setCompleter(completer)
+        self.btn_lote_create.clicked.connect(self.crearLote)
 
 
 
@@ -1124,121 +1125,94 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
 
     def actualizarLote(self):
-
-
-        idlote = self.lbl_id_lote.text()
-
-
+        idlote = self.idlote
         nombre = self.line_lote_nombre.text()
-
-
         idexp = self.line_lote_idexp.text()
-
-
         idcult = self.line_lote_idcultivo.text()
-
-
         dateSiembra = self.lote_dateSiembra.date().toString('yyyy.MM.dd')
-
-
         dateCosecha = self.lote_dateCosecha.date().toString('yyyy.MM.dd')
-
-
         dateFondo = self.date_fondo.date().toString('yyyy.MM.dd')
-
-
         fondoFormula = self.line_fondo_formula.text()
-
-
         fondoPrecio = float(self.line_fondo_precio.text())
-
-
         fondoCalculado = float(self.line_fondo_calculado.text())
-
-
         fondoAjustado = float(self.line_fondo_ajustado.text())
-
-
         fondoAplicado = float(self.line_fondo_aplicado.text())
-
-
         dateCob1 = self.date_cob.date().toString('yyyy.MM.dd')
-
-
         cob1Formula = self.line_cob_formula.text()
-
-
         cob1Precio = float(self.line_cob_precio.text())
-
-
         cob1Calculado = float(self.line_cob_calculado.text())
-
-
         cob1Ajustado = float(self.line_cob_ajustado.text())
-
-
         cob1Aplicado = float(self.line_cob_aplicado.text())
-
-
         dateCob2 = self.date_cob_2.date().toString('yyyy.MM.dd')
-
-
         cob2Formula = self.line_cob_formula_2.text()
-
-
         cob2Precio = float(self.line_cob_precio_2.text())
-
-
         cob2Calculado = float(self.line_cob_calculado_2.text())
-
-
         cob2Ajustado = float(self.line_cob_ajustado_2.text())
-
-
         cob2Aplicado = float(self.line_cob_aplicado_2.text())
-
-
         dateCob3 = self.date_cob_3.date().toString('yyyy.MM.dd')
-
-
         cob3Formula = self.line_cob_formula_3.text()
-
-
         cob3Precio = float(self.line_cob_precio_3.text())
-
-
         cob3Calculado = float(self.line_cob_calculado_3.text())
-
-
         cob3Ajustado = float(self.line_cob_ajustado_3.text())
-
-
         cob3Aplicado = float(self.line_cob_aplicado_3.text())
+        confirm = QMessageBox.question(
+            self, 'aGrae GIS', f"Seguro quiere Actualizar el Lote:\n--- ID: {idlote}\n--- Nombre: {nombre.upper()}?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if confirm == QMessageBox.Yes:
+            try:             
+                sql = f'''update lote set  idexplotacion = '{idexp}', idcultivo = '{idcult}', nombre = '{nombre}',fechasiembra = '{dateSiembra}',fechacosecha = '{dateCosecha}',fechafertilizacionfondo = '{dateFondo}',    fertilizantefondoformula = '{fondoFormula}',fertilizantefondoprecio = {fondoPrecio}, fertilizantefondocalculado = {fondoCalculado},fertilizantefondoajustado = {fondoAjustado},  fertilizantefondoaplicado = {fondoAplicado},fechafertilizacioncbo1 = '{dateCob1}', fertilizantecob1formula ='{cob1Formula}',fertilizantecob1precio = {cob1Precio}, fertilizantecob1calculado = {cob1Calculado},fertilizantecob1ajustado = {cob1Ajustado}, fertilizantecob1aplicado = {cob1Aplicado},fechafertilizacioncbo2 = '{dateCob2}', fertilizantecob2formula = '{cob2Formula}', fertilizantecob2precio = {cob2Precio},  fertilizantecob2calculado = {cob2Calculado}, fertilizantecob2ajustado = {cob2Ajustado}, fertilizantecob2aplicado ={cob2Aplicado},fechafertilizacioncbo3 = '{dateCob3}', fertilizantecob3formula = '{cob3Formula}',fertilizantecob3precio = {cob3Precio}, fertilizantecob3calculado = {cob3Calculado},fertilizantecob3ajustado = {cob3Ajustado}, fertilizantecob3aplicado = {cob3Aplicado} where idlote = {idlote} '''
+                # print(sql)      
+                conn = self.conn
+                cursor = conn.cursor()
+                cursor.execute(sql)
+                conn.commit()
+                QMessageBox.about(self, f"aGrae GIS:",f"Lote *-- {nombre.upper()} --* Se modifico Correctamente.")
+            except Exception as e: 
+                QMessageBox.about(self,'aGrae GIS:',f'Ocurrio un Error. \n {e}')
+        else:
+            pass
+    def crearLote(self):
+        nombre = self.line_lote_nombre.text()
+        idexp = int(self.line_lote_idexp.text())
+        idcult = int(self.line_lote_idcultivo.text())
+        dateSiembra = self.lote_dateSiembra.date().toString('yyyy.MM.dd')
+        dateCosecha = self.lote_dateCosecha.date().toString('yyyy.MM.dd')
+        dateFondo = self.date_fondo.date().toString('yyyy.MM.dd')
+        fondoFormula = self.line_fondo_formula.text()
+        fondoPrecio = float(self.line_fondo_precio.text())
+        fondoCalculado = float(self.line_fondo_calculado.text())
+        fondoAjustado = float(self.line_fondo_ajustado.text())
+        fondoAplicado = float(self.line_fondo_aplicado.text())
+        dateCob1 = self.date_cob.date().toString('yyyy.MM.dd')
+        cob1Formula = self.line_cob_formula.text()
+        cob1Precio = float(self.line_cob_precio.text())
+        cob1Calculado = float(self.line_cob_calculado.text())
+        cob1Ajustado = float(self.line_cob_ajustado.text())
+        cob1Aplicado = float(self.line_cob_aplicado.text())
+        dateCob2 = self.date_cob_2.date().toString('yyyy.MM.dd')
+        cob2Formula = self.line_cob_formula_2.text()
+        cob2Precio = float(self.line_cob_precio_2.text())
+        cob2Calculado = float(self.line_cob_calculado_2.text())
+        cob2Ajustado = float(self.line_cob_ajustado_2.text())
+        cob2Aplicado = float(self.line_cob_aplicado_2.text())
+        dateCob3 = self.date_cob_3.date().toString('yyyy.MM.dd')
+        cob3Formula = self.line_cob_formula_3.text()
+        cob3Precio = float(self.line_cob_precio_3.text())
+        cob3Calculado = float(self.line_cob_calculado_3.text())
+        cob3Ajustado = float(self.line_cob_ajustado_3.text())
+        cob3Aplicado = float(self.line_cob_aplicado_3.text())
+        try:             
+            sql = f'''insert into lote (idexplotacion,idcultivo,nombre,fechasiembra,fechacosecha, fechafertilizacionfondo,fertilizantefondoformula,fertilizantefondoprecio,ertilizantefondocalculado,fertilizantefondoajustado,fertilizantefondoaplicado,fechafertilizacioncbo1 ,fertilizantecob1formula,fertilizantecob1precio,fertilizantecob1calculado,fertilizantecob1ajustado,fertilizantecob1aplicado,fechafertilizacioncbo2 ,fertilizantecbo2formula,fertilizantecbo2precio,fertilizantecbo2calculado,fertilizantecbo2ajustado,fertilizantecbo2aplicado,fechafertilizacioncbo3 ,fertilizantecbo3formula,fertilizantecbo3precio,fertilizantecbo3calculado,fertilizantecbo3ajustado,fertilizantecbo3aplicado) values ('{idexp}', '{idcult}',  '{nombre}','{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, {fondoAjustado},  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, {cob1Ajustado},  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  {cob2Ajustado}, {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, {cob3Ajustado},  {cob3Aplicado}) '''
 
-
-
-
-        sql = self.utils.actualizarQueryLote(idlote,idcult,nombre,dateSiembra,dateCosecha,dateFondo,fondoFormula,fondoPrecio,fondoCalculado,fondoAjustado,fondoAplicado,dateCob1,cob1Formula,cob1Precio,cob1Calculado,cob1Ajustado,cob1Aplicado,dateCob2,cob2Formula,cob2Precio,cob2Calculado,cob2Ajustado,cob2Aplicado,dateCob3,cob3Formula,cob3Precio,cob3Calculado,cob3Ajustado,cob3Aplicado)
-        
-        print(idlote)
-        
-
-
-        # conn = self.conn
-
-
-        # cursor = conn.cursor()
-
-
-        # cursor.execute(sql)
-
-
-        # cursor.commit()
-
-
-
-        pass
-
+            print(sql)
+            conn = self.conn
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            conn.commit()
+            QMessageBox.about(self.mainWindowDialog, f"aGrae GIS:",
+                              "Lote: *-- {name} --* Creado Correctamente.\nCrear Relacion Lote Parcelas.")
+        except Exception as e: 
+            QMessageBox.about(self,'aGrae GIS:',f'Ocurrio un Error. \n {e}')
+      
 
 
     def populateParcela(self,data):
@@ -1260,201 +1234,78 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.ln_par_parcela.setText(dataStr[8])
         self.ln_par_recinto.setText(dataStr[9])
         self.btn_par_update.setEnabled(True)
-
-
-
-
     def populateLote(self, data):
-
-
         # print(data)
-
-
         self.resetStyleLabels()
-
-
         data2 = []
-
-
         style = "font-weight: bold ; color : red"
-
-
         for e in data:
-
-
             if e == None:
-
-
                 data2.append(e)
-
-
             else:
-
-
                 data2.append(str(e))
-
-
-
         try:
-
-
+            self.idlote = data[0]
             self.lbl_id_lote.setText(data2[0])
-
-
             self.line_lote_idexp.setText(data2[1])
-
-
             self.line_lote_idcultivo.setText(data2[2])
-
-
             self.line_lote_nombre.setText(data2[3])
-
-
             try:
-
-
                 self.lote_dateSiembra.setDate(data[4])
-
-
             except:
-
-
                 self.label_5.setStyleSheet(style)
-                pass
+                
 
 
             try:
-
-
                 self.lote_dateCosecha.setDate(data[5])
-
-
             except:
-
-
                 self.label_6.setStyleSheet(style)
                 pass
 
 
             try:
-
-
                 self.lote_dateFondo.setDate(data[6])
-
-
             except:
-
-
                 self.label_13.setStyleSheet(style)
                 pass
-
-
             self.line_fondo_formula.setText(data2[7])
-
-
             self.line_fondo_precio.setText(data2[8])
-
-
             self.line_fondo_calculado.setText(data2[9])
-
-
             self.line_fondo_ajustado.setText(data2[10])
-
-
             self.line_fondo_aplicado.setText(data2[11])
-
-
             try:
-
-
                 self.date_cob.setDate(data[12])
-
-
             except:
-
-
                 self.label_15.setStyleSheet(style)
                 pass
-
-
             self.line_cob_formula.setText(data2[13])
-
-
             self.line_cob_precio.setText(data2[14])
-
-
             self.line_cob_calculado.setText(data2[15])
-
-
             self.line_cob_ajustado.setText(data2[16])
-
-
             self.line_cob_aplicado.setText(data2[17])
-
-
             try:
-
-
                 self.date_cob_2.setDate(data[18])
-
-
             except:
-
-
                 self.label_20.setStyleSheet(style)
                 pass
-
-
             self.line_cob_formula_2.setText(data2[19])
-
-
             self.line_cob_precio_2.setText(data2[20])
-
-
             self.line_cob_calculado_2.setText(data2[21])
-
-
             self.line_cob_ajustado_2.setText(data2[22])
-
-
             self.line_cob_aplicado_2.setText(data2[23])
-
-
             try:
-
-
                 self.date_cob_3.setDate(data[24])
-
-
             except:
-
-
                 self.label_26.setStyleSheet(style)
                 pass
-
-
             self.line_cob_formula_3.setText(data2[25])
-
-
             self.line_cob_precio_3.setText(data2[26])
-
-
             self.line_cob_calculado_3.setText(data2[27])
-
-
             self.line_cob_ajustado_3.setText(data2[28])
-
-
             self.line_cob_aplicado_3.setText(data2[29])
-
-
             self.btn_lote_update.setEnabled(True)
-
-
-
         except Exception as ex:
-
-
             print(ex)
             pass
 
@@ -1464,7 +1315,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
 
         self.ln_rel_parcela.setText(idPar)
-
 
     def populateRelLote(self,idLote):
 
@@ -1539,7 +1389,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         dialog.exec_()
 
-
+    def crearLote(self): 
+        pass
 
     def crearRelacionLoteParcela(self):
 
@@ -1795,8 +1646,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         idprov = str(self.prov_combo.currentData())
         print(idprov)
         self.mcpo_combo.clear()
-        self.populateComboMcpo(idprov)
-        
+        self.populateComboMcpo(idprov)   
     def populateComboMcpo(self,idprov):
         self.mcpo_combo.setStyleSheet("QComboBox { combobox-popup: 0; }")
         conn = self.conn
