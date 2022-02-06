@@ -1437,6 +1437,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.setupUi(self)
 
         self.populateComboProv()
+        
 
         self.setLineFormatValidator()
 
@@ -1471,7 +1472,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.line_buscar.setCompleter(completer)
 
         self.btn_crear_lote.clicked.connect(self.crearLote)
-
 
 
 
@@ -2416,8 +2416,5 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
              conn.rollback()
              pass
-             
-        
-        
 
 

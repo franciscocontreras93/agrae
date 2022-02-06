@@ -26,6 +26,8 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVari
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
 from qgis.core import *
+import pip
+import random
 
 from qgis import processing
 # Initialize Qt resources from file resources.py
@@ -37,6 +39,34 @@ from .utils import AgraeUtils
 from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget
 import os.path
 from qgis.core import QgsDataSourceUri
+
+try:
+    import psycopg2
+    import psycopg2.extras
+except: 
+    pip.main('install','psycopg2')
+    import psycopg2
+    import psycopg2.extras
+
+try: 
+    import numpy as np
+except:
+    pip.main('install', 'numpy')
+    import numpy as np
+try:
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+except:
+    pip.main('install', 'matplotlib')
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+try: 
+    import seaborn as sns
+except:
+    pip.main('install', 'seaborn')
+    import seaborn as sns
+
+    
 
 
 class agrae:
@@ -55,6 +85,8 @@ class agrae:
         self.utils = AgraeUtils()
         self.conn = self.utils.Conn()
         self.dbset = QSettings('agrae','dbConnection')
+
+        self.nameLayerComposer = None
 
 
 
@@ -479,8 +511,10 @@ class agrae:
                     
                 if layer.isValid():
                     QgsProject.instance().addMapLayer(layer)
+                    self.iface.setActiveLayer(layer)
+                    self.iface.zoomToActiveLayer()
                     print(f"Capa añadida correctamente ")
-                    layer.startEditing()
+                    
 
                 else:
                     # uri.setDataSource('public', tablename, None)
@@ -580,26 +614,7 @@ class agrae:
                 self.mainWindowDialog.ln_par_poly.setText('')
                 self.mainWindowDialog.ln_par_parcela.setText('')
                 self.mainWindowDialog.ln_par_recinto.setText('')
-        
-        # TODO
-        def populate(inicial=True):
-            # self.mainWindowDialog.btn_add_layer.setEnabled(True)
-            # self.queryCapaLotes = sqlQuery
-            # a = len(data)
-            # b = len(data[0])
-            # i = 1
-            # j = 1
-            # self.mainWindowDialog.tableWidget.setRowCount(a)
-            # self.mainWindowDialog.tableWidget.setColumnCount(b)
-            # for j in range(a):
-            #     for i in range(b):
-            #         item = QTableWidgetItem(str(data[j][i]))
-            #         self.mainWindowDialog.tableWidget.setItem(j, i,item)
-            # print(data)
-            # funct = loadLayer(sqlQuery)
-            pass
 
-        # TODO       
         def dataLoteParcela(param='',inicial=False):
             with self.conn as conn:
                 if inicial == False:
@@ -624,9 +639,89 @@ class agrae:
                 else:
                     return data
             
-                    
+        def printMap():
+            import math 
+            barPlot()
+            #! LAYOUTMANAGER INSTANCIA
+            manager = QgsProject.instance().layoutManager() 
+            layoutName = self.iface.activeLayer().name()
+            manager_list = manager.printLayouts() 
+
+            for l in manager_list:
+                if l.name() == layoutName :
+                    manager.removeLayout(l)
+
+            layout = QgsPrintLayout(QgsProject.instance())
+            layout.initializeDefaults() 
+            layout.setName(layoutName)
+            manager.addLayout(layout)
+
+            lyrsDict = QgsProject().instance().mapLayers()
+            lyrs = []
+            ms = QgsMapSettings()
+            for lyr in lyrsDict:
+                lyrs.append(lyrsDict[lyr])
+            ms.setLayers(lyrs)            
+            extent = QgsProject.instance().mapLayersByName(layoutName)[0].extent()
+            lyrScale = self.iface.mapCanvas().scale()
+            scale = math.ceil((lyrScale / 200)) * 200
+            print(scale)
+            # extent.scale(1.0)
+            # ms.setExtent(extent)
+            #! MAP ITEM
+            map = QgsLayoutItemMap(layout)
+            map.setRect(20,20,20,20)
+            map.setExtent(extent)
+            map.setScale(math.floor(scale*10))
+            # map.setBackgroundColor(QColor(255,255,225,0))
+            map.attemptMove(QgsLayoutPoint(5, 5,QgsUnitTypes.LayoutMillimeters))
+            map.attemptResize(QgsLayoutSize(180, 180,QgsUnitTypes.LayoutMillimeters))
+
+            #! BARPLOT
+            barplot = QgsLayoutItemPicture(layout)
+            barplot.setMode(QgsLayoutItemPicture.FormatRaster)
+            barplot.setPicturePath(r'C:\Users\FRANCISCO\Desktop\demo.png')
+            barplot.setResizeMode(QgsLayoutItemPicture.ZoomResizeFrame)
+            # barplot.setRect(20, 20, 20, 20)
+            # dim_barplot = [640, 480]
+            barplot.attemptMove(QgsLayoutPoint(212, 5, QgsUnitTypes.LayoutMillimeters))
+            barplot.attemptResize(QgsLayoutSize(80, 60, QgsUnitTypes.LayoutMillimeters))
 
 
+
+
+
+            #! ADD ITEMS TO LAYOUT 
+            layout.addLayoutItem(map)
+            layout.addLayoutItem(barplot)
+
+
+            pass            
+
+        def barPlot():
+            sns.set_style('darkgrid')
+            conn = psycopg2.connect(
+                'host=localhost dbname=agrae user=postgres password=23826405')
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            cursor.execute(
+                'select nombre , st_area(st_transform(geometria,25830))/10000  from parcela')
+            # data = [r[1] for r in cursor.fetchall()]
+            result = cursor.fetchall()
+            nombre = [e[0] for e in result]
+            data = [e[1] for e in result]
+
+            print(nombre, data)
+
+
+            # ypos = np.arange(len(nombre))
+            # plt.xticks(ypos, nombre)
+            # plt.ylabel('Area Parcela (Ha)')
+            # plt.bar(ypos, data)
+
+            sns.barplot(nombre,data)
+
+            plt.show()\
+# plt.savefig(r'C:\Users\FRANCISCO\Desktop\demo.png')
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
@@ -641,6 +736,7 @@ class agrae:
                 # self.mainWindowDialog.tableWidget.setColumnHidden(5, True)
                 # self.mainWindowDialog.loadButton.clicked.connect(loadAllotmentToDB)
                 self.mainWindowDialog.btn_lote_update.setEnabled(False)
+                self.mainWindowDialog.pushButton_2.clicked.connect(printMap)
 
             self.mainWindowDialog.closingPlugin.connect(self.onClosePluginMain)
 
