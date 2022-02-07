@@ -28,6 +28,7 @@ from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
 from qgis.core import *
 import pip
 import random
+import math
 
 from qgis import processing
 # Initialize Qt resources from file resources.py
@@ -87,6 +88,7 @@ class agrae:
         self.dbset = QSettings('agrae','dbConnection')
 
         self.nameLayerComposer = None
+        self.sqlParcela = None
 
 
 
@@ -137,7 +139,6 @@ class agrae:
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('agrae', message)
-
 
     def add_action(
         self,
@@ -212,7 +213,6 @@ class agrae:
 
         return action
 
-
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
@@ -235,16 +235,6 @@ class agrae:
             parent=self.iface.mainWindow())
 
     #--------------------------------------------------------------------------
-
-    def onClosePlugin(self):
-        self.dockwidget.inputLay.clear()
-        self.dockwidget.superLay.clear()
-        # disconnects
-        self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
-
-
-        self.pluginIsActive = False
-
     def onClosePluginConfig(self):
         # disconnects
         self.configDialog.closingPlugin2.disconnect(self.onClosePluginConfig)
@@ -256,7 +246,6 @@ class agrae:
         self.mainWindowDialog.closingPlugin.disconnect(
             self.onClosePluginMain)
         self.pluginIsActive = False
-
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -489,7 +478,6 @@ class agrae:
 
         pass
 
-
     def runMain(self):
         def loadLayer():
             sql = self.queryCapaLotes
@@ -526,8 +514,7 @@ class agrae:
             except Exception as ex:
                 QMessageBox.about(self.mainWindowDialog, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
         
-        def cargarLotesParcelas():
-            
+        def cargarLotesParcelas():            
             param = self.mainWindowDialog.line_buscar.text()
             sqlQuery = ''
             try: 
@@ -575,6 +562,45 @@ class agrae:
             except Exception as ex: 
                 QMessageBox.about(self.mainWindowDialog, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")
 
+        def cargarParcela(): 
+            self.sqlParcela = self.mainWindowDialog.sqlParcela
+            sql = self.sqlParcela
+            dns = self.utils.ConnParams()
+            row = self.mainWindowDialog.tableWidget.currentRow()
+            column = self.mainWindowDialog.tableWidget.currentColumn()
+            try:
+                uri = QgsDataSourceUri()
+                uri.setConnection(dns['host'], dns['port'],dns['dbname'], dns['user'], dns['password'])
+                uri.setDataSource('', f'({sql})', 'geometria', '', 'idparcela')
+                nombre = self.mainWindowDialog.tableWidget.item(row, column)
+                if nombre == None:
+                    nombre = self.mainWindowDialog.ln_par_nombre.text()
+                    layer = self.iface.addVectorLayer(
+                        uri.uri(False), nombre, 'postgres')
+                else:
+                    layer = self.iface.addVectorLayer(
+                        uri.uri(False), nombre, 'postgres')
+
+                if layer.isValid():
+                    QgsProject.instance().addMapLayer(layer)
+                    self.iface.setActiveLayer(layer)
+                    self.iface.zoomToActiveLayer()
+                    print(f"Capa añadida correctamente ")
+                    self.mainWindowDialog.pushButton.setEnabled(False)
+
+                else:
+                    # uri.setDataSource('public', tablename, None)
+                    # layer = QgsVectorLayer(
+                    #     uri.uri(False), tablename, 'postgres')
+                    # QgsProject.instance().addMapLayer(layer)
+                    QMessageBox.about(self, "aGrae GIS:","La capa no es Valida")
+
+            except Exception as ex:
+                QMessageBox.about(
+                    self.mainWindowDialog, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
+
+
+
         def crearParcela():
             try:
                 with self.conn as conn:
@@ -586,20 +612,26 @@ class agrae:
                 srid = layer.crs().authid()[5:]
 
                 name = str(self.mainWindowDialog.ln_par_nombre.text())
-                prov = str(self.mainWindowDialog.ln_par_provincia.text())
-                mcpo = str(self.mainWindowDialog.ln_par_mcpo.text())
-                aggregate = str(self.mainWindowDialog.ln_par_agg.text())
-                zone = str(self.mainWindowDialog.ln_par_zona.text())
-                poly = str(self.mainWindowDialog.ln_par_poly.text())
-                allotment = str(self.mainWindowDialog.ln_par_parcela.text())
-                inclosure = str(self.mainWindowDialog.ln_par_recinto.text())
-
+                prov = int(self.mainWindowDialog.prov_combo.currentData())
+                mcpo = int(self.mainWindowDialog.mcpo_combo.currentData())
+                aggregate = int(self.mainWindowDialog.ln_par_agg.text())
+                zone = int(self.mainWindowDialog.ln_par_zona.text())
+                poly = int(self.mainWindowDialog.ln_par_poly.text())
+                allotment = int(self.mainWindowDialog.ln_par_parcela.text())
+                inclosure = int(self.mainWindowDialog.ln_par_recinto.text())
                 # print(ls)
-                sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria) VALUES('{name}','{prov}','{mcpo}','{aggregate}','{zone}','{poly}','{allotment}','{inclosure}',st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))))'''
+                
+                sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria) VALUES('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))))'''
                 cur.execute(sql)
                 conn.commit()
-                # print('agregado correctamente')
-                QMessageBox.about(self.mainWindowDialog,f"aGrae GIS:", "Parcela *-- {name} --* Creada Correctamente.\nCrear Relacion Lote Parcelas.")
+                print('agregado correctamente')
+                QMessageBox.about(self.mainWindowDialog,f"aGrae GIS:", f"Parcela *-- {name} --* Creada Correctamente.\nCrear Relacion Lote Parcelas.")
+                
+
+            
+            except IndexError as ie: 
+                QMessageBox.about(self.mainWindowDialog, f"aGrae GIS {ie}",f"Debe Seleccionar una parcela a cargar.")
+
 
             except Exception as ex:
                 print(ex)
@@ -607,13 +639,13 @@ class agrae:
 
             finally: 
                 self.mainWindowDialog.ln_par_nombre.setText('')
-                self.mainWindowDialog.ln_par_provincia.setText('')
-                self.mainWindowDialog.ln_par_mcpo.setText('')
-                self.mainWindowDialog.ln_par_agg.setText('')
-                self.mainWindowDialog.ln_par_zona.setText('')
-                self.mainWindowDialog.ln_par_poly.setText('')
-                self.mainWindowDialog.ln_par_parcela.setText('')
-                self.mainWindowDialog.ln_par_recinto.setText('')
+                # self.mainWindowDialog.ln_par_provincia.setText('')
+                # self.mainWindowDialog.ln_par_mcpo.setText('')
+                self.mainWindowDialog.ln_par_agg.setText('0')
+                self.mainWindowDialog.ln_par_zona.setText('0')
+                self.mainWindowDialog.ln_par_poly.setText('0')
+                self.mainWindowDialog.ln_par_parcela.setText('0')
+                self.mainWindowDialog.ln_par_recinto.setText('0')
 
         def dataLoteParcela(param='',inicial=False):
             with self.conn as conn:
@@ -640,7 +672,9 @@ class agrae:
                     return data
             
         def printMap():
-            import math 
+            
+
+            
             barPlot()
             #! LAYOUTMANAGER INSTANCIA
             manager = QgsProject.instance().layoutManager() 
@@ -651,56 +685,40 @@ class agrae:
                 if l.name() == layoutName :
                     manager.removeLayout(l)
             
-            #print(lyrs)
-            
-
-
+            #? print(lyrs) 
             layout = QgsPrintLayout(QgsProject.instance())
             layout.initializeDefaults() 
             layout.setName(layoutName)
             manager.addLayout(layout)
-
             lyrsDict = QgsProject().instance().mapLayers()
             lyrs = [lyrsDict[lyr] for lyr in lyrsDict]
             colors = [l.renderer().symbol().color().name() for l in lyrs]
-            print(colors)
-            # for l in lyrs:
-            #     color = 
-            #     colors.append(color)
-            
-            
-            ms = QgsMapSettings()
-            
+            print(colors)       
+            ms = QgsMapSettings()            
             ms.setLayers(lyrs)            
             extent = QgsProject.instance().mapLayersByName(layoutName)[0].extent()
             lyrScale = self.iface.mapCanvas().scale()
             scale = math.ceil((lyrScale / 200)) * 200
             print(scale)
-            # extent.scale(1.0)
-            # ms.setExtent(extent)
+            #? extent.scale(1.0)
+            #? ms.setExtent(extent)
             #! MAP ITEM
             map = QgsLayoutItemMap(layout)
             map.setRect(20,20,20,20)
             map.setExtent(extent)
             map.setScale(math.floor(scale*10))
-            # map.setBackgroundColor(QColor(255,255,225,0))
+            #? map.setBackgroundColor(QColor(255,255,225,0))
             map.attemptMove(QgsLayoutPoint(5, 5,QgsUnitTypes.LayoutMillimeters))
             map.attemptResize(QgsLayoutSize(180, 180,QgsUnitTypes.LayoutMillimeters))
-
             #! BARPLOT
             barplot = QgsLayoutItemPicture(layout)
             barplot.setMode(QgsLayoutItemPicture.FormatRaster)
             barplot.setPicturePath(r'C:\Users\FRANCISCO\Desktop\demo.png')
             barplot.setResizeMode(QgsLayoutItemPicture.ZoomResizeFrame)
-            # barplot.setRect(20, 20, 20, 20)
-            # dim_barplot = [640, 480]
+            #? barplot.setRect(20, 20, 20, 20)
+            #? dim_barplot = [640, 480]
             barplot.attemptMove(QgsLayoutPoint(212, 5, QgsUnitTypes.LayoutMillimeters))
             barplot.attemptResize(QgsLayoutSize(80, 60, QgsUnitTypes.LayoutMillimeters))
-
-
-
-
-
             #! ADD ITEMS TO LAYOUT 
             layout.addLayoutItem(map)
             layout.addLayoutItem(barplot)
@@ -739,8 +757,10 @@ class agrae:
 
             plt.bar(ypos, data, color=colors)
 
-            plt.show()\
-# plt.savefig(r'C:\Users\FRANCISCO\Desktop\demo.png')
+            # plt.show()
+            plt.savefig(r'C:\Users\FRANCISCO\Desktop\demo.png')
+
+
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
@@ -756,6 +776,7 @@ class agrae:
                 # self.mainWindowDialog.loadButton.clicked.connect(loadAllotmentToDB)
                 self.mainWindowDialog.btn_lote_update.setEnabled(False)
                 self.mainWindowDialog.pushButton_2.clicked.connect(printMap)
+                self.mainWindowDialog.pushButton.clicked.connect(cargarParcela)
 
             self.mainWindowDialog.closingPlugin.connect(self.onClosePluginMain)
 

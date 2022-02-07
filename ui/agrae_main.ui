@@ -44,7 +44,7 @@
     <string notr="true"/>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="lotes_tab">
     <attribute name="title">
@@ -236,7 +236,7 @@
          <height>121</height>
         </rect>
        </property>
-       <layout class="QGridLayout" name="gridLayout_8" columnstretch="0,0,0,0,0,0,0,0">
+       <layout class="QGridLayout" name="gridLayout_8" columnstretch="0,0,0,0,0,0,0">
         <property name="sizeConstraint">
          <enum>QLayout::SetDefaultConstraint</enum>
         </property>
@@ -256,7 +256,7 @@
            <bool>false</bool>
           </property>
           <property name="text">
-           <string>Limpiar</string>
+           <string>Anadir al Mapa</string>
           </property>
          </widget>
         </item>
@@ -299,6 +299,9 @@
         </item>
         <item row="5" column="6">
          <widget class="QPushButton" name="btn_par_create">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>Crear</string>
           </property>
@@ -307,7 +310,10 @@
         <item row="4" column="1">
          <widget class="QLineEdit" name="ln_par_zona">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>0</string>
           </property>
          </widget>
         </item>
@@ -324,14 +330,20 @@
         <item row="4" column="3">
          <widget class="QLineEdit" name="ln_par_poly">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>0</string>
           </property>
          </widget>
         </item>
         <item row="5" column="1">
          <widget class="QLineEdit" name="ln_par_recinto">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>0</string>
           </property>
          </widget>
         </item>
@@ -388,7 +400,10 @@
         <item row="4" column="5" colspan="2">
          <widget class="QLineEdit" name="ln_par_parcela">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>0</string>
           </property>
          </widget>
         </item>
@@ -427,10 +442,13 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="5" colspan="3">
+        <item row="2" column="5" colspan="2">
          <widget class="QLineEdit" name="ln_par_agg">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>0</string>
           </property>
          </widget>
         </item>

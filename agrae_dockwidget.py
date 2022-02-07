@@ -349,43 +349,25 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
     closingPlugin = pyqtSignal()
 
     actualizar = pyqtSignal(list)
-
-    actualizarRel = pyqtSignal(str)  
-
-
-
+    actualizarRel = pyqtSignal(str) 
+    sqlSignal = pyqtSignal(str)
 
     def __init__(self, parent=None):
-
         """Constructor."""
-
         super(parcelaFindDialog, self).__init__(parent)
-
         self.utils = AgraeUtils()
-
-        self.conn = self.utils.Conn()     
+        self.conn = self.utils.Conn()
 
 
         data = self.dataAuto()
-
         lista = [e[0] for e in data]
-
         completer = QCompleter(lista)
-
         completer.setCaseSensitivity(False)
-
-
         self.setupUi(self)
-
         self.btn_buscar.clicked.connect(self.buscar)
-
-        self.lineEdit.setCompleter(completer)
-        
-
+        self.lineEdit.setCompleter(completer)       
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
-
         self.pushButton.clicked.connect(self.cargarParcela)
-
         self.pushButton_2.clicked.connect(self.insertarIdRelacion)
 
 
@@ -398,84 +380,29 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
 
 
     def data(self, filtro=None):
-
         if filtro == None:
-
             cursor = self.conn.cursor()
-
             sql = '''select p.idparcela,p.nombre, (case when lp.parcela = 1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion,prov.nombre provincia, mcpo.nombre municipio , p.agregado , p.zona , p.poligono , p.parcela , p.recinto from parcela p left join (select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela  = p.idparcela left join lote l on lp2.idlote = l.idlote left join datos.provincia prov on p.provincia = prov.idprovincia left join datos.municipio mcpo on p.municipio = mcpo.idmunicipio order by idparcela  '''
-
             cursor.execute(sql)
-
-
-
             data = cursor.fetchall()
-
-
-
         else:
-
-
-
             cursor = self.conn.cursor()
-
-
-
-            sql = f"select p.idparcela, p.nombre, (case when lp.parcela=1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion, prov.nombre provincia, mcpo.nombre municipio, p.agregado, p.zona, p.poligono, p.parcela, p.recinto from parcela p left join(select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela = p.idparcela left join lote l on lp2.idlote = l.idlote left join (select idprovincia, nombre from datos.provincia) as prov on p.provincia = prov.idprovincia left join (select idmunicipio , nombre from datos.municipio) as mcpo on p.municipio = mcpo.idmunicipio where p.nombre ilike '%{filtro}%' or prov.nombre ilike '%{filtro}%' or mcpo.nombre ilike '%{filtro}%' order by p.idparcela "
-            
-
+            sql = f"select p.idparcela, p.nombre, (case when lp.parcela=1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion, prov.nombre provincia, mcpo.nombre municipio, p.agregado, p.zona, p.poligono, p.parcela, p.recinto from parcela p left join(select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela = p.idparcela left join lote l on lp2.idlote = l.idlote left join (select idprovincia, nombre from datos.provincia) as prov on p.provincia = prov.idprovincia left join (select idmunicipio , nombre from datos.municipio) as mcpo on p.municipio = mcpo.idmunicipio where p.nombre ilike '%{filtro}%' or prov.nombre ilike '%{filtro}%' or mcpo.nombre ilike '%{filtro}%' order by p.idparcela "          
             # or p.agregado ilike '%{filtro}%' or p.zona ilike '%{filtro}%' or p.poligono ilike '%{filtro}%' or p.parcela ilike '%{filtro}%' or p.recinto ilike '%{filtro}%' order by p.idparcela " 
-
-
-
             cursor.execute(sql)
-
-
-
             data = cursor.fetchall()
-
-
-
         if len(data) >= 1:
             return data
-
-
-
         elif len(data) == 0:
-
-
-
             data = [0, 0]
             return data
 
-
-
-
     def dataAuto(self):
-
-
-
         cursor = self.conn.cursor()
-
-
-
-        sql = "select distinct unnest(array[p.nombre, prov.nombre, mcpo.nombre]) from parcela p left join datos.provincia prov on p.provincia = prov.idprovincia left join datos.municipio mcpo on p.municipio = mcpo.idmunicipio "
-        
-
-
-
-
-
+        sql = "select distinct unnest(array[p.nombre, prov.nombre, mcpo.nombre]) from parcela p left join datos.provincia prov on p.provincia = prov.idprovincia left join datos.municipio mcpo on p.municipio = mcpo.idmunicipio "     
         cursor.execute(sql)
-
-
-
         data = cursor.fetchall()
         return data
-
-
-
-
     def populate(self,data):
 
 
@@ -534,109 +461,46 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
 
 
             print('error')
-
-
-
-
-    def loadData(self,param=None):
-        
-        
-             
-
-
-
+    def loadData(self,param=None):    
         if param == None:  
-
-
-
             data = self.data()
-
-
-
-            # print(data[0][1])
             self.populate(data)
-
-
-
         else:
-
-
-
             data = self.data(param)
-
-
-
-            # print(data[0][1])
             self.populate(data)
         pass
-
     def buscar(self):
-
         filtro = self.lineEdit.text()
-
         self.loadData(filtro)
         pass
-
     def cargarParcela(self):
-
         # value = self.tableWidget.item(0, 1).text()
-
         # print(str(value))
-
         try:
-
             row = self.tableWidget.currentRow()
-
             # column = self.tableWidget.currentColumn()
-
             param = self.tableWidget.item(row, 0).text()
-
             sqlQuery = f"""select * from parcela where idparcela = {param} """
-
             conn = self.conn
-
             cursor = conn.cursor()
-
             cursor.execute(sqlQuery)
-
             data = cursor.fetchone()
-
             dataLista = list(data)
-
             self.actualizar.emit(dataLista)
+            self.sqlSignal.emit(sqlQuery)
             self.close()
           
-
         except Exception as ex:
 
             QMessageBox.about(self,'aGrae GIS', 'Debe Seleccionar una parcela para agregar') 
         pass
-
     def insertarIdRelacion(self):
-
-
-
         try:
-
-
-
             row = self.tableWidget.currentRow()
-
-
-
             idRel = self.tableWidget.item(row, 0).text()
-
-
-
             self.actualizarRel.emit(idRel)
             self.close()
-
-
-
         except Exception as ex:
-
-
-
             QMessageBox.about(self,'aGrae GIS', 'Debe Seleccionar una parcela para agregar a la relacion')     
            
 
@@ -1396,586 +1260,283 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         """Constructor."""
 
-        super(agraeMainWidget, self).__init__(parent)   
-
+        super(agraeMainWidget, self).__init__(parent)  
         self.utils = AgraeUtils()
-
         self.conn = self.utils.Conn()
-
-        self.style = self.utils.styleSheet()       
-
+        self.style = self.utils.styleSheet()
         self.idlote = None
-
-        self.idmcpo = None
-
-        self.idAgg = None
-
-        self.idZona = None
-
-        self.idPoly = None
-
-        self.parcela = None
-
-        self.idRecinto = None
-
-        # self.doubleFormat = QRegExpValidator(QRegExp(r'^[1-9]'))
+        self.sqlParcela = ''
 
         data = self.dataAuto()
-
         lista = [e[0] for e in data]
-
         # print(lista)
-
         completer = QCompleter(lista)
-
         completer.setCaseSensitivity(False)
-        
-        
-
-
-
+              
         self.setupUi(self)
-
-        self.populateComboProv()
-        
-
+        self.populateComboProv()      
         self.setLineFormatValidator()
-
         self.setStyleLines()
 
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
-
         self.tableWidget.setColumnHidden(5, True)
 
         self.btn_par_update.clicked.connect(self.actualizarParcela)
-
         self.btn_buscar_parcela.clicked.connect(self.parcelaDialog)
-
         self.btn_buscar_parcela_2.clicked.connect(self.parcelaDialog)
-
         self.btn_buscar_lote.clicked.connect(self.loteDialog)
-
         self.btn_buscar_lote_2.clicked.connect(self.loteDialog)
-
         self.btn_buscar_exp.clicked.connect(self.expDialog)
-
         self.btn_buscar_cult.clicked.connect(self.cultivoDialog)
-
         self.btn_rel_create.clicked.connect(self.crearRelacionLoteParcela)
-
         self.btn_lote_update.clicked.connect(self.actualizarLote)     
-
         self.prov_combo.currentTextChanged.connect(self.indexProvUpdate)
-
         self.setStyleSheet(self.style)
-
         self.line_buscar.setCompleter(completer)
-
         self.btn_crear_lote.clicked.connect(self.crearLote)
+        self.ln_par_nombre.textChanged.connect(self.validarNombre)
 
 
 
     def closeEvent(self, event):
-
-
-
         self.closingPlugin.emit()
-
-
-
         event.accept()
 
-
-
-
     def dataAuto(self): 
-
-
-
         cursor = self.conn.cursor()
-
-
-
         sql = '''select distinct nombre from lote 
                 union
-
-
-
                 select distinct nombre from parcela
                 union 
-
-
-
                 select distinct nombre from cultivo
-
-
-
                 order by nombre'''
-
-
-
         cursor.execute(sql)
-
-
-
         data = cursor.fetchall()
         return data
-
-
-
-
     def actualizarParcela(self):
-
-
         idParcela = self.lbl_id_parcela.text()
-
         name = self.ln_par_nombre.text()
-
         prov = int(self.prov_combo.currentData())
-
         mcpo = int(self.mcpo_combo.currentData())
-
         aggregate = self.ln_par_agg.text()
-
         zone = self.ln_par_zona.text()
-
         poly = self.ln_par_poly.text()
-
         allotment = self.ln_par_parcela.text()
-
         inclosure = self.ln_par_recinto.text()
-
         confirm = QMessageBox.question(self, 'aGrae GIS', f"Seguro quiere Actualizar la parcela:\n--- ID: {idParcela}\n--- Nombre: {name.upper()}?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-
         if confirm == QMessageBox.Yes:
-
             with self.conn as conn:
-
                 try:
-
-                    # sql = f'''update parcela set nombre = '{name}', provincia = {prov}, municipio = {mcpo}, agregado = '{aggregate}', zona = '{zone}', poligono = '{poly}', parcela = '{allotment}', recinto = '{inclosure}' where idparcela = '{idParcela}' '''
-                 
-
+                    # sql = f'''update parcela set nombre = '{name}', provincia = {prov}, municipio = {mcpo}, agregado = '{aggregate}', zona = '{zone}', poligono = '{poly}', parcela = '{allotment}', recinto = '{inclosure}' where idparcela = '{idParcela}' '''               
                     sql = f'''update parcela set nombre = '{name}', provincia = {prov}, municipio = {mcpo}  where idparcela = '{idParcela}' '''  # ! SENTENCIA TEMPORAL
-
                     cursor = conn.cursor()
-
                     cursor.execute(sql)
-
                     conn.commit()
-
                     QMessageBox.about(self, f"aGrae GIS:",f"Parcela *-- {name} --* Se modifico Correctamente.")
-
                     self.btn_par_update.setEnabled(False)
-
                 except Exception as ex:
-
                     QMessageBox.about(self, f"Error:",f"{ex} \nHa ocurrido un Error por favor, verifique los datos o contacese con soporte tecnico")
-
         else:
             pass
-
-
-
     def actualizarLote(self):
-
         idlote = self.idlote
-
         nombre = self.line_lote_nombre.text()
-
         idexp = self.line_lote_idexp.text()
-
         idcult = self.line_lote_idcultivo.text()
-
         dateSiembra = self.lote_dateSiembra.date().toString('yyyy.MM.dd')
-
         dateCosecha = self.lote_dateCosecha.date().toString('yyyy.MM.dd')
-
         dateFondo = self.date_fondo.date().toString('yyyy.MM.dd')
-
         fondoFormula = self.line_fondo_formula.text()
-
         fondoPrecio = float(self.line_fondo_precio.text())
-
         fondoCalculado = float(self.line_fondo_calculado.text())
-
         fondoAjustado = float(self.line_fondo_ajustado.text())
-
         fondoAplicado = float(self.line_fondo_aplicado.text())
-
         dateCob1 = self.date_cob.date().toString('yyyy.MM.dd')
-
         cob1Formula = self.line_cob_formula.text()
-
         cob1Precio = float(self.line_cob_precio.text())
-
         cob1Calculado = float(self.line_cob_calculado.text())
-
         cob1Ajustado = float(self.line_cob_ajustado.text())
-
         cob1Aplicado = float(self.line_cob_aplicado.text())
-
         dateCob2 = self.date_cob_2.date().toString('yyyy.MM.dd')
-
         cob2Formula = self.line_cob_formula_2.text()
-
         cob2Precio = float(self.line_cob_precio_2.text())
-
         cob2Calculado = float(self.line_cob_calculado_2.text())
-
         cob2Ajustado = float(self.line_cob_ajustado_2.text())
-
         cob2Aplicado = float(self.line_cob_aplicado_2.text())
-
         dateCob3 = self.date_cob_3.date().toString('yyyy.MM.dd')
-
         cob3Formula = self.line_cob_formula_3.text()
-
         cob3Precio = float(self.line_cob_precio_3.text())
-
         cob3Calculado = float(self.line_cob_calculado_3.text())
-
         cob3Ajustado = float(self.line_cob_ajustado_3.text())
-
         cob3Aplicado = float(self.line_cob_aplicado_3.text())
-
-        confirm = QMessageBox.question(
-
-            self, 'aGrae GIS', f"Seguro quiere Actualizar el Lote:\n--- ID: {idlote}\n--- Nombre: {nombre.upper()}?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-
+        confirm = QMessageBox.question(self, 'aGrae GIS', f"Seguro quiere Actualizar el Lote:\n--- ID: {idlote}\n--- Nombre: {nombre.upper()}?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if confirm == QMessageBox.Yes:
-
             try:             
-
                 sql = f'''update lote set  idexplotacion = '{idexp}', idcultivo = '{idcult}', nombre = '{nombre}',fechasiembra = '{dateSiembra}',fechacosecha = '{dateCosecha}',fechafertilizacionfondo = '{dateFondo}',    fertilizantefondoformula = '{fondoFormula}',fertilizantefondoprecio = {fondoPrecio}, fertilizantefondocalculado = {fondoCalculado},fertilizantefondoajustado = {fondoAjustado},  fertilizantefondoaplicado = {fondoAplicado},fechafertilizacioncbo1 = '{dateCob1}', fertilizantecob1formula ='{cob1Formula}',fertilizantecob1precio = {cob1Precio}, fertilizantecob1calculado = {cob1Calculado},fertilizantecob1ajustado = {cob1Ajustado}, fertilizantecob1aplicado = {cob1Aplicado},fechafertilizacioncbo2 = '{dateCob2}', fertilizantecob2formula = '{cob2Formula}', fertilizantecob2precio = {cob2Precio},  fertilizantecob2calculado = {cob2Calculado}, fertilizantecob2ajustado = {cob2Ajustado}, fertilizantecob2aplicado ={cob2Aplicado},fechafertilizacioncbo3 = '{dateCob3}', fertilizantecob3formula = '{cob3Formula}',fertilizantecob3precio = {cob3Precio}, fertilizantecob3calculado = {cob3Calculado},fertilizantecob3ajustado = {cob3Ajustado}, fertilizantecob3aplicado = {cob3Aplicado} where idlote = {idlote} '''
-
                 # print(sql)      
-
                 conn = self.conn
-
                 cursor = conn.cursor()
-
                 cursor.execute(sql)
-
                 conn.commit()
-
                 QMessageBox.about(self, f"aGrae GIS:",f"Lote *-- {nombre.upper()} --* Se modifico Correctamente.")
-
             except Exception as e: 
-
                 QMessageBox.about(self,'aGrae GIS:',f'Ocurrio un Error. \n {e}')
 
         else:
-            pass
-
-
-    
+            pass  
     def crearLote(self):
-
-        print('Hola!')
-
         idlote = self.idlote
-
         nombre = self.line_lote_nombre.text()
-
         idexp = self.line_lote_idexp.text()
-
         idcult = self.line_lote_idcultivo.text()
-
         dateSiembra = self.lote_dateSiembra.date().toString('yyyy.MM.dd')
-
         dateCosecha = self.lote_dateCosecha.date().toString('yyyy.MM.dd')
-
         dateFondo = self.date_fondo.date().toString('yyyy.MM.dd')
-
         fondoFormula = self.line_fondo_formula.text()
-
         fondoPrecio = float(self.line_fondo_precio.text())
-
         fondoCalculado = float(self.line_fondo_calculado.text())
-
         fondoAjustado = float(self.line_fondo_ajustado.text())
-
         fondoAplicado = float(self.line_fondo_aplicado.text())
-
         dateCob1 = self.date_cob.date().toString('yyyy.MM.dd')
-
         cob1Formula = self.line_cob_formula.text()
-
         cob1Precio = float(self.line_cob_precio.text())
-
         cob1Calculado = float(self.line_cob_calculado.text())
-
         cob1Ajustado = float(self.line_cob_ajustado.text())
-
         cob1Aplicado = float(self.line_cob_aplicado.text())
-
         dateCob2 = self.date_cob_2.date().toString('yyyy.MM.dd')
-
         cob2Formula = self.line_cob_formula_2.text()
-
         cob2Precio = float(self.line_cob_precio_2.text())
-
         cob2Calculado = float(self.line_cob_calculado_2.text())
-
         cob2Ajustado = float(self.line_cob_ajustado_2.text())
-
         cob2Aplicado = float(self.line_cob_aplicado_2.text())
-
         dateCob3 = self.date_cob_3.date().toString('yyyy.MM.dd')
-
         cob3Formula = self.line_cob_formula_3.text()
-
         cob3Precio = float(self.line_cob_precio_3.text())
-
         cob3Calculado = float(self.line_cob_calculado_3.text())
-
         cob3Ajustado = float(self.line_cob_ajustado_3.text())
-
         cob3Aplicado = float(self.line_cob_aplicado_3.text())
-        
-
+      
         sql = f'''insert into lote values (nextval('lote_idlote_seq'),{idexp}, {idcult},  '{nombre}','{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, {fondoAjustado},  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, {cob1Ajustado},  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  {cob2Ajustado}, {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, {cob3Ajustado},  {cob3Aplicado}) '''
-        
-
-
-
+       
         with self.conn as conn:
-
             try: 
-
                 cursor = conn.cursor()
-
                 cursor.execute(sql)
-
                 conn.commit()
-
                 QMessageBox.about(self, f"aGrae GIS:",f"Lote: *--  --* Creado Correctamente.\nCrear Relacion Lote Parcelas.")
-
             except Exception as e: 
-
-                QMessageBox.about(self, f"Error: ",f"{e}")
-
-
-           
+                QMessageBox.about(self, f"Error: ",f"{e}")         
         
-
-
-
     def populateParcela(self,data):
-
         style = "font-weight: bold ; color : red"
-
         dataStr = [str(e) for e in data]
-        
-
         self.lbl_id_parcela.setText(dataStr[1])
-
         self.ln_par_nombre.setText(dataStr[2])
-
         # self.ln_par_provincia.setText(dataStr[3])            
-
         # if dataStr[11] != None:
-
         idxProv = self.prov_combo.findData(dataStr[3])
-
         self.prov_combo.setCurrentIndex(idxProv)           
-
         idxMcpo = self.mcpo_combo.findData(dataStr[4])
-
         self.mcpo_combo.setCurrentIndex(idxMcpo)
-
         # self.ln_par_mcpo.setText(dataStr[3])
-
         self.ln_par_agg.setText(dataStr[5])
-
         self.ln_par_zona.setText(dataStr[6])
-
         self.ln_par_poly.setText(dataStr[7])
-
         self.ln_par_parcela.setText(dataStr[8])
-
         self.ln_par_recinto.setText(dataStr[9])
-
+        self.btn_par_create.setEnabled(False)
         self.btn_par_update.setEnabled(True)
+        self.pushButton.setEnabled(True)
 
     def populateLote(self, data):
-
         # print(data)
-
         self.resetStyleLabels()
-
         data2 = []
-
         style = "font-weight: bold ; color : red"
-
         for e in data:
-
             if e == None:
-
                 data2.append(e)
-
             else:
-
                 data2.append(str(e))
-
         try:
-
             self.idlote = data[0]
-
             self.lbl_id_lote.setText(data2[0])
-
             self.line_lote_idexp.setText(data2[1])
-
             self.line_lote_idcultivo.setText(data2[2])
-
             self.line_lote_nombre.setText(data2[3])
-
             try:
-
                 self.lote_dateSiembra.setDate(data[4])
-
             except:
-
-                self.label_5.setStyleSheet(style)
-                
-
-
-
+                self.label_5.setStyleSheet(style)              
             try:
-
                 self.lote_dateCosecha.setDate(data[5])
-
             except:
-
                 self.label_6.setStyleSheet(style)
                 pass
-
-
-
             try:
-
                 self.lote_dateFondo.setDate(data[6])
-
             except:
-
                 self.label_13.setStyleSheet(style)
                 pass
-
             self.line_fondo_formula.setText(data2[7])
-
             self.line_fondo_precio.setText(data2[8])
-
             self.line_fondo_calculado.setText(data2[9])
-
             self.line_fondo_ajustado.setText(data2[10])
-
             self.line_fondo_aplicado.setText(data2[11])
-
             try:
-
                 self.date_cob.setDate(data[12])
-
             except:
-
                 self.label_15.setStyleSheet(style)
                 pass
-
             self.line_cob_formula.setText(data2[13])
-
             self.line_cob_precio.setText(data2[14])
-
             self.line_cob_calculado.setText(data2[15])
-
             self.line_cob_ajustado.setText(data2[16])
-
             self.line_cob_aplicado.setText(data2[17])
-
             try:
-
                 self.date_cob_2.setDate(data[18])
-
             except:
-
                 self.label_20.setStyleSheet(style)
                 pass
-
             self.line_cob_formula_2.setText(data2[19])
-
             self.line_cob_precio_2.setText(data2[20])
-
             self.line_cob_calculado_2.setText(data2[21])
-
             self.line_cob_ajustado_2.setText(data2[22])
-
             self.line_cob_aplicado_2.setText(data2[23])
-
             try:
-
                 self.date_cob_3.setDate(data[24])
-
             except:
-
                 self.label_26.setStyleSheet(style)
                 pass
-
             self.line_cob_formula_3.setText(data2[25])
-
             self.line_cob_precio_3.setText(data2[26])
-
             self.line_cob_calculado_3.setText(data2[27])
-
             self.line_cob_ajustado_3.setText(data2[28])
-
             self.line_cob_aplicado_3.setText(data2[29])
-
             self.btn_lote_update.setEnabled(True)
-
         except Exception as ex:
-
             print(ex)
             pass
 
-
-
-
     def populateRelPar(self,idPar):
-
-
-
         self.ln_rel_parcela.setText(idPar)
 
 
     def populateRelLote(self,idLote):
-
-
-
         self.ln_rel_lote.setText(idLote)
-    
-        
+           
 
+    def returnSql(self,sql):
+        self.sqlParcela = sql
+        # print(self.sqlParcela)
 
-
-    def parcelaDialog(self):
-        
-
-
+    def parcelaDialog(self):       
 
         dialog = parcelaFindDialog()
-
-
-
         dialog.loadData()
-
-
-
         dialog.actualizar.connect(self.populateParcela)
-
-
-
         dialog.actualizarRel.connect(self.populateRelPar)
-
-
+        dialog.sqlSignal.connect(self.returnSql)
 
         dialog.exec_()
     
@@ -2140,88 +1701,41 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
 
     def setLineFormatValidator(self):
-
-
-
         self.doubleFormat = QRegExpValidator(QRegExp(r'^[1-9]\d*(\.\d+)?$'))
-
-
-
         self.line_fondo_precio.setValidator(self.doubleFormat)
-
-
-
         self.line_fondo_calculado.setValidator(self.doubleFormat)
-
-
-
         self.line_fondo_ajustado.setValidator(self.doubleFormat)
-
-
-
         self.line_fondo_aplicado.setValidator(self.doubleFormat)
-
-
-
         self.line_cob_precio.setValidator(self.doubleFormat)
-
-
-
         self.line_cob_calculado.setValidator(self.doubleFormat)
-
-
-
         self.line_cob_ajustado.setValidator(self.doubleFormat)
-
-
-
         self.line_cob_aplicado.setValidator(self.doubleFormat)
-
-
-
         self.line_cob_precio_2.setValidator(self.doubleFormat)
-
-
-
         self.line_cob_calculado_2.setValidator(self.doubleFormat)
-
-
-
         self.line_cob_ajustado_2.setValidator(self.doubleFormat)
-
-
-
         self.line_cob_aplicado_2.setValidator(self.doubleFormat)
-
-
-
         self.line_cob_precio_3.setValidator(self.doubleFormat)
-
-
-
         self.line_cob_calculado_3.setValidator(self.doubleFormat)
-
-
-
         self.line_cob_ajustado_3.setValidator(self.doubleFormat)
-
-
-
         self.line_cob_aplicado_3.setValidator(self.doubleFormat)
-
-
 
         ###########################################################
 
-
-
-        self.integerFormat = QRegExpValidator(QRegExp(r'^[1-9]\d*$'))
-
-
+        self.integerFormat = QRegExpValidator(QRegExp(r'^[0-9]\d*$'))
+        self.ln_par_agg.setValidator(self.integerFormat)
+        self.ln_par_zona.setValidator(self.integerFormat)
+        self.ln_par_poly.setValidator(self.integerFormat)
+        self.ln_par_parcela.setValidator(self.integerFormat)
+        self.ln_par_recinto.setValidator(self.integerFormat)
         self.line_lote_idexp.setValidator(self.integerFormat)
-
-
         self.line_lote_idcultivo.setValidator(self.integerFormat)
+
+    def validarNombre(self):
+        if self.ln_par_nombre.text() == '':
+            self.btn_par_create.setEnabled(False)
+        else: 
+            self.btn_par_create.setEnabled(True)
+
 
 
 
@@ -2375,7 +1889,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             self.prov_combo.addItem(row["nombre"],row["idprovincia"]) 
         
 
-        self.prov_combo.setStyleSheet("QComboBox { combobox-popup: 0; }")
+        self.prov_combo.setStyleSheet("QComboBox { combobox-popup: 0; font-size: 10pt}")
 
         # self.prov_combo.currentTextChanged.connect(self.printComboBoxText)
 
