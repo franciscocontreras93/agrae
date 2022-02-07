@@ -650,6 +650,10 @@ class agrae:
             for l in manager_list:
                 if l.name() == layoutName :
                     manager.removeLayout(l)
+            
+            #print(lyrs)
+            
+
 
             layout = QgsPrintLayout(QgsProject.instance())
             layout.initializeDefaults() 
@@ -657,10 +661,16 @@ class agrae:
             manager.addLayout(layout)
 
             lyrsDict = QgsProject().instance().mapLayers()
-            lyrs = []
+            lyrs = [lyrsDict[lyr] for lyr in lyrsDict]
+            colors = [l.renderer().symbol().color().name() for l in lyrs]
+            print(colors)
+            # for l in lyrs:
+            #     color = 
+            #     colors.append(color)
+            
+            
             ms = QgsMapSettings()
-            for lyr in lyrsDict:
-                lyrs.append(lyrsDict[lyr])
+            
             ms.setLayers(lyrs)            
             extent = QgsProject.instance().mapLayersByName(layoutName)[0].extent()
             lyrScale = self.iface.mapCanvas().scale()
@@ -699,26 +709,35 @@ class agrae:
             pass            
 
         def barPlot():
+            lyrsDict = QgsProject().instance().mapLayers()
+            lyrs = [lyrsDict[lyr] for lyr in lyrsDict]
+            colors = [l.renderer().symbol().color().name() for l in lyrs]
+            # colors = ['#a47158', '#85b66f', '#85006f']
+            print(colors)
+
             sns.set_style('darkgrid')
             conn = psycopg2.connect(
                 'host=localhost dbname=agrae user=postgres password=23826405')
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            cursor.execute(
-                'select nombre , st_area(st_transform(geometria,25830))/10000  from parcela')
-            # data = [r[1] for r in cursor.fetchall()]
+            sql = '''select l.nombre ,sum(st_area(st_transform(p.geometria,25830))/10000) area
+                    from parcela p
+                    join loteparcela lp on p.idparcela = lp.idparcela 
+                    join lote l on l.idlote = lp.idlote
+                    group by l.nombre'''
+            cursor.execute(sql)
             result = cursor.fetchall()
             nombre = [e[0] for e in result]
             data = [e[1] for e in result]
 
-            print(nombre, data)
+            print(nombre, data,)
 
 
-            # ypos = np.arange(len(nombre))
-            # plt.xticks(ypos, nombre)
-            # plt.ylabel('Area Parcela (Ha)')
+            ypos = np.arange(len(nombre))
+            plt.xticks(ypos, nombre)
+            plt.ylabel('Area Parcela (Ha)')
             # plt.bar(ypos, data)
 
-            sns.barplot(nombre,data)
+            plt.bar(ypos, data, color=colors)
 
             plt.show()\
 # plt.savefig(r'C:\Users\FRANCISCO\Desktop\demo.png')
