@@ -572,7 +572,7 @@ class agrae:
                 uri = QgsDataSourceUri()
                 uri.setConnection(dns['host'], dns['port'],dns['dbname'], dns['user'], dns['password'])
                 uri.setDataSource('', f'({sql})', 'geometria', '', 'idparcela')
-                nombre = self.mainWindowDialog.tableWidget.item(row, column)
+                nombre = self.mainWindowDialog.ln_par_nombre.text()
                 if nombre == None:
                     nombre = self.mainWindowDialog.ln_par_nombre.text()
                     layer = self.iface.addVectorLayer(
@@ -691,12 +691,12 @@ class agrae:
             layout.setName(layoutName)
             manager.addLayout(layout)
             lyrsDict = QgsProject().instance().mapLayers()
-            lyrs = [lyrsDict[lyr] for lyr in lyrsDict]
-            colors = [l.renderer().symbol().color().name() for l in lyrs]
-            print(colors)       
+            lyrs = [lyrsDict[lyr] for lyr in lyrsDict]       
             ms = QgsMapSettings()            
-            ms.setLayers(lyrs)            
-            extent = QgsProject.instance().mapLayersByName(layoutName)[0].extent()
+            ms.setLayers(lyrs)
+            lyr = QgsProject.instance().mapLayersByName(layoutName)[0]
+            # lyr.setCrs(QgsCoordinateReferenceSystem(25830))
+            extent = lyr.extent()
             lyrScale = self.iface.mapCanvas().scale()
             scale = math.ceil((lyrScale / 200)) * 200
             print(scale)
@@ -704,6 +704,7 @@ class agrae:
             #? ms.setExtent(extent)
             #! MAP ITEM
             map = QgsLayoutItemMap(layout)
+            # map.setCrs(QgsCoordinateReferenceSystem(25830))
             map.setRect(20,20,20,20)
             map.setExtent(extent)
             map.setScale(math.floor(scale*10))
@@ -728,7 +729,8 @@ class agrae:
 
         def barPlot():
             lyrsDict = QgsProject().instance().mapLayers()
-            lyrs = [lyrsDict[lyr] for lyr in lyrsDict]
+            lyrs = [lyrsDict[lyr] for lyr in lyrsDict if lyrsDict[lyr].type() == QgsVectorLayer.VectorLayer]            
+            print(lyrs)
             colors = [l.renderer().symbol().color().name() for l in lyrs]
             # colors = ['#a47158', '#85b66f', '#85006f']
             print(colors)

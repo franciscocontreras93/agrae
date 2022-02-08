@@ -781,7 +781,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -1320,7 +1320,7 @@
    </widget>
    <widget class="QWidget" name="tab_2">
     <attribute name="title">
-     <string>Page</string>
+     <string>Ambientes , Segmentos y Unidades</string>
     </attribute>
     <widget class="QPushButton" name="pushButton_2">
      <property name="geometry">
@@ -1339,11 +1339,34 @@
   </widget>
  </widget>
  <tabstops>
-  <tabstop>tabWidget</tabstop>
   <tabstop>line_buscar</tabstop>
+  <tabstop>radio_nombre</tabstop>
+  <tabstop>radio_id</tabstop>
   <tabstop>btn_buscar1</tabstop>
   <tabstop>tableWidget</tabstop>
+  <tabstop>btn_add_layer</tabstop>
   <tabstop>tabWidget_2</tabstop>
+  <tabstop>ln_par_nombre</tabstop>
+  <tabstop>prov_combo</tabstop>
+  <tabstop>mcpo_combo</tabstop>
+  <tabstop>ln_par_agg</tabstop>
+  <tabstop>ln_par_zona</tabstop>
+  <tabstop>ln_par_poly</tabstop>
+  <tabstop>ln_par_parcela</tabstop>
+  <tabstop>ln_par_recinto</tabstop>
+  <tabstop>btn_buscar_parcela</tabstop>
+  <tabstop>pushButton</tabstop>
+  <tabstop>btn_par_update</tabstop>
+  <tabstop>btn_par_create</tabstop>
+  <tabstop>ln_rel_parcela</tabstop>
+  <tabstop>btn_buscar_parcela_2</tabstop>
+  <tabstop>ln_rel_lote</tabstop>
+  <tabstop>btn_buscar_lote_2</tabstop>
+  <tabstop>btn_rel_create</tabstop>
+  <tabstop>line_lote_nombre</tabstop>
+  <tabstop>line_lote_idexp</tabstop>
+  <tabstop>line_lote_idcultivo</tabstop>
+  <tabstop>lineEdit</tabstop>
   <tabstop>lote_dateSiembra</tabstop>
   <tabstop>lote_dateCosecha</tabstop>
   <tabstop>tabWidget_3</tabstop>
@@ -1354,23 +1377,30 @@
   <tabstop>line_fondo_ajustado</tabstop>
   <tabstop>line_fondo_aplicado</tabstop>
   <tabstop>date_cob</tabstop>
-  <tabstop>line_cob_precio</tabstop>
   <tabstop>line_cob_formula</tabstop>
+  <tabstop>line_cob_precio</tabstop>
   <tabstop>line_cob_calculado</tabstop>
   <tabstop>line_cob_ajustado</tabstop>
   <tabstop>line_cob_aplicado</tabstop>
   <tabstop>date_cob_2</tabstop>
-  <tabstop>line_cob_precio_2</tabstop>
   <tabstop>line_cob_formula_2</tabstop>
+  <tabstop>line_cob_precio_2</tabstop>
   <tabstop>line_cob_calculado_2</tabstop>
   <tabstop>line_cob_ajustado_2</tabstop>
   <tabstop>line_cob_aplicado_2</tabstop>
-  <tabstop>line_cob_precio_3</tabstop>
-  <tabstop>line_cob_formula_3</tabstop>
   <tabstop>date_cob_3</tabstop>
+  <tabstop>line_cob_formula_3</tabstop>
+  <tabstop>line_cob_precio_3</tabstop>
   <tabstop>line_cob_calculado_3</tabstop>
   <tabstop>line_cob_ajustado_3</tabstop>
   <tabstop>line_cob_aplicado_3</tabstop>
+  <tabstop>btn_buscar_exp</tabstop>
+  <tabstop>btn_buscar_cult</tabstop>
+  <tabstop>btn_buscar_lote</tabstop>
+  <tabstop>btn_lote_update</tabstop>
+  <tabstop>btn_crear_lote</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>pushButton_2</tabstop>
  </tabstops>
  <resources/>
  <connections/>

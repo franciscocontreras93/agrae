@@ -1733,8 +1733,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def validarNombre(self):
         if self.ln_par_nombre.text() == '':
             self.btn_par_create.setEnabled(False)
+            self.btn_par_update.setEnabled(False)
         else: 
             self.btn_par_create.setEnabled(True)
+            self.btn_par_update.setEnabled(True)
 
 
 
