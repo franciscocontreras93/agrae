@@ -74,18 +74,25 @@
         <height>41</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="gridLayout" columnstretch="0,2,0,0,0,0">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label">
+      <layout class="QGridLayout" name="gridLayout" columnstretch="0,2,0,0,0,0,0,0,0">
+       <item row="0" column="7">
+        <widget class="QDateEdit" name="dateEdit_2">
+         <property name="calendarPopup">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="4">
+        <widget class="QLabel" name="label_44">
          <property name="text">
-          <string>Buscar Lote o Parcela</string>
+          <string>Desde:</string>
          </property>
         </widget>
        </item>
        <item row="0" column="5">
-        <widget class="QPushButton" name="btn_buscar1">
-         <property name="text">
-          <string>Buscar</string>
+        <widget class="QDateEdit" name="dateEdit">
+         <property name="calendarPopup">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -93,6 +100,20 @@
         <widget class="QLineEdit" name="line_buscar">
          <property name="inputMethodHints">
           <set>Qt::ImhUppercaseOnly</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Buscar Lote o Parcela</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="8">
+        <widget class="QPushButton" name="btn_buscar1">
+         <property name="text">
+          <string>Buscar</string>
          </property>
         </widget>
        </item>
@@ -113,6 +134,13 @@
          </property>
          <property name="checked">
           <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="6">
+        <widget class="QLabel" name="label_45">
+         <property name="text">
+          <string>Hasta:</string>
          </property>
         </widget>
        </item>
@@ -201,7 +229,7 @@
           <bool>false</bool>
          </property>
          <property name="text">
-          <string>Cargar Capa</string>
+          <string>Añadir al Mapa</string>
          </property>
         </widget>
        </item>
@@ -1320,13 +1348,13 @@
    </widget>
    <widget class="QWidget" name="tab_2">
     <attribute name="title">
-     <string>Ambientes , Segmentos y Unidades</string>
+     <string>Analisis </string>
     </attribute>
     <widget class="QPushButton" name="pushButton_2">
      <property name="geometry">
       <rect>
-       <x>190</x>
-       <y>70</y>
+       <x>10</x>
+       <y>140</y>
        <width>75</width>
        <height>23</height>
       </rect>
@@ -1334,6 +1362,198 @@
      <property name="text">
       <string>COMPOSER</string>
      </property>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_4">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>191</width>
+       <height>121</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Cargar Ambientes y Segmentos</string>
+     </property>
+     <widget class="QWidget" name="gridLayoutWidget_10">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>190</width>
+        <height>91</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_10" columnstretch="0,0,0,0">
+       <property name="sizeConstraint">
+        <enum>QLayout::SetDefaultConstraint</enum>
+       </property>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="pushButton_3">
+         <property name="text">
+          <string>Ambiente</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_41">
+         <property name="text">
+          <string>1)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QLabel" name="label_42">
+         <property name="text">
+          <string>2)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QPushButton" name="pushButton_4">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string> Segmento</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>10</y>
+       <width>541</width>
+       <height>201</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="title">
+      <string>Buscar Segmento </string>
+     </property>
+     <widget class="QWidget" name="gridLayoutWidget_11">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>521</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_11" columnstretch="0,0,0,0">
+       <item row="0" column="3">
+        <widget class="QPushButton" name="btn_find_segmento">
+         <property name="text">
+          <string>Buscar</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="line_find_segmento">
+         <property name="inputMethodHints">
+          <set>Qt::ImhUppercaseOnly</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_43">
+         <property name="text">
+          <string>Codigo Control o Muestreo</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="gridLayoutWidget_12">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>80</y>
+        <width>521</width>
+        <height>111</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_12" rowstretch="0,0,0" columnstretch="2,0">
+       <item row="0" column="0" rowspan="3">
+        <widget class="QTableWidget" name="tableWidget_2">
+         <property name="contextMenuPolicy">
+          <enum>Qt::CustomContextMenu</enum>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Box</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Sunken</enum>
+         </property>
+         <property name="sizeAdjustPolicy">
+          <enum>QAbstractScrollArea::AdjustToContents</enum>
+         </property>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+         <property name="dragDropOverwriteMode">
+          <bool>false</bool>
+         </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
+         </property>
+         <property name="showGrid">
+          <bool>true</bool>
+         </property>
+         <property name="sortingEnabled">
+          <bool>false</bool>
+         </property>
+         <property name="cornerButtonEnabled">
+          <bool>false</bool>
+         </property>
+         <column>
+          <property name="text">
+           <string>Atlas</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Cod Control</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Cod Muestreo</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Parcela</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Geometria</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="btn_add_layer_2">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Añadir al Mapa</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </widget>
   </widget>

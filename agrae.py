@@ -45,26 +45,26 @@ try:
     import psycopg2
     import psycopg2.extras
 except: 
-    pip.main('install','psycopg2')
+    pip.main(['install','psycopg2'])
     import psycopg2
     import psycopg2.extras
 
 try: 
     import numpy as np
 except:
-    pip.main('install', 'numpy')
+    pip.main(['install', 'numpy'])
     import numpy as np
 try:
     import matplotlib as mpl
     import matplotlib.pyplot as plt
 except:
-    pip.main('install', 'matplotlib')
+    pip.main(['install', 'matplotlib'])
     import matplotlib as mpl
     import matplotlib.pyplot as plt
 try: 
     import seaborn as sns
 except:
-    pip.main('install', 'seaborn')
+    pip.main(['install', 'seaborn'])
     import seaborn as sns
 
     
@@ -560,93 +560,7 @@ class agrae:
                         # funct = loadLayer(sqlQuery)
             
             except Exception as ex: 
-                QMessageBox.about(self.mainWindowDialog, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")
-
-        def cargarParcela(): 
-            self.sqlParcela = self.mainWindowDialog.sqlParcela
-            sql = self.sqlParcela
-            dns = self.utils.ConnParams()
-            row = self.mainWindowDialog.tableWidget.currentRow()
-            column = self.mainWindowDialog.tableWidget.currentColumn()
-            try:
-                uri = QgsDataSourceUri()
-                uri.setConnection(dns['host'], dns['port'],dns['dbname'], dns['user'], dns['password'])
-                uri.setDataSource('', f'({sql})', 'geometria', '', 'idparcela')
-                nombre = self.mainWindowDialog.ln_par_nombre.text()
-                if nombre == None:
-                    nombre = self.mainWindowDialog.ln_par_nombre.text()
-                    layer = self.iface.addVectorLayer(
-                        uri.uri(False), nombre, 'postgres')
-                else:
-                    layer = self.iface.addVectorLayer(
-                        uri.uri(False), nombre, 'postgres')
-
-                if layer.isValid():
-                    QgsProject.instance().addMapLayer(layer)
-                    self.iface.setActiveLayer(layer)
-                    self.iface.zoomToActiveLayer()
-                    print(f"Capa añadida correctamente ")
-                    self.mainWindowDialog.pushButton.setEnabled(False)
-
-                else:
-                    # uri.setDataSource('public', tablename, None)
-                    # layer = QgsVectorLayer(
-                    #     uri.uri(False), tablename, 'postgres')
-                    # QgsProject.instance().addMapLayer(layer)
-                    QMessageBox.about(self, "aGrae GIS:","La capa no es Valida")
-
-            except Exception as ex:
-                QMessageBox.about(
-                    self.mainWindowDialog, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
-
-
-
-        def crearParcela():
-            try:
-                with self.conn as conn:
-                    cur = conn.cursor()
-                layer = self.iface.activeLayer()
-                # print(layer.name())
-                feat = layer.selectedFeatures()
-                ls = feat[0].geometry().asWkt()
-                srid = layer.crs().authid()[5:]
-
-                name = str(self.mainWindowDialog.ln_par_nombre.text())
-                prov = int(self.mainWindowDialog.prov_combo.currentData())
-                mcpo = int(self.mainWindowDialog.mcpo_combo.currentData())
-                aggregate = int(self.mainWindowDialog.ln_par_agg.text())
-                zone = int(self.mainWindowDialog.ln_par_zona.text())
-                poly = int(self.mainWindowDialog.ln_par_poly.text())
-                allotment = int(self.mainWindowDialog.ln_par_parcela.text())
-                inclosure = int(self.mainWindowDialog.ln_par_recinto.text())
-                # print(ls)
-                
-                sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria) VALUES('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))))'''
-                cur.execute(sql)
-                conn.commit()
-                print('agregado correctamente')
-                QMessageBox.about(self.mainWindowDialog,f"aGrae GIS:", f"Parcela *-- {name} --* Creada Correctamente.\nCrear Relacion Lote Parcelas.")
-                
-
-            
-            except IndexError as ie: 
-                QMessageBox.about(self.mainWindowDialog, f"aGrae GIS {ie}",f"Debe Seleccionar una parcela a cargar.")
-
-
-            except Exception as ex:
-                print(ex)
-                QMessageBox.about(self.mainWindowDialog, f"aGrae GIS",f"No se pudo almacenar el registro {ex}")
-
-            finally: 
-                self.mainWindowDialog.ln_par_nombre.setText('')
-                # self.mainWindowDialog.ln_par_provincia.setText('')
-                # self.mainWindowDialog.ln_par_mcpo.setText('')
-                self.mainWindowDialog.ln_par_agg.setText('0')
-                self.mainWindowDialog.ln_par_zona.setText('0')
-                self.mainWindowDialog.ln_par_poly.setText('0')
-                self.mainWindowDialog.ln_par_parcela.setText('0')
-                self.mainWindowDialog.ln_par_recinto.setText('0')
-
+                QMessageBox.about(self.mainWindowDialog, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")       
         def dataLoteParcela(param='',inicial=False):
             with self.conn as conn:
                 if inicial == False:
@@ -768,20 +682,11 @@ class agrae:
 
             if self.mainWindowDialog == None:
                 self.mainWindowDialog = agraeMainWidget()
-                # cargar = loadLayer(self.queryCapaLotes)
                 self.mainWindowDialog.btn_buscar1.clicked.connect(cargarLotesParcelas)
-                # self.mainWindowDialog.btn_buscar2.clicked.connect(buscarLote)
                 self.mainWindowDialog.btn_add_layer.clicked.connect(loadLayer)
-                self.mainWindowDialog.btn_par_create.clicked.connect(crearParcela)
-                # self.mainWindowDialog.tableWidget.setColumnHidden(0, True)
-                # self.mainWindowDialog.tableWidget.setColumnHidden(5, True)
-                # self.mainWindowDialog.loadButton.clicked.connect(loadAllotmentToDB)
                 self.mainWindowDialog.btn_lote_update.setEnabled(False)
                 self.mainWindowDialog.pushButton_2.clicked.connect(printMap)
-                self.mainWindowDialog.pushButton.clicked.connect(cargarParcela)
-
             self.mainWindowDialog.closingPlugin.connect(self.onClosePluginMain)
-
             self.mainWindowDialog.show()
         pass
     

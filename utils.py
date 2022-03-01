@@ -1,5 +1,12 @@
+from PyQt5.QtWidgets import *
 from qgis.PyQt.QtCore import QSettings
+
 from qgis.gui import QgsMessageBar
+from qgis.utils import iface
+from qgis.core import *
+
+import pandas as pd
+
 from .dbconn import DbConnection
 
 class AgraeUtils():
@@ -91,31 +98,236 @@ class AgraeUtils():
 
         return sql 
 
+    def segmentosQueryTable(self, param=''):
+        if param != '': 
+            sql = f''' select s.atlas , s.cod_control , s.cod  ,p.nombre, l.nombre, s.geometria from segmento s
+                left join parcela p on p.idparcela = s.idparcela 
+                left join lote l on l.idlote = s.idlote 
+                where s.cod ilike '%{param}%' or s.atlas ilike '%{param}%' or s.cod_control ilike '%{param}%' '''
+            return sql
+        else: 
+            sql = f''' select s.atlas , s.cod_control , s.cod , p.nombre , l.nombre, s.geometria from segmento s
+                left join parcela p on p.idparcela = s.idparcela
+                left join lote l on l.idlote = s.idlote  
+                '''
+            return sql
+
+class AgraeToolset():
+    def __init__(self):
+        self.iface = iface
+        self.s = QSettings('agrae', 'dbConnection')
+        self.dns = {
+            'dbname': self.s.value('dbname'),
+            'user': self.s.value('dbuser'),
+            'password': self.s.value('dbpass'),
+            'host': self.s.value('dbhost'),
+            'port': self.s.value('dbport')
+        }
+        self.conn = DbConnection.connection(
+            self.dns['dbname'], self.dns['user'], self.dns['password'], self.dns['host'], self.dns['port'])
+        pass
+
+    def crearAmbientes(self,widget):
+        # print('test')
+        lyr = self.iface.activeLayer()
+        srid = lyr.crs().authid()[5:]
+        features = lyr.selectedFeatures()
+        try:
+            with self.conn as conn:
+                cursor = conn.cursor()
+                if len(features) > 0: 
+                    for f in features:
+                        # print('test')
+                        oa = f[0]
+                        amb = f[1]
+                        ndvimax = f[2]
+                        atlas = f[3]
+                        geometria = f.geometry().asWkt()
+                        sql = f''' insert into ambiente(obj_amb,ambiente,ndvimax,atlas,geometria)
+                                values
+                                ({oa},
+                                {amb},
+                                {ndvimax},
+                                '{atlas}',
+                                st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))'''
+                        print(f'{oa}-{amb}-{ndvimax}-{atlas}')
+                        cursor.execute(sql)
+                        conn.commit()
+                        
+                    QMessageBox.about(widget, 'aGrae GIS', 'Ambiente Cargado Correctamente \na la base de datos')
+                else:
+                    QMessageBox.about(
+                        widget, 'aGrae GIS', 'Debe Seleccionar al menos un ambiente')
+
+        except Exception as ex:
+            print(ex)
+            pass
+        
+    def crearParcela(self,widget):
+        try:
+            with self.conn as conn:
+                cur = conn.cursor()
+            layer = self.iface.activeLayer()
+            # print(layer.name())
+            feat = layer.selectedFeatures()
+            ls = feat[0].geometry().asWkt()
+            srid = layer.crs().authid()[5:]
+
+            name = str(widget.ln_par_nombre.text())
+            prov = int(widget.prov_combo.currentData())
+            mcpo = int(widget.mcpo_combo.currentData())
+            aggregate = int(widget.ln_par_agg.text())
+            zone = int(widget.ln_par_zona.text())
+            poly = int(widget.ln_par_poly.text())
+            allotment = int(widget.ln_par_parcela.text())
+            inclosure = int(widget.ln_par_recinto.text())
+            # print(ls)
+
+            sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria) VALUES('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))))'''
+            cur.execute(sql)
+            conn.commit()
+            print('agregado correctamente')
+            QMessageBox.about(widget, f"aGrae GIS:",
+                                f"Parcela *-- {name} --* Creada Correctamente.\nCrear Relacion Lote Parcelas.")
 
 
- 
-  # def loadData():
-        #     layer = self.iface.activeLayer()
-        #     feature = layer.selectedFeatures()
-        #     print(len(feature))
-        #     try:
-        #         self.addFeatureDialog.line_Nombre.setText(
-        #             str(feature[0]['name_parc']))
-        #         self.addFeatureDialog.line_Prov.setText(
-        #             str(feature[0]['provincia']))
-        #         self.addFeatureDialog.line_Mcpo.setText(
-        #             str(feature[0]['municipio']))
-        #         self.addFeatureDialog.line_Agregado.setText(
-        #             str(feature[0]['agregado']))
-        #         self.addFeatureDialog.line_Zona.setText(
-        #             str(feature[0]['zona']))
-        #         self.addFeatureDialog.line_Poly.setText(
-        #             str(feature[0]['poligono']))
-        #         self.addFeatureDialog.line_Parcela.setText(
-        #             str(feature[0]['parcela']))
-        #         self.addFeatureDialog.line_Recinto.setText(
-        #             str(feature[0]['recinto']))
-        #     except Exception as ex:
-        #         if len(feature) == 0 or len(feature) >1:
-        #             self.iface.messageBar().pushMessage(
-        #                 f'aGraes GIS | {ex}: ', 'Debe seleccionar una Parcela', level=1, duration=3)
+
+        except IndexError as ie:
+            QMessageBox.about(widget, f"aGrae GIS {ie}", f"Debe Seleccionar una parcela a cargar.")
+
+        except Exception as ex:
+            print(ex)
+            QMessageBox.about(widget, f"aGrae GIS", f"No se pudo almacenar el registro {ex}")
+
+        finally:
+            widget.ln_par_nombre.setText('')
+            # widget.ln_par_provincia.setText('')
+            # widget.ln_par_mcpo.setText('')
+            widget.ln_par_agg.setText('0')
+            widget.ln_par_zona.setText('0')
+            widget.ln_par_poly.setText('0')
+            widget.ln_par_parcela.setText('0')
+            widget.ln_par_recinto.setText('0')
+
+    def cargarParcela(self,widget):
+        self.sqlParcela = widget.sqlParcela
+        sql = self.sqlParcela
+        dns = self.dns
+        row = widget.tableWidget.currentRow()
+        column = widget.tableWidget.currentColumn()
+        try:
+            uri = QgsDataSourceUri()
+            uri.setConnection(dns['host'], dns['port'],
+                                dns['dbname'], dns['user'], dns['password'])
+            uri.setDataSource('', f'({sql})', 'geometria', '', 'idparcela')
+            nombre = widget.ln_par_nombre.text()
+            if nombre == None:
+                nombre = widget.ln_par_nombre.text()
+                layer = self.iface.addVectorLayer(
+                    uri.uri(False), nombre, 'postgres')
+            else:
+                layer = self.iface.addVectorLayer(
+                    uri.uri(False), nombre, 'postgres')
+
+            if layer.isValid():
+                QgsProject.instance().addMapLayer(layer)
+                self.iface.setActiveLayer(layer)
+                self.iface.zoomToActiveLayer()
+                print(f"Capa añadida correctamente ")
+                widget.pushButton.setEnabled(False)
+
+            else:
+                # uri.setDataSource('public', tablename, None)
+                # layer = QgsVectorLayer(
+                #     uri.uri(False), tablename, 'postgres')
+                # QgsProject.instance().addMapLayer(layer)
+                QMessageBox.about(self, "aGrae GIS:",
+                                    "La capa no es Valida")
+
+        except Exception as ex:
+            QMessageBox.about(
+                widget, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
+
+
+
+
+    def dataSegmento(self,table):
+        lyr = self.iface.activeLayer()
+        features = lyr.getFeatures()
+        columns = [fld.name() for fld in lyr.fields()]
+        data = ([f[col] for col in columns] for f in features)
+        df = pd.DataFrame.from_records(data=data, columns=columns)
+        
+        
+        nRows , nColumns = df.shape
+        table.setRowCount(nRows)
+        table.setColumnCount(nColumns)
+        table.setHorizontalHeaderLabels(columns)
+        for r in range(table.rowCount()):
+            for c in range(table.columnCount()):
+                item = QTableWidgetItem(str(df.iloc[r,c]))
+                table.setItem(r,c,item)
+
+    
+    def crearSegmento(self,widget,table):
+        lyr = self.iface.activeLayer()
+        srid = lyr.crs().authid()[5:]
+        features = lyr.getFeatures()
+
+        nRow = table.rowCount() 
+        nColumn = table.columnCount()
+        try:
+            with self.conn as conn:
+                cursor = conn.cursor()
+                for row , f in (zip(range(nRow), features)):
+                    segm = f[0]
+                    atlas = f[1]                
+                    geometria = f.geometry() .asWkt()
+                    cod = table.item(row,2).text().upper()
+                    if cod == 'NULL':                         
+                        sql = f""" insert into segmento(segmento,atlas,cod,geometria)
+                                            values
+                                            ({segm},
+                                            '{atlas}',
+                                            '',
+                                            st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))"""
+                    else: 
+                        sql = f""" insert into segmento(segmento,atlas,cod,geometria)
+                                            values
+                                            ({segm},
+                                            '{atlas}',
+                                            '{cod}',
+                                            st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))"""
+
+                                     
+                    cursor.execute(sql)
+                    conn.commit()                            
+                    # print(sql)
+
+                QMessageBox.about(widget, 'aGrae GIS', 'Segmento Cargado Correctamente \na la base de datos')
+        except Exception as ex: 
+            print(ex)
+            pass
+
+
+    def lastCode(self): 
+        with self.conn as conn: 
+            cursor = conn.cursor()
+            try: 
+                sql = '''select cod from segmento where cod != '' order by idsegmento desc limit 1'''
+                cursor.execute(sql)
+                code = cursor.fetchone()
+                if len(code) > 0: 
+                    return code[0]
+                else: 
+                    code = 'NO DATA'
+            except Exception as ex:
+
+                print(ex)
+                code = 'NO DATA'
+                return code
+                pass
+
+
+
+

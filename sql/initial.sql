@@ -106,7 +106,7 @@ ALTER TABLE cultivoagricultor
 
 
 create table ambiente (
-	pk_uid bigserial not null,
+	pk_uid uuid DEFAULT uuid_generate_v4 NOT NULL,
 	idambiente bigserial not null  primary key,
 	idparcela integer not null references parcela (idparcela)
 	obj_amb integer,
@@ -120,7 +120,8 @@ create table ambiente (
 create table segmento (
 	pk_uid bigserial not null,
 	idsegmento bigserial not null primary key,
-	idparcela integer not null references parcela (idparcela),
+	idparcela integer references parcela (idparcela),
+	idlote integer references lote (idlote),
 	segmento integer,
 	atlas varchar,
 	cod_control varchar(10),
@@ -312,3 +313,37 @@ CREATE INDEX unidad_geom_idx
 CREATE INDEX reticula_geom_idx
   ON reticulabase
   USING GIST (geometria);
+
+
+create function sp_idparcela_ambiente() 
+returns trigger as $$ 
+begin 
+	update ambiente
+	set idparcela = subquery.id
+	from (select p.idparcela id from parcela p where st_intersects(p.geometria , new.geometria)) as subquery
+	where idambiente = new.idambiente;
+	return new;
+end
+$$ 
+language plpgsql 
+
+create trigger tr_update_ambiente after insert on ambiente 
+for each row 
+execute procedure sp_idparcela_ambiente();
+
+create function sp_idparcela_segmento() 
+returns trigger as $$ 
+begin 
+	update segmento
+	set idparcela = subquery.id
+	set cod_control = new.atlas||new.segmento
+	from (select p.idparcela id from parcela p where st_intersects(p.geometria , new.geometria)) as subquery
+	where idsegmento = new.idsegmento;
+	return new;
+end
+$$ 
+language plpgsql 
+
+create trigger tr_update_ambiente after insert on segmento 
+for each row 
+execute procedure sp_idparcela_segmento();

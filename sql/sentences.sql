@@ -40,3 +40,9 @@ left join lote l on l.idlote = lp.idlote
 left join cultivo c on c.idcultivo = l.idcultivo 
 where p.idparcela = 39
 
+
+select s.segmento,s.atlas,s.cod_control,s.cod, p.nombre parcela, l.nombre lote, l.fechasiembra from segmento s
+left join parcela p on p.idparcela = s.idparcela 
+left join lote l on l.idlote = s.idlote 
+where date_part('year', l.fechasiembra) >= 2021 
+order by l.fechasiembra asc
