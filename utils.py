@@ -100,17 +100,28 @@ class AgraeUtils():
 
     def segmentosQueryTable(self, param=''):
         if param != '': 
-            sql = f''' select s.atlas , s.cod_control , s.cod  ,p.nombre, l.nombre, s.geometria from segmento s
-                left join parcela p on p.idparcela = s.idparcela 
+            sql = f''' select p.nombre parcela, l.nombre lote , s.cod_control, a.cod_analisis , s.geometria from segmento s
+                left join segmentoanalisis sa on s.idsegmento = sa.idsegmento 
+                left join analisis a on a.idanalisis = sa.idanalisis 
+                left join parcela p on p.idparcela = s.idparcela
                 left join lote l on l.idlote = s.idlote 
-                where s.cod ilike '%{param}%' or s.atlas ilike '%{param}%' or s.cod_control ilike '%{param}%' '''
+                where a.cod_analisis ilike '%{param}%' or l.nombre ilike '%{param}%' or s.cod_control ilike '%{param}%' '''
             return sql
         else: 
-            sql = f''' select s.atlas , s.cod_control , s.cod , p.nombre , l.nombre, s.geometria from segmento s
+            sql = f''' select p.nombre parcela, l.nombre lote , s.cod_control, a.cod_analisis , s.geometria from segmento s
+                left join segmentoanalisis sa on s.idsegmento = sa.idsegmento 
+                left join analisis a on a.idanalisis = sa.idanalisis 
                 left join parcela p on p.idparcela = s.idparcela
-                left join lote l on l.idlote = s.idlote  
-                '''
+                left join lote l on l.idlote = s.idlote '''
             return sql
+    def sqlLoteParcela(self,idlote): 
+        sql = f'''select p.idparcela , l.idlote, l.nombre lote, p.nombre parcela, l.fechasiembra,l.fechacosecha, c.nombre cultivo, p.geometria 
+        from parcela p 
+        left join loteparcela lp on p.idparcela = lp.idparcela 
+        left join lote l on l.idlote = lp.idlote 
+        left join cultivo c on c.idcultivo = l.idcultivo 
+        where p.idparcela in(lp.idparcela) and l.idlote = {idlote} order by p.nombre '''
+        return sql
 
 class AgraeToolset():
     def __init__(self):
@@ -280,26 +291,12 @@ class AgraeToolset():
             with self.conn as conn:
                 cursor = conn.cursor()
                 for row , f in (zip(range(nRow), features)):
-                    segm = f[0]
-                    atlas = f[1]                
-                    geometria = f.geometry() .asWkt()
-                    cod = table.item(row,2).text().upper()
-                    if cod == 'NULL':                         
-                        sql = f""" insert into segmento(segmento,atlas,cod,geometria)
-                                            values
-                                            ({segm},
-                                            '{atlas}',
-                                            '',
-                                            st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))"""
-                    else: 
-                        sql = f""" insert into segmento(segmento,atlas,cod,geometria)
-                                            values
-                                            ({segm},
-                                            '{atlas}',
-                                            '{cod}',
-                                            st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))"""
-
-                                     
+                    segm = f[0]               
+                    geometria = f.geometry() .asWkt()                                        
+                    sql = f""" insert into segmento(segmento,geometria)
+                                        values
+                                        ({segm},
+                                        st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))"""                   
                     cursor.execute(sql)
                     conn.commit()                            
                     # print(sql)
@@ -314,7 +311,8 @@ class AgraeToolset():
         with self.conn as conn: 
             cursor = conn.cursor()
             try: 
-                sql = '''select cod from segmento where cod != '' order by idsegmento desc limit 1'''
+                sql = '''select a.cod_analisis  from analisis a 
+                        order by a.idanalisis desc limit 1'''
                 cursor.execute(sql)
                 code = cursor.fetchone()
                 if len(code) > 0: 
@@ -327,6 +325,7 @@ class AgraeToolset():
                 code = 'NO DATA'
                 return code
                 pass
+
 
 
 

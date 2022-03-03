@@ -1,4 +1,9 @@
 
+create table analisis ( 
+idanalisis smallserial not null primary key,
+idlote integer references lote(idlote),
+cod_analisis varchar(10) not null
+);
 
 CREATE TABLE persona (
 	idpersona serial NOT NULL PRIMARY KEY,
@@ -121,11 +126,11 @@ create table segmento (
 	pk_uid bigserial not null,
 	idsegmento bigserial not null primary key,
 	idparcela integer references parcela (idparcela),
-	idlote integer references lote (idlote),
 	segmento integer,
 	atlas varchar,
 	cod_control varchar(10),
 	cod varchar (10),
+	idanalisis integer references analisis(idanalisis),
 	geometria geometry(MultiPolygon,4326)
 )
 

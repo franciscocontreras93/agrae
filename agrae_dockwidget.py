@@ -21,8 +21,10 @@ agraeDockWidget
  ***************************************************************************/
 """
 import os
+# from datetime import date
+
 from psycopg2 import OperationalError,InterfaceError, errors, extras
-from PyQt5.QtCore import QRegExp
+from PyQt5.QtCore import QRegExp, QDate
 from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtWidgets import *
 from qgis.PyQt import QtGui, QtWidgets, uic
@@ -122,12 +124,12 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
     def data(self, filtro=None):
         if filtro == None:
             cursor = self.conn.cursor()
-            sql = '''select p.idparcela,p.nombre, (case when lp.parcela >= 1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion,prov.nombre provincia, mcpo.nombre municipio , p.agregado , p.zona , p.poligono , p.parcela , p.recinto from parcela p left join (select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela  = p.idparcela left join lote l on lp2.idlote = l.idlote left join datos.provincia prov on p.provincia = prov.idprovincia left join datos.municipio mcpo on p.municipio = mcpo.idmunicipio order by idparcela  '''
+            sql = '''select p.idparcela,p.nombre, (case when lp.parcela >= 1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion,prov.nombre provincia, mcpo.nombre municipio , p.agregado , p.zona , p.poligono , p.parcela , p.recinto from parcela p left join (select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela  = p.idparcela left join lote l on lp2.idlote = l.idlote left join datos.provincia prov on p.provincia = prov.idprovincia left join datos.municipio mcpo on p.municipio = mcpo.idmunicipio order by l.idlote  '''
             cursor.execute(sql)
             data = cursor.fetchall()
         else:
             cursor = self.conn.cursor()
-            sql = f"select p.idparcela, p.nombre, (case when lp.parcela=1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion, prov.nombre provincia, mcpo.nombre municipio, p.agregado, p.zona, p.poligono, p.parcela, p.recinto from parcela p left join(select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela = p.idparcela left join lote l on lp2.idlote = l.idlote left join (select idprovincia, nombre from datos.provincia) as prov on p.provincia = prov.idprovincia left join (select idmunicipio , nombre from datos.municipio) as mcpo on p.municipio = mcpo.idmunicipio where p.nombre ilike '%{filtro}%' or prov.nombre ilike '%{filtro}%' or mcpo.nombre ilike '%{filtro}%' order by p.idparcela "          
+            sql = f"select p.idparcela, p.nombre, (case when lp.parcela=1 then 'Si' else 'No' end) relacion, l.nombre lote_relacion, prov.nombre provincia, mcpo.nombre municipio, p.agregado, p.zona, p.poligono, p.parcela, p.recinto from parcela p left join(select lp.idparcela, count(*) as parcela from loteparcela as lp group by lp.idparcela) as lp  on lp.idparcela = p.idparcela left join loteparcela lp2 on lp2.idparcela = p.idparcela left join lote l on lp2.idlote = l.idlote left join (select idprovincia, nombre from datos.provincia) as prov on p.provincia = prov.idprovincia left join (select idmunicipio , nombre from datos.municipio) as mcpo on p.municipio = mcpo.idmunicipio where p.nombre ilike '%{filtro}%' or prov.nombre ilike '%{filtro}%' or mcpo.nombre ilike '%{filtro}%' order by l.idlote "          
             # or p.agregado ilike '%{filtro}%' or p.zona ilike '%{filtro}%' or p.poligono ilike '%{filtro}%' or p.parcela ilike '%{filtro}%' or p.recinto ilike '%{filtro}%' order by p.idparcela " 
             cursor.execute(sql)
             data = cursor.fetchall()
@@ -531,8 +533,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.setStyleLines()
 
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
-        self.tableWidget.setColumnHidden(5, True)
-        self.tableWidget_2.setColumnHidden(5, True)
+        self.tableWidget.setColumnHidden(0, True) # columna geometria lote parcela
+        self.tableWidget.setColumnHidden(1, True) # columna geometria lote parcela
+        self.tableWidget.setColumnHidden(7, True) # columna geometria lote parcela
+        # self.tableWidget_2.setColumnHidden(5, True) # columna geometria segmento
 
         self.btn_par_update.clicked.connect(self.actualizarParcela)
         self.btn_buscar_parcela.clicked.connect(self.parcelaDialog)
@@ -555,6 +559,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.pushButton.clicked.connect(self.cargarParcela)
         self.btn_find_segmento.clicked.connect(self.buscarSegmento)
 
+        # self.btn_buscar1.clicked.connect(self.filt)
+
 
 
 
@@ -565,18 +571,20 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     def dataAutoParcela(self): 
         cursor = self.conn.cursor()
-        sql = '''select distinct nombre from lote 
-                union
-                select distinct nombre from parcela
-                union 
-                select distinct nombre from cultivo
-                order by nombre'''
+        sql = '''select distinct unnest(array[l.nombre, p.nombre, c.nombre]) from lote l
+                left join loteparcela lp on l.idlote = lp.idlote 
+                left join parcela p on lp.idparcela = p.idparcela 
+                left join cultivo c on c.idcultivo = l.idcultivo '''
         cursor.execute(sql)
         data = cursor.fetchall()
         return data
     def dataAutoSegmento(self): 
         cursor = self.conn.cursor()
-        sql = '''select distinct unnest(array[atlas, cod_control, cod]) lista from segmento order by lista '''
+        sql = '''select distinct unnest(array[s.cod_control, l.nombre, a.cod_analisis]) lista from segmento s
+            join lote l on s.idlote = l.idlote 
+            left join segmentoanalisis sa on s.idsegmento = sa.idsegmento
+            left join analisis a on a.idanalisis = sa.idanalisis
+            order by lista '''
         cursor.execute(sql)
         data = cursor.fetchall()
         return data
@@ -647,6 +655,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 conn.commit()
                 QMessageBox.about(self, f"aGrae GIS:",f"Lote *-- {nombre.upper()} --* Se modifico Correctamente.")
             except Exception as e: 
+                cursor.rollback()
                 QMessageBox.about(self,'aGrae GIS:',f'Ocurrio un Error. \n {e}')
 
         else:
@@ -893,6 +902,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.line_lote_idexp.setValidator(self.integerFormat)
         self.line_lote_idcultivo.setValidator(self.integerFormat)
 
+        ##############################################################
+
+        self.untilDate.setDate(QDate.currentDate())
+
     def validarNombre(self):
         if self.ln_par_nombre.text() == '':
             self.btn_par_create.setEnabled(False)
@@ -1010,6 +1023,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def agregarSegmento(self): 
         param 
             
+    def filt(self): 
+        sinceDate = self.sinceDate.date().toString('yyyy-MM-dd')
+        untilDate = self.untilDate.date().toString('yyyy-MM-dd')
 
-
-
+        print(sinceDate, untilDate)

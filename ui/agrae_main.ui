@@ -44,7 +44,7 @@
     <string notr="true"/>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="lotes_tab">
     <attribute name="title">
@@ -74,23 +74,53 @@
         <height>41</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="gridLayout" columnstretch="0,2,0,0,0,0,0,0,0">
-       <item row="0" column="7">
-        <widget class="QDateEdit" name="dateEdit_2">
+      <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0,0,0,0">
+       <item row="0" column="4">
+        <widget class="QLabel" name="label_45">
+         <property name="text">
+          <string>Hasta:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="5">
+        <widget class="QDateEdit" name="untilDate">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="dateTime">
+          <datetime>
+           <hour>0</hour>
+           <minute>0</minute>
+           <second>0</second>
+           <year>2022</year>
+           <month>1</month>
+           <day>1</day>
+          </datetime>
+         </property>
          <property name="calendarPopup">
           <bool>true</bool>
          </property>
         </widget>
        </item>
-       <item row="0" column="4">
+       <item row="0" column="2">
         <widget class="QLabel" name="label_44">
          <property name="text">
           <string>Desde:</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="5">
-        <widget class="QDateEdit" name="dateEdit">
+       <item row="0" column="3">
+        <widget class="QDateEdit" name="sinceDate">
+         <property name="dateTime">
+          <datetime>
+           <hour>0</hour>
+           <minute>0</minute>
+           <second>0</second>
+           <year>2022</year>
+           <month>1</month>
+           <day>1</day>
+          </datetime>
+         </property>
          <property name="calendarPopup">
           <bool>true</bool>
          </property>
@@ -110,37 +140,10 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="8">
+       <item row="0" column="6">
         <widget class="QPushButton" name="btn_buscar1">
          <property name="text">
           <string>Buscar</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QRadioButton" name="radio_nombre">
-         <property name="text">
-          <string>Nombre</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="3">
-        <widget class="QRadioButton" name="radio_id">
-         <property name="text">
-          <string>ID</string>
-         </property>
-         <property name="checked">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="6">
-        <widget class="QLabel" name="label_45">
-         <property name="text">
-          <string>Hasta:</string>
          </property>
         </widget>
        </item>
@@ -193,12 +196,12 @@
          </property>
          <column>
           <property name="text">
-           <string>ID. Parcela</string>
+           <string>Id. Parcela</string>
           </property>
          </column>
          <column>
           <property name="text">
-           <string>ID. Lote</string>
+           <string>Id. Lote</string>
           </property>
          </column>
          <column>
@@ -209,6 +212,16 @@
          <column>
           <property name="text">
            <string>Parcela</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Fecha Siembra</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Fecha Cosecha</string>
           </property>
          </column>
          <column>
@@ -249,7 +262,7 @@
       <string notr="true">#tabWidget_2::pane{border: 0}</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab_admin_pl">
       <attribute name="title">
@@ -706,7 +719,7 @@
             <second>0</second>
             <year>2022</year>
             <month>1</month>
-            <day>28</day>
+            <day>1</day>
            </datetime>
           </property>
           <property name="minimumDate">
@@ -733,7 +746,7 @@
             <second>0</second>
             <year>2022</year>
             <month>1</month>
-            <day>28</day>
+            <day>1</day>
            </datetime>
           </property>
           <property name="minimumDate">
@@ -809,7 +822,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -1350,99 +1363,27 @@
     <attribute name="title">
      <string>Analisis </string>
     </attribute>
-    <widget class="QPushButton" name="pushButton_2">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>140</y>
-       <width>75</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>COMPOSER</string>
-     </property>
-    </widget>
-    <widget class="QGroupBox" name="groupBox_4">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>191</width>
-       <height>121</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Cargar Ambientes y Segmentos</string>
-     </property>
-     <widget class="QWidget" name="gridLayoutWidget_10">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>190</width>
-        <height>91</height>
-       </rect>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_10" columnstretch="0,0,0,0">
-       <property name="sizeConstraint">
-        <enum>QLayout::SetDefaultConstraint</enum>
-       </property>
-       <item row="0" column="1">
-        <widget class="QPushButton" name="pushButton_3">
-         <property name="text">
-          <string>Ambiente</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_41">
-         <property name="text">
-          <string>1)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QLabel" name="label_42">
-         <property name="text">
-          <string>2)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="3">
-        <widget class="QPushButton" name="pushButton_4">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="text">
-          <string> Segmento</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </widget>
     <widget class="QGroupBox" name="groupBox_3">
      <property name="geometry">
       <rect>
-       <x>220</x>
+       <x>10</x>
        <y>10</y>
-       <width>541</width>
-       <height>201</height>
+       <width>751</width>
+       <height>431</height>
       </rect>
      </property>
      <property name="styleSheet">
       <string notr="true"/>
      </property>
      <property name="title">
-      <string>Buscar Segmento </string>
+      <string>Herramientas de Analisis</string>
      </property>
      <widget class="QWidget" name="gridLayoutWidget_11">
       <property name="geometry">
        <rect>
         <x>10</x>
         <y>30</y>
-        <width>521</width>
+        <width>541</width>
         <height>41</height>
        </rect>
       </property>
@@ -1464,23 +1405,33 @@
        <item row="0" column="0">
         <widget class="QLabel" name="label_43">
          <property name="text">
-          <string>Codigo Control o Muestreo</string>
+          <string>Buscar Segmento</string>
          </property>
         </widget>
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="gridLayoutWidget_12">
+     <widget class="QWidget" name="gridLayoutWidget_10">
       <property name="geometry">
        <rect>
         <x>10</x>
         <y>80</y>
-        <width>521</width>
-        <height>111</height>
+        <width>541</width>
+        <height>341</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="gridLayout_12" rowstretch="0,0,0" columnstretch="2,0">
-       <item row="0" column="0" rowspan="3">
+      <layout class="QGridLayout" name="gridLayout_10">
+       <item row="0" column="1">
+        <widget class="QPushButton" name="btn_add_layer_2">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Añadir al Mapa</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
         <widget class="QTableWidget" name="tableWidget_2">
          <property name="contextMenuPolicy">
           <enum>Qt::CustomContextMenu</enum>
@@ -1517,7 +1468,12 @@
          </property>
          <column>
           <property name="text">
-           <string>Atlas</string>
+           <string>Parcela</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Lote</string>
           </property>
          </column>
          <column>
@@ -1532,27 +1488,119 @@
          </column>
          <column>
           <property name="text">
-           <string>Parcela</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
            <string>Geometria</string>
           </property>
          </column>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QPushButton" name="btn_add_layer_2">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Añadir al Mapa</string>
-         </property>
-        </widget>
-       </item>
       </layout>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_4">
+      <property name="geometry">
+       <rect>
+        <x>560</x>
+        <y>20</y>
+        <width>181</width>
+        <height>401</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Herramientas</string>
+      </property>
+      <widget class="QTabWidget" name="tabWidget">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>161</width>
+         <height>361</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(240, 240, 240);</string>
+       </property>
+       <property name="tabPosition">
+        <enum>QTabWidget::West</enum>
+       </property>
+       <property name="currentIndex">
+        <number>1</number>
+       </property>
+       <widget class="QWidget" name="tabWidgetPage1" native="true">
+        <attribute name="title">
+         <string>Ambiente</string>
+        </attribute>
+        <widget class="QWidget" name="verticalLayoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>9</y>
+           <width>111</width>
+           <height>341</height>
+          </rect>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QPushButton" name="pushButton_3">
+            <property name="text">
+             <string>Cargar</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="tabWidgetPage2" native="true">
+        <attribute name="title">
+         <string>Segmento</string>
+        </attribute>
+        <widget class="QWidget" name="verticalLayoutWidget_2">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>9</y>
+           <width>111</width>
+           <height>341</height>
+          </rect>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QPushButton" name="pushButton_4">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="text">
+             <string>Cargar</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="tabWidgetPage3" native="true">
+        <attribute name="title">
+         <string>Compositor</string>
+        </attribute>
+        <widget class="QWidget" name="verticalLayoutWidget_3">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>9</y>
+           <width>111</width>
+           <height>341</height>
+          </rect>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QPushButton" name="pushButton_2">
+            <property name="text">
+             <string>Generar</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </widget>
      </widget>
     </widget>
    </widget>
@@ -1560,8 +1608,6 @@
  </widget>
  <tabstops>
   <tabstop>line_buscar</tabstop>
-  <tabstop>radio_nombre</tabstop>
-  <tabstop>radio_id</tabstop>
   <tabstop>btn_buscar1</tabstop>
   <tabstop>tableWidget</tabstop>
   <tabstop>btn_add_layer</tabstop>
