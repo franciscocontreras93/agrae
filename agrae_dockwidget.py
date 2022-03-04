@@ -20,12 +20,13 @@ agraeDockWidget
  *                                                                         *
  ***************************************************************************/
 """
+
 import os
 # from datetime import date
 
 from psycopg2 import OperationalError,InterfaceError, errors, extras
 from PyQt5.QtCore import QRegExp, QDate
-from PyQt5.QtGui import QRegExpValidator
+from PyQt5.QtGui import QRegExpValidator, QIcon
 from PyQt5.QtWidgets import *
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QSettings
@@ -35,6 +36,9 @@ from .agrae_dialogs import agraeSegmentoDialog
 from .utils import AgraeUtils, AgraeToolset
 
 from .agraeTools import agraeToolset
+
+icons_path = {'search_icon_path': r'ui\icons\search.svg'}
+
 
 agraeSidePanel, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/agrae_dockwidget_base.ui'))
 agraeConfigPanel, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/config_ui.ui'))
@@ -234,12 +238,21 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
     def data(self, filtro=None):
         if filtro == None:
             cursor = self.conn.cursor()
-            sql = "select l.idlote ,l.nombre, coalesce(lp.parcelas,0) from lote l left join (select lp.idlote, count(*) as parcelas from loteparcela as lp group by lp.idlote) as lp on lp.idlote = l.idlote order by l.idlote"
+            sql = """select l.idlote ,l.nombre, (case when lp.parcelas >= 1 then coalesce(lp.parcelas,0)::varchar(10) else 'No' end) parcelas, ca.fechasiembra, ca.fechacosecha , c.nombre from lote l 
+            left join (select lp.idlote, count(*) as parcelas from loteparcela as lp group by lp.idlote) as lp on lp.idlote = l.idlote 
+            left join campania ca on ca.idlote = l.idlote 
+            left join cultivo c on c.idcultivo = ca.idcultivo 
+            order by l.idlote"""
             cursor.execute(sql)
             data = cursor.fetchall()
         else:
             cursor = self.conn.cursor()
-            sql = f"select l.idlote ,l.nombre, coalesce(lp.parcelas,0) from lote l left join (select lp.idlote, count(*) as parcelas from loteparcela as lp group by lp.idlote) as lp on lp.idlote = l.idlote where l.nombre ilike '%{filtro}%' order by l.idlote "
+            sql = f"""select l.idlote ,l.nombre, (case when lp.parcelas >= 1 then coalesce(lp.parcelas,0)::varchar(10) else 'No' end) parcelas, ca.fechasiembra, ca.fechacosecha , c.nombre from lote l 
+            left join (select lp.idlote, count(*) as parcelas from loteparcela as lp group by lp.idlote) as lp on lp.idlote = l.idlote 
+            left join campania ca on ca.idlote = l.idlote 
+            left join cultivo c on c.idcultivo = ca.idcultivo 
+            order by l.idlote 
+            where l.nombre ilike '%{filtro}%' order by l.idlote """
             cursor.execute(sql)
             data = cursor.fetchall()
         if len(data) >= 1:
@@ -299,7 +312,22 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
 
             param = self.tableWidget.item(row, 0).text()
 
-            sqlQuery = f"""select * from lote where idlote = {param} """
+            sqlQuery = f""" select
+            l.idlote, ca.idexplotacion, ca.idcultivo, l.nombre, ca.fechasiembra, ca.fechacosecha,
+            --fondo
+            ca.fechafertilizacionfondo, ca.fertilizantefondoformula, ca.fertilizantefondoprecio, ca.fertilizantefondocalculado,
+            ca.fertilizantefondoajustado, ca.fertilizantefondoaplicado,
+            -- cob1
+            ca.fechafertilizacioncbo1, ca.fertilizantecob1formula, ca.fertilizantecob1precio, ca.fertilizantecob1calculado,
+            ca.fertilizantecob1ajustado, ca.fertilizantecob1aplicado,
+            -- cob2
+            ca.fechafertilizacioncbo2, ca.fertilizantecob2formula, ca.fertilizantecob2precio, ca.fertilizantecob2calculado,
+            ca.fertilizantecob2ajustado, ca.fertilizantecob2aplicado,
+            -- cob3
+            ca.fechafertilizacioncbo3, ca.fertilizantecob3formula, ca.fertilizantecob3precio, ca.fertilizantecob3calculado,
+            ca.fertilizantecob3ajustado, ca.fertilizantecob3aplicado
+            from lote l
+            left join campania ca on l.idlote = ca.idlote  where l.idlote = {param} """
 
             conn = self.conn
 
@@ -524,7 +552,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         completerSegmento = QCompleter(listaSegmento)
         completerSegmento.setCaseSensitivity(False)
 
-
+        
               
         self.setupUi(self)
         self.populateComboProv()
@@ -533,9 +561,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.setStyleLines()
 
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
-        self.tableWidget.setColumnHidden(0, True) # columna geometria lote parcela
-        self.tableWidget.setColumnHidden(1, True) # columna geometria lote parcela
-        self.tableWidget.setColumnHidden(7, True) # columna geometria lote parcela
+        self.tableWidget.setColumnHidden(5, True) # columna geometria lote parcela
+        self.tableWidget.setColumnHidden(0, True) # columna id lote parcela
+
         # self.tableWidget_2.setColumnHidden(5, True) # columna geometria segmento
 
         self.btn_par_update.clicked.connect(self.actualizarParcela)
@@ -572,9 +600,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def dataAutoParcela(self): 
         cursor = self.conn.cursor()
         sql = '''select distinct unnest(array[l.nombre, p.nombre, c.nombre]) from lote l
-                left join loteparcela lp on l.idlote = lp.idlote 
-                left join parcela p on lp.idparcela = p.idparcela 
-                left join cultivo c on c.idcultivo = l.idcultivo '''
+            left join campania camp on camp.idlote = l.idlote 
+            left join loteparcela lp on l.idlote = lp.idlote 
+            left join parcela p on lp.idparcela = p.idparcela
+            left join cultivo c on c.idcultivo = camp.idcultivo'''
         cursor.execute(sql)
         data = cursor.fetchall()
         return data

@@ -6,19 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>650</width>
     <height>300</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>400</width>
-    <height>200</height>
+    <width>650</width>
+    <height>300</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>400</width>
+    <width>650</width>
     <height>300</height>
    </size>
   </property>
@@ -30,7 +30,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>381</width>
+     <width>631</width>
      <height>281</height>
     </rect>
    </property>
@@ -42,7 +42,7 @@
      <rect>
       <x>10</x>
       <y>31</y>
-      <width>361</width>
+      <width>611</width>
       <height>211</height>
      </rect>
     </property>
@@ -90,6 +90,21 @@
          <string>Num. Parcelas</string>
         </property>
        </column>
+       <column>
+        <property name="text">
+         <string>Fecha. Siembra</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Fecha. Cosecha</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Cultivo</string>
+        </property>
+       </column>
       </widget>
      </item>
     </layout>
@@ -97,7 +112,7 @@
    <widget class="QPushButton" name="btn_cargar_lote">
     <property name="geometry">
      <rect>
-      <x>300</x>
+      <x>550</x>
       <y>250</y>
       <width>71</width>
       <height>23</height>

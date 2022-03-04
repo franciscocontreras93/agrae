@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/plugins/agrae" >
         <file>icon.png</file>
+        <file>ui\icons\search.svg</file>
     </qresource>
 </RCC>

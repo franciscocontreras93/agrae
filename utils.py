@@ -114,13 +114,15 @@ class AgraeUtils():
                 left join parcela p on p.idparcela = s.idparcela
                 left join lote l on l.idlote = s.idlote '''
             return sql
-    def sqlLoteParcela(self,idlote): 
-        sql = f'''select p.idparcela , l.idlote, l.nombre lote, p.nombre parcela, l.fechasiembra,l.fechacosecha, c.nombre cultivo, p.geometria 
-        from parcela p 
-        left join loteparcela lp on p.idparcela = lp.idparcela 
-        left join lote l on l.idlote = lp.idlote 
-        left join cultivo c on c.idcultivo = l.idcultivo 
-        where p.idparcela in(lp.idparcela) and l.idlote = {idlote} order by p.nombre '''
+    def sqlLoteParcela(self,idlote, nombre, fecha): 
+        sql = f'''select l.idlote, l.nombre , lc.fechasiembra, lc.fechacosecha, c.nombre, st_multi(st_union(p.geometria)) geometria from loteparcela lp
+        left join parcela p on lp.idparcela = p.idparcela 
+        left join lote l on lp.idlote = l.idlote 
+        left join campania lc on lc.idlote = l.idlote 
+        left join cultivo c on c.idcultivo = lc.idcultivo 
+        where l.idlote = {idlote} and l.nombre ilike '%{nombre}%' and  lc.fechacosecha = '{fecha}' 
+        group by l.idlote , lc.fechasiembra , lc.fechacosecha, c.nombre
+        order by lc.fechasiembra desc '''
         return sql
 
 class AgraeToolset():
