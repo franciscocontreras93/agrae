@@ -712,8 +712,20 @@ class agrae:
             self.pluginIsActive = True
 
             if self.mainWindowDialog == None:
+                icons_path = {
+                    'search_icon_path': os.path.join(os.path.dirname(__file__), r'ui\icons\search.svg'),
+                    'add_layer_to_map': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-add-o.svg')
+                }
+
+                
                 self.mainWindowDialog = agraeMainWidget()
-                self.mainWindowDialog.btn_buscar1.clicked.connect(cargarLotesParcelas)
+
+                line_buscar_action = self.mainWindowDialog.line_buscar.addAction(
+                    QIcon(icons_path['search_icon_path']), self.mainWindowDialog.line_buscar.TrailingPosition)
+                
+                line_buscar_action.triggered.connect(cargarLotesParcelas)
+
+                # self.mainWindowDialog.btn_buscar1.clicked.connect(cargarLotesParcelas)
                 self.mainWindowDialog.btn_add_layer.clicked.connect(loadLayer)
                 self.mainWindowDialog.btn_lote_update.setEnabled(False)
                 self.mainWindowDialog.pushButton_2.clicked.connect(printMap)

@@ -26,7 +26,7 @@ import os
 
 from psycopg2 import OperationalError,InterfaceError, errors, extras
 from PyQt5.QtCore import QRegExp, QDate
-from PyQt5.QtGui import QRegExpValidator, QIcon
+from PyQt5.QtGui import QRegExpValidator, QIcon, QPixmap
 from PyQt5.QtWidgets import *
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QSettings
@@ -36,8 +36,12 @@ from .agrae_dialogs import agraeSegmentoDialog
 from .utils import AgraeUtils, AgraeToolset
 
 from .agraeTools import agraeToolset
+from .resources import *
 
-icons_path = {'search_icon_path': r'ui\icons\search.svg'}
+icons_path = {
+    'search_icon_path': os.path.join(os.path.dirname(__file__), r'ui\icons\search.svg'),
+    'add_layer_to_map': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-add-o.svg')
+}
 
 
 agraeSidePanel, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/agrae_dockwidget_base.ui'))
@@ -564,15 +568,24 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget.setColumnHidden(5, True) # columna geometria lote parcela
         self.tableWidget.setColumnHidden(0, True) # columna id lote parcela
 
+        self.line_buscar.setClearButtonEnabled(True)
+        line_par_action = self.ln_par_nombre.addAction(QIcon(icons_path['search_icon_path']), self.ln_par_nombre.TrailingPosition)
+        line_par_action.triggered.connect(self.parcelaDialog)
+        line_lote_action = self.line_lote_nombre.addAction(QIcon(icons_path['search_icon_path']), self.line_lote_nombre.TrailingPosition)
+        line_lote_action.triggered.connect(self.loteDialog)
+        line_loteidexp_action = self.line_lote_idexp.addAction(QIcon(icons_path['search_icon_path']), self.line_lote_idexp.TrailingPosition)
+        line_loteidexp_action.triggered.connect(self.expDialog)
+        line_loteidcultivo_action = self.line_lote_idcultivo.addAction(
+            QIcon(icons_path['search_icon_path']), self.line_lote_idcultivo.TrailingPosition)
+        line_loteidcultivo_action.triggered.connect(self.cultivoDialog)
+
         # self.tableWidget_2.setColumnHidden(5, True) # columna geometria segmento
+        self.btn_add_layer.setIcon(QIcon(icons_path['add_layer_to_map']))
+        self.btn_add_layer.setIconSize(QtCore.QSize(20, 20))
 
         self.btn_par_update.clicked.connect(self.actualizarParcela)
-        self.btn_buscar_parcela.clicked.connect(self.parcelaDialog)
         self.btn_buscar_parcela_2.clicked.connect(self.parcelaDialog)
-        self.btn_buscar_lote.clicked.connect(self.loteDialog)
         self.btn_buscar_lote_2.clicked.connect(self.loteDialog)
-        self.btn_buscar_exp.clicked.connect(self.expDialog)
-        self.btn_buscar_cult.clicked.connect(self.cultivoDialog)
         self.btn_rel_create.clicked.connect(self.crearRelacionLoteParcela)
         self.btn_lote_update.clicked.connect(self.actualizarLote)     
         self.prov_combo.currentTextChanged.connect(self.indexProvUpdate)
@@ -580,6 +593,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.line_buscar.setCompleter(completerParcela)
         self.line_find_segmento.setCompleter(completerSegmento)
         self.btn_crear_lote.clicked.connect(self.crearLote)
+        self.btn_crear_campania.clicked.connect(self.crearCampania)
         self.ln_par_nombre.textChanged.connect(self.validarNombre)
         self.pushButton_3.clicked.connect(self.crearAmbientes)
         self.pushButton_4.clicked.connect(self.segmentoDialog)
@@ -587,7 +601,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.pushButton.clicked.connect(self.cargarParcela)
         self.btn_find_segmento.clicked.connect(self.buscarSegmento)
 
-        # self.btn_buscar1.clicked.connect(self.filt)
 
 
 
@@ -692,9 +705,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def crearParcela(self):
         self.tools.crearParcela(self)
     
-    def crearLote(self):
-        idlote = self.idlote
-        nombre = self.line_lote_nombre.text()
+    def crearCampania(self):
+        lote = str(self.line_lote_nombre.text()).upper()
         idexp = self.line_lote_idexp.text()
         idcult = self.line_lote_idcultivo.text()
         dateSiembra = self.lote_dateSiembra.date().toString('yyyy.MM.dd')
@@ -723,26 +735,49 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         cob3Calculado = float(self.line_cob_calculado_3.text())
         cob3Ajustado = float(self.line_cob_ajustado_3.text())
         cob3Aplicado = float(self.line_cob_aplicado_3.text())
+        unidadDesprecio = self.ln_und_deprecio.text()
       
-        sql = f'''insert into lote values (nextval('lote_idlote_seq'),{idexp}, {idcult},  '{nombre}','{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, {fondoAjustado},  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, {cob1Ajustado},  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  {cob2Ajustado}, {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, {cob3Ajustado},  {cob3Aplicado}) '''
+        sql = f'''with get_lote_id as ( select idlote from lote where nombre ilike '%{lote}%')
+        insert into campania 
+        select nextval('campania_idcampania_seq') ,idlote,{idexp}, {idcult},'{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, {fondoAjustado},  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, {cob1Ajustado},  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  {cob2Ajustado}, {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, {cob3Ajustado},  {cob3Aplicado} , '{unidadDesprecio}'
+        from get_lote_id '''
        
         with self.conn as conn:
             try: 
                 cursor = conn.cursor()
                 cursor.execute(sql)
                 conn.commit()
-                QMessageBox.about(self, f"aGrae GIS:",f"Lote: *--  --* Creado Correctamente.\nCrear Relacion Lote Parcelas.")
+                QMessageBox.about(self, f"aGrae GIS:",f"Campaña creada correctamente")
             except InterfaceError as ie: 
                 conn = self.utils.Conn()
                 cursor = conn.cursor()
                 cursor.execute(sql)
-                QMessageBox.about(
-                    self, f"aGrae GIS:", f"Lote: *--  --* Creado Correctamente.\nCrear Relacion Lote Parcelas.")
+                QMessageBox.about(self, f"aGrae GIS:", f"Campaña creada correctamente")
 
 
             except Exception as e: 
+                print(e)
                 QMessageBox.about(self, f"Error: ",f"{e}")         
-        
+    
+    def crearLote(self): 
+        nombre = str(self.line_lote_nombre.text()).upper()
+        sql = f""" insert into lote(nombre) values('{nombre}')  """
+        with self.conn as conn: 
+            try: 
+                cursor = conn.cursor()
+                cursor.execute(sql)
+                print('Lote creado')
+                QMessageBox.about(
+                    self, f"aGrae GIS:", f"Lote: {nombre} Creado Correctamente.\nCrear Relacion Lote Parcelas.")
+            except errors.lookup('23505'): 
+                print('El lote ya existe, ingresa otro nombre o modifica el existente')
+                QMessageBox.about(self, f"aGrae GIS:",f"El Lote: {nombre} ya existe.\nIngresa otro Nombre o Modifica el Existente")
+                conn.rollback()
+            except Exception as ex: 
+                print(ex)
+                QMessageBox.about(self, f"ERROR:",f"Ocurrio un Error, Revisa la Consola")
+                conn.rollback()
+
     def populateParcela(self,data):
         style = "font-weight: bold ; color : red"
         dataStr = [str(e) for e in data]
