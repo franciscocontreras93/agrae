@@ -44,7 +44,7 @@
     <string notr="true"/>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="lotes_tab">
     <attribute name="title">
@@ -205,6 +205,11 @@
          </column>
          <column>
           <property name="text">
+           <string>Parcela</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
            <string>Fecha Siembra</string>
           </property>
          </column>
@@ -225,8 +230,21 @@
          </column>
         </widget>
        </item>
-       <item row="1" column="1">
+       <item row="0" column="1">
         <widget class="QPushButton" name="btn_add_layer">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Añadir Lote al Mapa</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="btn_reload">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -662,6 +680,9 @@
         </item>
         <item row="0" column="8">
          <widget class="QPushButton" name="btn_crear_lote">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
           <property name="text">
            <string>Crear Lote</string>
           </property>
@@ -696,6 +717,9 @@
         </item>
         <item row="1" column="8">
          <widget class="QPushButton" name="btn_crear_campania">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
           <property name="text">
            <string>Crear Campaña</string>
           </property>
@@ -1374,7 +1398,7 @@
        <rect>
         <x>10</x>
         <y>30</y>
-        <width>541</width>
+        <width>351</width>
         <height>41</height>
        </rect>
       </property>
@@ -1407,7 +1431,7 @@
        <rect>
         <x>10</x>
         <y>80</y>
-        <width>541</width>
+        <width>731</width>
         <height>341</height>
        </rect>
       </property>
@@ -1418,12 +1442,15 @@
           <bool>false</bool>
          </property>
          <property name="text">
-          <string>Añadir al Mapa</string>
+          <string/>
          </property>
         </widget>
        </item>
        <item row="0" column="0">
         <widget class="QTableWidget" name="tableWidget_2">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
          <property name="contextMenuPolicy">
           <enum>Qt::CustomContextMenu</enum>
          </property>
@@ -1437,7 +1464,7 @@
           <enum>QAbstractScrollArea::AdjustToContents</enum>
          </property>
          <property name="editTriggers">
-          <set>QAbstractItemView::NoEditTriggers</set>
+          <set>QAbstractItemView::AllEditTriggers</set>
          </property>
          <property name="dragDropOverwriteMode">
           <bool>false</bool>
@@ -1459,7 +1486,17 @@
          </property>
          <column>
           <property name="text">
-           <string>Parcela</string>
+           <string>Id. Segmento</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Id. Lote</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Id Campaña</string>
           </property>
          </column>
          <column>
@@ -1469,128 +1506,107 @@
          </column>
          <column>
           <property name="text">
-           <string>Cod Control</string>
+           <string>Segmento</string>
           </property>
          </column>
          <column>
           <property name="text">
-           <string>Cod Muestreo</string>
+           <string>Cod. Control</string>
           </property>
          </column>
          <column>
           <property name="text">
-           <string>Geometria</string>
+           <string>Fecha Siembra</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Cultivo</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Analisis</string>
           </property>
          </column>
         </widget>
        </item>
       </layout>
      </widget>
-     <widget class="QGroupBox" name="groupBox_4">
-      <property name="geometry">
-       <rect>
-        <x>560</x>
-        <y>20</y>
-        <width>181</width>
-        <height>401</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Herramientas</string>
-      </property>
-      <widget class="QTabWidget" name="tabWidget">
+    </widget>
+    <widget class="QTabWidget" name="tabWidget_5">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>450</y>
+       <width>291</width>
+       <height>91</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(240, 240, 240);</string>
+     </property>
+     <property name="tabPosition">
+      <enum>QTabWidget::North</enum>
+     </property>
+     <property name="currentIndex">
+      <number>2</number>
+     </property>
+     <widget class="QWidget" name="tabWidgetPage2">
+      <attribute name="title">
+       <string>Segmento</string>
+      </attribute>
+      <widget class="QPushButton" name="pushButton_4">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>20</y>
+         <width>109</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Cargar</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="tabWidgetPage1">
+      <attribute name="title">
+       <string>Ambiente</string>
+      </attribute>
+      <widget class="QPushButton" name="pushButton_3">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>30</y>
-         <width>161</width>
-         <height>361</height>
+         <y>10</y>
+         <width>79</width>
+         <height>23</height>
         </rect>
        </property>
-       <property name="styleSheet">
-        <string notr="true">background-color: rgb(240, 240, 240);</string>
+       <property name="text">
+        <string>Cargar</string>
        </property>
-       <property name="tabPosition">
-        <enum>QTabWidget::West</enum>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="tabWidgetPage3">
+      <attribute name="title">
+       <string>Compositor</string>
+      </attribute>
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>109</width>
+         <height>23</height>
+        </rect>
        </property>
-       <property name="currentIndex">
-        <number>1</number>
+       <property name="text">
+        <string>Generar</string>
        </property>
-       <widget class="QWidget" name="tabWidgetPage1">
-        <attribute name="title">
-         <string>Ambiente</string>
-        </attribute>
-        <widget class="QWidget" name="verticalLayoutWidget">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>9</y>
-           <width>111</width>
-           <height>341</height>
-          </rect>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout">
-          <item>
-           <widget class="QPushButton" name="pushButton_3">
-            <property name="text">
-             <string>Cargar</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </widget>
-       <widget class="QWidget" name="tabWidgetPage2">
-        <attribute name="title">
-         <string>Segmento</string>
-        </attribute>
-        <widget class="QWidget" name="verticalLayoutWidget_2">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>9</y>
-           <width>111</width>
-           <height>341</height>
-          </rect>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <item>
-           <widget class="QPushButton" name="pushButton_4">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="text">
-             <string>Cargar</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </widget>
-       <widget class="QWidget" name="tabWidgetPage3">
-        <attribute name="title">
-         <string>Compositor</string>
-        </attribute>
-        <widget class="QWidget" name="verticalLayoutWidget_3">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>9</y>
-           <width>111</width>
-           <height>341</height>
-          </rect>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_3">
-          <item>
-           <widget class="QPushButton" name="pushButton_2">
-            <property name="text">
-             <string>Generar</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </widget>
       </widget>
      </widget>
     </widget>
@@ -1641,7 +1657,6 @@
  <tabstops>
   <tabstop>line_buscar</tabstop>
   <tabstop>tableWidget</tabstop>
-  <tabstop>btn_add_layer</tabstop>
   <tabstop>tabWidget_2</tabstop>
   <tabstop>ln_par_nombre</tabstop>
   <tabstop>prov_combo</tabstop>
@@ -1685,7 +1700,6 @@
   <tabstop>line_cob_ajustado_3</tabstop>
   <tabstop>line_cob_aplicado_3</tabstop>
   <tabstop>tabWidget</tabstop>
-  <tabstop>pushButton_2</tabstop>
  </tabstops>
  <resources/>
  <connections/>

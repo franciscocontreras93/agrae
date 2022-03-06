@@ -148,6 +148,7 @@ create table unidades (
 CREATE TABLE parcela (
 	pk_uid uuid DEFAULT uuid_generate_v4 NOT NULL ,
 	idparcela bigserial NOT NULL PRIMARY KEY,
+	
 	nombre text,
 	provincia integer references public.pronvia (idprovincia),
 	municipio integer references public.municipio (idmunicipio),

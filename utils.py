@@ -1,9 +1,14 @@
+import os
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QGuiApplication
 from qgis.PyQt.QtCore import QSettings
 
 from qgis.gui import QgsMessageBar
 from qgis.utils import iface
 from qgis.core import *
+
+from psycopg2 import OperationalError, InterfaceError, errors, extras
 
 import pandas as pd
 
@@ -100,19 +105,29 @@ class AgraeUtils():
 
     def segmentosQueryTable(self, param=''):
         if param != '': 
-            sql = f''' select p.nombre parcela, l.nombre lote , s.cod_control, a.cod_analisis , s.geometria from segmento s
-                left join segmentoanalisis sa on s.idsegmento = sa.idsegmento 
-                left join analisis a on a.idanalisis = sa.idanalisis 
-                left join parcela p on p.idparcela = s.idparcela
-                left join lote l on l.idlote = s.idlote 
-                where a.cod_analisis ilike '%{param}%' or l.nombre ilike '%{param}%' or s.cod_control ilike '%{param}%' '''
+            sql = f''' select s.idsegmento, l.idlote , ca.idcampania, l.nombre lote, s.segmento , (l.nombre||'-'||s.segmento) cod_control , 
+            ca.fechasiembra, cu.nombre, a.cod_analisis 
+            from segmento s 
+            left join lote l on s.idlote = l.idlote 
+            left join lotecampania lc on lc.idlote = l.idlote 
+            left join campania ca on ca.idcampania = lc.idcampania 
+            left join cultivo cu on cu.idcultivo = ca.idcultivo 
+            left join segmentoanalisis sa on sa.idsegmento = s.idsegmento 
+            left join analisis a on a.idanalisis = sa.idanalisis  
+            where l.nombre ||'-'||s.segmento ilike '%{param}%'
+            or a.cod_analisis ilike '%{param}%' 
+            order by ca.idcampania desc '''
             return sql
         else: 
-            sql = f''' select p.nombre parcela, l.nombre lote , s.cod_control, a.cod_analisis , s.geometria from segmento s
-                left join segmentoanalisis sa on s.idsegmento = sa.idsegmento 
-                left join analisis a on a.idanalisis = sa.idanalisis 
-                left join parcela p on p.idparcela = s.idparcela
-                left join lote l on l.idlote = s.idlote '''
+            sql = f''' select s.idsegmento, l.idlote , ca.idcampania, l.nombre lote, s.segmento , (l.nombre||'-'||s.segmento) cod_control , 
+            ca.fechasiembra, cu.nombre, a.cod_analisis 
+            from segmento s 
+            left join lote l on s.idlote = l.idlote 
+            left join lotecampania lc on lc.idlote = l.idlote 
+            left join campania ca on ca.idcampania = lc.idcampania 
+            left join cultivo cu on cu.idcultivo = ca.idcultivo 
+            left join segmentoanalisis sa on sa.idsegmento = s.idsegmento 
+            left join analisis a on a.idanalisis = sa.idanalisis   '''
             return sql
     def sqlLoteParcela(self,idlote, nombre, fecha): 
         sql = f'''select l.idlote, l.nombre , lc.fechasiembra, lc.fechacosecha, c.nombre, st_multi(st_union(p.geometria)) geometria from loteparcela lp
@@ -125,6 +140,19 @@ class AgraeUtils():
         order by lc.fechasiembra desc '''
         return sql
 
+    def iconsPath(self):
+        icons_path = {
+            'search_icon_path': os.path.join(os.path.dirname(__file__), r'ui\icons\search.svg'),
+            'reload_data': os.path.join(os.path.dirname(__file__), r'ui\icons\reload.svg'),
+            'create_rel': os.path.join(os.path.dirname(__file__), r'ui\icons\object-join.svg'),
+            'layer_upload': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-upload.svg'),
+            'layer_edit': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-edit.svg'),
+            'add_layer_to_map': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-add-o.svg'),
+            'filter_objects': os.path.join(os.path.dirname(__file__), r'ui\icons\filter-solid.svg'),
+            'menu': os.path.join(os.path.dirname(__file__), r'ui\icons\ellipsis-solid.svg'),
+        }
+
+        return icons_path
 class AgraeToolset():
     def __init__(self):
         self.iface = iface
@@ -176,51 +204,56 @@ class AgraeToolset():
             print(ex)
             pass
         
-    def crearParcela(self,widget):
+    def crearParcela(self,widget=None):
+        count = 0
+        _count = 0 
         try:
             with self.conn as conn:
                 cur = conn.cursor()
             layer = self.iface.activeLayer()
             # print(layer.name())
-            feat = layer.selectedFeatures()
-            ls = feat[0].geometry().asWkt()
-            srid = layer.crs().authid()[5:]
+            features = layer.getFeatures()
+            for feat in features: 
+                
+                ls = feat.geometry().asWkt()
+                srid = layer.crs().authid()[5:]
+                name = ''
+                prov = feat[2]
+                mcpo = feat[3]
+                aggregate = feat[4]
+                zone = feat[5]
+                poly = feat[6]
+                allotment = feat[7]
+                inclosure = feat[8]
+                idsigpac = feat[0]
 
-            name = str(widget.ln_par_nombre.text())
-            prov = int(widget.prov_combo.currentData())
-            mcpo = int(widget.mcpo_combo.currentData())
-            aggregate = int(widget.ln_par_agg.text())
-            zone = int(widget.ln_par_zona.text())
-            poly = int(widget.ln_par_poly.text())
-            allotment = int(widget.ln_par_parcela.text())
-            inclosure = int(widget.ln_par_recinto.text())
-            # print(ls)
+                sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria,idsigpac) VALUES('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))),'{idsigpac}')'''
+                try:
+                    cur.execute(sql)
+                    conn.commit()
+                    count += 1
+                    # print('agregado correctamente')
+                except errors.lookup('23505'):
+                    # errors.append(idParcela)
+                    _count += 1
+                    # print(f'La parcela {feat[0]} ya existe.')
+                    # QMessageBox.about(widget, f"aGrae GIS:",f'La parcela: {feat[0]} ya existe.')
+                    conn.rollback()
 
-            sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria) VALUES('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))))'''
-            cur.execute(sql)
-            conn.commit()
-            print('agregado correctamente')
             QMessageBox.about(widget, f"aGrae GIS:",
-                                f"Parcela *-- {name} --* Creada Correctamente.\nCrear Relacion Lote Parcelas.")
+                                f"Se agregaron {count} parcelas correctamente.\nErronas = {_count}")
 
 
 
         except IndexError as ie:
             QMessageBox.about(widget, f"aGrae GIS {ie}", f"Debe Seleccionar una parcela a cargar.")
+            conn.rollback()
 
         except Exception as ex:
             print(ex)
             QMessageBox.about(widget, f"aGrae GIS", f"No se pudo almacenar el registro {ex}")
+            conn.rollback()
 
-        finally:
-            widget.ln_par_nombre.setText('')
-            # widget.ln_par_provincia.setText('')
-            # widget.ln_par_mcpo.setText('')
-            widget.ln_par_agg.setText('0')
-            widget.ln_par_zona.setText('0')
-            widget.ln_par_poly.setText('0')
-            widget.ln_par_parcela.setText('0')
-            widget.ln_par_recinto.setText('0')
 
     def cargarParcela(self,widget):
         self.sqlParcela = widget.sqlParcela
@@ -260,6 +293,148 @@ class AgraeToolset():
         except Exception as ex:
             QMessageBox.about(
                 widget, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
+
+    def buscarLotes(self,widget,status):
+        nombre = widget.line_buscar.text()
+        sinceDate = widget.sinceDate.date().toString('yyyy-MM-dd')
+        untilDate = widget.untilDate.date().toString('yyyy-MM-dd')
+
+        sqlQuery = ''
+        try: 
+            with self.conn as conn:
+                if nombre == '' and status == False:
+                    sqlQuery = f'''select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo 
+                    from lotecampania lc
+                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
+                    left join lote l on l.idlote = lc.idlote
+                    left join parcela p on p.idparcela = lp.idparcela 
+                    left join campania ca on ca.idcampania = lc.idcampania 
+                    left join cultivo cu on cu.idcultivo = ca.idcultivo 
+                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
+                    order by ca.fechasiembra desc'''
+                    widget.btn_add_layer.setEnabled(False)
+                    
+
+                elif nombre != '' and status == False:
+                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo 
+                    from lotecampania lc
+                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
+                    left join lote l on l.idlote = lc.idlote
+                    left join parcela p on p.idparcela = lp.idparcela 
+                    left join campania ca on ca.idcampania = lc.idcampania 
+                    left join cultivo cu on cu.idcultivo = ca.idcultivo 
+                    where l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
+                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
+                    order by ca.fechasiembra desc                        
+                    """
+                    self.btn_reload.setEnabled(True)
+
+                elif nombre == '' and status == True:
+                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo 
+                    from lotecampania lc
+                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
+                    left join lote l on l.idlote = lc.idlote
+                    left join parcela p on p.idparcela = lp.idparcela 
+                    left join campania ca on ca.idcampania = lc.idcampania 
+                    left join cultivo cu on cu.idcultivo = ca.idcultivo 
+                    where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
+                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
+                    order by ca.fechasiembra desc"""
+                    self.btn_reload.setEnabled(True)
+                elif nombre != '' and status == True:
+                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo 
+                    from lotecampania lc
+                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
+                    left join lote l on l.idlote = lc.idlote
+                    left join parcela p on p.idparcela = lp.idparcela 
+                    left join campania ca on ca.idcampania = lc.idcampania 
+                    left join cultivo cu on cu.idcultivo = ca.idcultivo 
+                    where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
+                    or l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
+                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
+                    order by ca.fechasiembra desc"""
+                    self.btn_reload.setEnabled(True)
+
+
+                cursor = conn.cursor()
+                cursor.execute(sqlQuery)
+                data = cursor.fetchall()
+                if len(data) == 0:
+                    QMessageBox.about(
+                        widget, "aGrae GIS:", "No existen registros con los parametros de busqueda")
+                    widget.tableWidget.setRowCount(0)
+                else:
+                    widget.btn_add_layer.setEnabled(True)
+                    status = False
+                    widget.untilDate.setEnabled(False)
+                    self.queryCapaLotes = sqlQuery
+                    a = len(data)
+                    b = len(data[0])
+                    i = 1
+                    j = 1
+                    checklist = []
+                    check = False
+                    widget.tableWidget.setRowCount(a)
+                    widget.tableWidget.setColumnCount(b)
+                    for j in range(a):
+                        for i in range(b):
+                            item = QTableWidgetItem(str(data[j][i]))
+                            widget.tableWidget.setItem(j,i,item)
+                        obj = widget.tableWidget.item(j,1).text()
+                        checklist.append(obj)                    
+                    # if len(checklist) > 0 :
+                    #     check = all(elem == checklist[0] for elem in checklist)
+                    # if check :
+                    #     widget.btn_add_layer.setEnabled(True)
+                    # else:        
+                    #     widget.btn_add_layer.setEnabled(False)
+                
+        
+        except Exception as ex:
+            print(ex)
+            QMessageBox.about(widget, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)") 
+    
+    
+    def cargarLote(self,widget):
+            print('Working')
+            
+            dns = self.dns
+            row = widget.tableWidget.currentRow()
+            column = widget.tableWidget.currentColumn()
+           
+
+            try:
+                idlote = widget.tableWidget.item(row, 0)
+                nombreLote = widget.tableWidget.item(row, 1)
+                nombreParcela = widget.tableWidget.item(row, 2)
+                fecha = widget.tableWidget.item(row, 3)
+                sql = sql = f''' select * from lotes
+                where idlotecampania = {idlote.text()} and lote ilike '%{nombreLote.text()}%' and parcela ilike'%{nombreParcela.text()}%' and fechasiembra = '{fecha.text()}' '''
+                uri = QgsDataSourceUri()
+                uri.setConnection(dns['host'], dns['port'], dns['dbname'], dns['user'], dns['password'])
+                uri.setDataSource(
+                    '', f'({sql})', 'geometria', '', 'idlotecampania')
+                
+                nombreCapa = f'{nombreLote.text()}-{nombreParcela.text()}-{widget.tableWidget.item(row, 5).text()}'
+                layer = self.iface.addVectorLayer(uri.uri(False), nombreCapa, 'postgres')
+                    
+                if layer is not None and layer.isValid():
+                    QgsProject.instance().addMapLayer(layer)
+                    self.iface.setActiveLayer(layer)
+                    self.iface.zoomToActiveLayer()
+                    print(f"Capa añadida correctamente ")
+                    
+
+                else:
+                    # uri.setDataSource('public', tablename, None)
+                    # layer = QgsVectorLayer(
+                    #     uri.uri(False), tablename, 'postgres')
+                    # QgsProject.instance().addMapLayer(layer)
+                    QMessageBox.about(widget, "aGrae GIS:", "Capa invalida.")
+            
+            except Exception as ex:
+                print(ex)
+                QMessageBox.about(widget, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
 
 
 

@@ -77,12 +77,12 @@
        </property>
        <column>
         <property name="text">
-         <string>ID Lote</string>
+         <string>ID Campaña</string>
         </property>
        </column>
        <column>
         <property name="text">
-         <string>Nombre</string>
+         <string>Lote</string>
         </property>
        </column>
        <column>
