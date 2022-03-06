@@ -3,7 +3,10 @@
         <file>icon.png</file>
         <file>ui\icons\search.svg</file>
         <file>ui\icons\reload.svg</file>
+        <file>ui\icons\plus-solid.svg</file>
         <file>ui\icons\object-join.svg</file>
+        <file>ui\icons\minus-solid.svg</file>
+        <file>ui\icons\list-check-solid.svg</file>
         <file>ui\icons\layer-upload.svg</file>
         <file>ui\icons\layer-edit.svg</file>
         <file>ui\icons\layer-add-o.svg</file>

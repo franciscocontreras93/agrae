@@ -228,6 +228,9 @@
        <property name="text">
         <string/>
        </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item>
@@ -240,6 +243,9 @@
        </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
        </property>
       </widget>
      </item>

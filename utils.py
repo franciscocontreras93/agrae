@@ -144,7 +144,10 @@ class AgraeUtils():
         icons_path = {
             'search_icon_path': os.path.join(os.path.dirname(__file__), r'ui\icons\search.svg'),
             'reload_data': os.path.join(os.path.dirname(__file__), r'ui\icons\reload.svg'),
+            'add_plus': os.path.join(os.path.dirname(__file__), r'ui\icons\plus-solid.svg'),
             'create_rel': os.path.join(os.path.dirname(__file__), r'ui\icons\object-join.svg'),
+            'drop_rel': os.path.join(os.path.dirname(__file__), r'ui\icons\minus-solid.svg'),
+            'load_data': os.path.join(os.path.dirname(__file__), r'ui\icons\list-check-solid.svg'),
             'layer_upload': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-upload.svg'),
             'layer_edit': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-edit.svg'),
             'add_layer_to_map': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-add-o.svg'),
@@ -206,42 +209,47 @@ class AgraeToolset():
         
     def crearParcela(self,widget=None):
         count = 0
-        _count = 0 
+        _count = 0
         try:
             with self.conn as conn:
                 cur = conn.cursor()
             layer = self.iface.activeLayer()
             # print(layer.name())
             features = layer.getFeatures()
-            for feat in features: 
-                
-                ls = feat.geometry().asWkt()
-                srid = layer.crs().authid()[5:]
-                name = ''
-                prov = feat[2]
-                mcpo = feat[3]
-                aggregate = feat[4]
-                zone = feat[5]
-                poly = feat[6]
-                allotment = feat[7]
-                inclosure = feat[8]
-                idsigpac = feat[0]
+            confirm = QMessageBox.question(
+                widget, 'aGrae GIS', f"Se Cargaran {layer.featureCount()} recintos, de la capa {layer.name()} a la Base de Datos.\nProceder con la carga? ", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if confirm == QMessageBox.Yes: 
+                for feat in features: 
+                    
+                    ls = feat.geometry().asWkt()
+                    srid = layer.crs().authid()[5:]
+                    name = ''
+                    prov = feat[2]
+                    mcpo = feat[3]
+                    aggregate = feat[4]
+                    zone = feat[5]
+                    poly = feat[6]
+                    allotment = feat[7]
+                    inclosure = feat[8]
+                    idsigpac = feat[0]
 
-                sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria,idsigpac) VALUES('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))),'{idsigpac}')'''
-                try:
-                    cur.execute(sql)
-                    conn.commit()
-                    count += 1
-                    # print('agregado correctamente')
-                except errors.lookup('23505'):
-                    # errors.append(idParcela)
-                    _count += 1
-                    # print(f'La parcela {feat[0]} ya existe.')
-                    # QMessageBox.about(widget, f"aGrae GIS:",f'La parcela: {feat[0]} ya existe.')
-                    conn.rollback()
+                    sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria,idsigpac) VALUES('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))),'{idsigpac}')'''
+                    try:
+                        cur.execute(sql)
+                        conn.commit()
+                        count += 1
+                        # print('agregado correctamente')
+                    except errors.lookup('23505'):
+                        # errors.append(idParcela)
+                        _count += 1
+                        # print(f'La parcela {feat[0]} ya existe.')
+                        # QMessageBox.about(widget, f"aGrae GIS:",f'La parcela: {feat[0]} ya existe.')
+                        conn.rollback()
 
-            QMessageBox.about(widget, f"aGrae GIS:",
-                                f"Se agregaron {count} parcelas correctamente.\nErronas = {_count}")
+                QMessageBox.about(widget, f"aGrae GIS:",
+                                    f"Se agregaron {count} parcelas correctamente.\nErronas = {_count}")
+            else: 
+                pass
 
 
 
@@ -327,7 +335,7 @@ class AgraeToolset():
                     group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
                     order by ca.fechasiembra desc                        
                     """
-                    self.btn_reload.setEnabled(True)
+                    widget.btn_reload.setEnabled(True)
 
                 elif nombre == '' and status == True:
                     sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo 
@@ -340,7 +348,7 @@ class AgraeToolset():
                     where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
                     group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
                     order by ca.fechasiembra desc"""
-                    self.btn_reload.setEnabled(True)
+                    widget.btn_reload.setEnabled(True)
                 elif nombre != '' and status == True:
                     sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo 
                     from lotecampania lc
@@ -353,7 +361,7 @@ class AgraeToolset():
                     or l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
                     group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
                     order by ca.fechasiembra desc"""
-                    self.btn_reload.setEnabled(True)
+                    widget.btn_reload.setEnabled(True)
 
 
                 cursor = conn.cursor()
@@ -372,8 +380,8 @@ class AgraeToolset():
                     b = len(data[0])
                     i = 1
                     j = 1
-                    checklist = []
-                    check = False
+                
+                
                     widget.tableWidget.setRowCount(a)
                     widget.tableWidget.setColumnCount(b)
                     for j in range(a):
@@ -381,14 +389,7 @@ class AgraeToolset():
                             item = QTableWidgetItem(str(data[j][i]))
                             widget.tableWidget.setItem(j,i,item)
                         obj = widget.tableWidget.item(j,1).text()
-                        checklist.append(obj)                    
-                    # if len(checklist) > 0 :
-                    #     check = all(elem == checklist[0] for elem in checklist)
-                    # if check :
-                    #     widget.btn_add_layer.setEnabled(True)
-                    # else:        
-                    #     widget.btn_add_layer.setEnabled(False)
-                
+                                                       
         
         except Exception as ex:
             print(ex)

@@ -514,145 +514,6 @@ class agrae:
         pass
 
     def runMain(self):
-        # def loadLayer():
-            
-        #     dns = self.utils.ConnParams()
-        #     row = self.mainWindowDialog.tableWidget.currentRow()
-        #     column = self.mainWindowDialog.tableWidget.currentColumn()
-           
-
-        #     try:
-        #         idlote = self.mainWindowDialog.tableWidget.item(row, 0)
-        #         nombreLote = self.mainWindowDialog.tableWidget.item(row, 1)
-        #         nombreParcela = self.mainWindowDialog.tableWidget.item(row, 2)
-        #         fecha = self.mainWindowDialog.tableWidget.item(row, 3)
-        #         sql = sql = f''' select * from lotes
-        #         where idlotecampania = {idlote.text()} and lote ilike '%{nombreLote.text()}%' and parcela ilike'%{nombreParcela.text()}%' and fechasiembra = '{fecha.text()}' '''
-        #         uri = QgsDataSourceUri()
-        #         uri.setConnection(dns['host'], dns['port'], dns['dbname'], dns['user'], dns['password'])
-        #         uri.setDataSource(
-        #             '', f'({sql})', 'geometria', '', 'idlotecampania')
-                
-        #         nombreCapa = f'{nombreLote.text()}-{nombreParcela.text()}-{self.mainWindowDialog.tableWidget.item(row, 5).text()}'
-        #         layer = self.iface.addVectorLayer(uri.uri(False), nombreCapa, 'postgres')
-                    
-        #         if layer is not None and layer.isValid():
-        #             QgsProject.instance().addMapLayer(layer)
-        #             self.iface.setActiveLayer(layer)
-        #             self.iface.zoomToActiveLayer()
-        #             print(f"Capa añadida correctamente ")
-                    
-
-        #         else:
-        #             # uri.setDataSource('public', tablename, None)
-        #             # layer = QgsVectorLayer(
-        #             #     uri.uri(False), tablename, 'postgres')
-        #             # QgsProject.instance().addMapLayer(layer)
-        #             QMessageBox.about(self.mainWindowDialog, "aGrae GIS:", "Capa invalida.")
-            
-        #     except Exception as ex:
-        #         print(ex)
-        #         QMessageBox.about(self.mainWindowDialog, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
-        # def sinceDateChange():
-        #     self.sinceDateStatus = True
-        #     d1 = self.mainWindowDialog.sinceDate.date()
-        #     self.mainWindowDialog.untilDate.setMinimumDate(d1)
-        #     self.mainWindowDialog.untilDate.setEnabled(True)
-        # def cargarLotesParcelas():            
-        #     nombre = self.mainWindowDialog.line_buscar.text()
-        #     sinceDate = self.mainWindowDialog.sinceDate.date().toString('yyyy-MM-dd')
-        #     untilDate = self.mainWindowDialog.untilDate.date().toString('yyyy-MM-dd')
-
-        #     sqlQuery = ''
-        #     try: 
-        #         with self.conn as conn:
-        #             if nombre == '' and self.sinceDateStatus == False:
-        #                 sqlQuery = f'''select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, 
-        #                 st_multi(st_union(p.geometria)) geometria from lotecampania lc
-        #                 join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
-        #                 left join lote l on l.idlote = lc.idlote
-        #                 left join parcela p on p.idparcela = lp.idparcela 
-        #                 left join campania ca on ca.idcampania = lc.idcampania 
-        #                 left join cultivo cu on cu.idcultivo = ca.idcultivo 
-        #                 group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
-        #                 order by ca.fechasiembra desc'''
-        #                 self.mainWindowDialog.btn_add_layer.setEnabled(False)
-
-        #             elif nombre != '' and self.sinceDateStatus == False:
-        #                 sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, 
-        #                 st_multi(st_union(p.geometria)) geometria from lotecampania lc
-        #                 join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
-        #                 left join lote l on l.idlote = lc.idlote
-        #                 left join parcela p on p.idparcela = lp.idparcela 
-        #                 left join campania ca on ca.idcampania = lc.idcampania 
-        #                 left join cultivo cu on cu.idcultivo = ca.idcultivo 
-        #                 where l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
-        #                 group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
-        #                 order by ca.fechasiembra desc                        
-        #                 """
-
-        #             elif nombre == '' and self.sinceDateStatus == True:
-        #                 sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, 
-        #                 st_multi(st_union(p.geometria)) geometria from lotecampania lc
-        #                 join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
-        #                 left join lote l on l.idlote = lc.idlote
-        #                 left join parcela p on p.idparcela = lp.idparcela 
-        #                 left join campania ca on ca.idcampania = lc.idcampania 
-        #                 left join cultivo cu on cu.idcultivo = ca.idcultivo 
-        #                 where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
-        #                 group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
-        #                 order by ca.fechasiembra desc"""
-        #             elif nombre != '' and self.sinceDateStatus == True:
-        #                 sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, 
-        #                 st_multi(st_union(p.geometria)) geometria from lotecampania lc
-        #                 join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
-        #                 left join lote l on l.idlote = lc.idlote
-        #                 left join parcela p on p.idparcela = lp.idparcela 
-        #                 left join campania ca on ca.idcampania = lc.idcampania 
-        #                 left join cultivo cu on cu.idcultivo = ca.idcultivo 
-        #                 where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
-        #                 or l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
-        #                 group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
-        #                 order by ca.fechasiembra desc"""
-
-
-        #             cursor = conn.cursor()
-        #             cursor.execute(sqlQuery)
-        #             data = cursor.fetchall()
-        #             if len(data) == 0:
-        #                 QMessageBox.about(
-        #                     self.mainWindowDialog, "aGrae GIS:", "No existen registros con los parametros de busqueda")
-        #                 self.mainWindowDialog.tableWidget.setRowCount(0)
-        #             else:
-        #                 self.mainWindowDialog.btn_add_layer.setEnabled(True)
-        #                 self.sinceDateStatus = False
-        #                 self.mainWindowDialog.untilDate.setEnabled(False)
-        #                 self.queryCapaLotes = sqlQuery
-        #                 a = len(data)
-        #                 b = len(data[0])
-        #                 i = 1
-        #                 j = 1
-        #                 checklist = []
-        #                 check = False
-        #                 self.mainWindowDialog.tableWidget.setRowCount(a)
-        #                 self.mainWindowDialog.tableWidget.setColumnCount(b)
-        #                 for j in range(a):
-        #                     for i in range(b):
-        #                         item = QTableWidgetItem(str(data[j][i]))
-        #                         self.mainWindowDialog.tableWidget.setItem(j,i,item)
-        #                     obj = self.mainWindowDialog.tableWidget.item(j,1).text()
-        #                     checklist.append(obj)                    
-        #                 # if len(checklist) > 0 :
-        #                 #     check = all(elem == checklist[0] for elem in checklist)
-        #                 # if check :
-        #                 #     self.mainWindowDialog.btn_add_layer.setEnabled(True)
-        #                 # else:        
-        #                 #     self.mainWindowDialog.btn_add_layer.setEnabled(False)
-                 
-            
-        #     except Exception as ex:
-        #         print(ex)
-        #         QMessageBox.about(self.mainWindowDialog, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)") 
             
         def printMap():
             
@@ -760,11 +621,10 @@ class agrae:
 
                 
 
-                # self.mainWindowDialog.btn_buscar1.clicked.connect(cargarLotesParcelas)
-                # self.mainWindowDialog.btn_add_layer.clicked.connect(loadLayer)
+                
                 self.mainWindowDialog.btn_lote_update.setEnabled(False)
                 self.mainWindowDialog.pushButton_2.clicked.connect(printMap)
-                # self.mainWindowDialog.sinceDate.dateChanged.connect(sinceDateChange)
+                
             self.mainWindowDialog.closingPlugin.connect(self.onClosePluginMain)
             self.mainWindowDialog.show()
         pass
