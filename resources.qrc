@@ -1,6 +1,9 @@
 <RCC>
     <qresource prefix="/plugins/agrae" >
         <file>icon.png</file>
+        <file>ui\icons\icon.svg</file>
+        <file>ui\icons\search-lotes.svg</file>
+        <file>ui\icons\search-parcela.svg</file>
         <file>ui\icons\search.svg</file>
         <file>ui\icons\reload.svg</file>
         <file>ui\icons\plus-solid.svg</file>
@@ -12,5 +15,6 @@
         <file>ui\icons\layer-add-o.svg</file>
         <file>ui\icons\filter-solid.svg</file>
         <file>ui\icons\ellipsis-solid.svg</file>
+        <file>ui\icons\floppy-disk-solid.svg</file>
     </qresource>
 </RCC>

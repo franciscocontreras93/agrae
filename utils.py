@@ -142,17 +142,23 @@ class AgraeUtils():
 
     def iconsPath(self):
         icons_path = {
+            'agrae_icon': os.path.join(os.path.dirname(__file__), r'ui\icons\icon.svg'),
             'search_icon_path': os.path.join(os.path.dirname(__file__), r'ui\icons\search.svg'),
+            'search_lotes': os.path.join(os.path.dirname(__file__), r'ui\icons\search-lotes.svg'),
+            'search_parcela': os.path.join(os.path.dirname(__file__), r'ui\icons\search-parcela.svg'),
             'reload_data': os.path.join(os.path.dirname(__file__), r'ui\icons\reload.svg'),
+            'link': os.path.join(os.path.dirname(__file__), r'ui\icons\link-solid.svg'),
+            'link-slash': os.path.join(os.path.dirname(__file__), r'ui\icons\link-slash-solid.svg'),
             'add_plus': os.path.join(os.path.dirname(__file__), r'ui\icons\plus-solid.svg'),
             'create_rel': os.path.join(os.path.dirname(__file__), r'ui\icons\object-join.svg'),
             'drop_rel': os.path.join(os.path.dirname(__file__), r'ui\icons\minus-solid.svg'),
             'load_data': os.path.join(os.path.dirname(__file__), r'ui\icons\list-check-solid.svg'),
-            'layer_upload': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-upload.svg'),
+            'layer_upload': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-upload-tool.svg'),
             'layer_edit': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-edit.svg'),
             'add_layer_to_map': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-add-o.svg'),
             'filter_objects': os.path.join(os.path.dirname(__file__), r'ui\icons\filter-solid.svg'),
             'menu': os.path.join(os.path.dirname(__file__), r'ui\icons\ellipsis-solid.svg'),
+            'save': os.path.join(os.path.dirname(__file__), r'ui\icons\floppy-disk-solid.svg'),
         }
 
         return icons_path
@@ -263,26 +269,19 @@ class AgraeToolset():
             conn.rollback()
 
 
-    def cargarParcela(self,widget):
-        self.sqlParcela = widget.sqlParcela
+    def cargarParcela(self,widget, id):
+        self.sqlParcela = 'select * from parcela'
+        idParcela = widget.idParcela
+        exp = f'idparcela = {idParcela}'
         sql = self.sqlParcela
         dns = self.dns
         row = widget.tableWidget.currentRow()
         column = widget.tableWidget.currentColumn()
-        try:
-            uri = QgsDataSourceUri()
-            uri.setConnection(dns['host'], dns['port'],
-                                dns['dbname'], dns['user'], dns['password'])
-            uri.setDataSource('', f'({sql})', 'geometria', '', 'idparcela')
-            nombre = widget.ln_par_nombre.text()
-            if nombre == None:
-                nombre = widget.ln_par_nombre.text()
-                layer = self.iface.addVectorLayer(
-                    uri.uri(False), nombre, 'postgres')
-            else:
-                layer = self.iface.addVectorLayer(
-                    uri.uri(False), nombre, 'postgres')
+        try: 
 
+            uri = self.retUri(sql, 'geometria', 'idparcela', exp,'parcela')
+            nombre = id
+            layer = QgsVectorLayer(uri.uri(False), nombre, 'postgres')
             if layer.isValid():
                 QgsProject.instance().addMapLayer(layer)
                 self.iface.setActiveLayer(layer)
@@ -291,16 +290,13 @@ class AgraeToolset():
                 widget.pushButton.setEnabled(False)
 
             else:
-                # uri.setDataSource('public', tablename, None)
-                # layer = QgsVectorLayer(
-                #     uri.uri(False), tablename, 'postgres')
-                # QgsProject.instance().addMapLayer(layer)
                 QMessageBox.about(self, "aGrae GIS:",
                                     "La capa no es Valida")
 
         except Exception as ex:
+            print(ex)
             QMessageBox.about(
-                widget, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
+                widget, f"Error:", f"Debe seleccionar un campo para el Nombre")
 
     def buscarLotes(self,widget,status):
         nombre = widget.line_buscar.text()
@@ -397,13 +393,12 @@ class AgraeToolset():
     
     
     def cargarLote(self,widget):
-            print('Working')
+            # print('Working')
             
             dns = self.dns
             row = widget.tableWidget.currentRow()
             column = widget.tableWidget.currentColumn()
            
-
             try:
                 idlote = widget.tableWidget.item(row, 0)
                 nombreLote = widget.tableWidget.item(row, 1)
@@ -411,10 +406,7 @@ class AgraeToolset():
                 fecha = widget.tableWidget.item(row, 3)
                 sql = sql = f''' select * from lotes
                 where idlotecampania = {idlote.text()} and lote ilike '%{nombreLote.text()}%' and parcela ilike'%{nombreParcela.text()}%' and fechasiembra = '{fecha.text()}' '''
-                uri = QgsDataSourceUri()
-                uri.setConnection(dns['host'], dns['port'], dns['dbname'], dns['user'], dns['password'])
-                uri.setDataSource(
-                    '', f'({sql})', 'geometria', '', 'idlotecampania')
+                uri = self.retUri(sql, 'geometria', 'idlotecampania')
                 
                 nombreCapa = f'{nombreLote.text()}-{nombreParcela.text()}-{widget.tableWidget.item(row, 5).text()}'
                 layer = self.iface.addVectorLayer(uri.uri(False), nombreCapa, 'postgres')
@@ -424,20 +416,14 @@ class AgraeToolset():
                     self.iface.setActiveLayer(layer)
                     self.iface.zoomToActiveLayer()
                     print(f"Capa añadida correctamente ")
-                    
-
                 else:
-                    # uri.setDataSource('public', tablename, None)
-                    # layer = QgsVectorLayer(
-                    #     uri.uri(False), tablename, 'postgres')
-                    # QgsProject.instance().addMapLayer(layer)
                     QMessageBox.about(widget, "aGrae GIS:", "Capa invalida.")
             
             except Exception as ex:
                 print(ex)
                 QMessageBox.about(widget, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
 
-
+    
 
 
     def dataSegmento(self,table):
@@ -504,7 +490,102 @@ class AgraeToolset():
                 return code
                 pass
 
+    
+    def addMapLayer(self,sql,nombre,idfield,ogr='postgres'):       
+        
+        uri = self.retUri(sql, 'geometria', idfield)
+        layer = QgsVectorLayer(uri.uri(), f'{nombre}', f'{ogr}')
+        QgsProject.instance().addMapLayer(layer)
+
+    def retUri(self,sql,geom,id, exp=None, table=None):
+        dns = self.dns
+        uri = QgsDataSourceUri()
+        uri.setConnection(dns['host'], dns['port'],
+                          dns['dbname'], dns['user'], dns['password'])
+        if exp == None and table == None:  
+            uri.setDataSource('', f'({sql})',f'{geom}', '', f'{id}')
+        else: 
+            uri.setDataSource('public', table ,geom ,exp)
 
 
+        return uri
+
+    def crearCampania(self,widget):
+        lote = str(widget.line_lote_nombre.text()).upper()
+        idexp = widget.line_lote_idexp.text()
+        idcult = widget.line_lote_idcultivo.text()
+        dateSiembra = widget.lote_dateSiembra.date().toString('yyyy.MM.dd')
+        dateCosecha = widget.lote_dateCosecha.date().toString('yyyy.MM.dd')
+        dateFondo = widget.date_fondo.date().toString('yyyy.MM.dd')
+        fondoFormula = widget.line_fondo_formula.text()
+        fondoPrecio = float(widget.line_fondo_precio.text())
+        fondoCalculado = float(widget.line_fondo_calculado.text())
+        fondoAjustado = float(widget.line_fondo_ajustado.text())
+        fondoAplicado = float(widget.line_fondo_aplicado.text())
+        dateCob1 = widget.date_cob.date().toString('yyyy.MM.dd')
+        cob1Formula = widget.line_cob_formula.text()
+        cob1Precio = float(widget.line_cob_precio.text())
+        cob1Calculado = float(widget.line_cob_calculado.text())
+        cob1Ajustado = float(widget.line_cob_ajustado.text())
+        cob1Aplicado = float(widget.line_cob_aplicado.text())
+        dateCob2 = widget.date_cob_2.date().toString('yyyy.MM.dd')
+        cob2Formula = widget.line_cob_formula_2.text()
+        cob2Precio = float(widget.line_cob_precio_2.text())
+        cob2Calculado = float(widget.line_cob_calculado_2.text())
+        cob2Ajustado = float(widget.line_cob_ajustado_2.text())
+        cob2Aplicado = float(widget.line_cob_aplicado_2.text())
+        dateCob3 = widget.date_cob_3.date().toString('yyyy.MM.dd')
+        cob3Formula = widget.line_cob_formula_3.text()
+        cob3Precio = float(widget.line_cob_precio_3.text())
+        cob3Calculado = float(widget.line_cob_calculado_3.text())
+        cob3Ajustado = float(widget.line_cob_ajustado_3.text())
+        cob3Aplicado = float(widget.line_cob_aplicado_3.text())
+        unidadDesprecio = widget.ln_und_deprecio.text()
+      
+        sql = f'''
+        insert into campania 
+        values(nextval('campania_idcampania_seq') ,{idexp}, {idcult},'{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, {fondoAjustado},  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, {cob1Ajustado},  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  {cob2Ajustado}, {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, {cob3Ajustado},  {cob3Aplicado} , '{unidadDesprecio}');
+        '''
+
+        sql2 = f'''insert into lotecampania(idlote,idcampania) 
+        select ql.idlote, qc.idcampania from (select idlote from lote where nombre ilike '%{lote}%') as ql, (select idcampania from campania order by idcampania desc limit 1) as qc; '''
+       
+        with self.conn as conn:
+            try: 
+                cursor = conn.cursor()
+                cursor.execute(sql)
+                conn.commit()
+                cursor.execute(sql2)
+                conn.commit()
+                QMessageBox.about(widget, f"aGrae GIS:",f"Campaña creada y asociada correctamente")
+            except InterfaceError as ie: 
+                conn = widget.utils.Conn()
+                cursor = conn.cursor()
+                cursor.execute(sql)
+                QMessageBox.about(widget, f"aGrae GIS:", f"Campaña creada correctamente")
 
 
+            except Exception as e: 
+                print(e)
+                QMessageBox.about(widget, f"Error: ",f"{e}")         
+    
+    def crearLote(self,widget):
+        nombre = str(widget.line_lote_nombre.text()).upper()
+        sql = f""" insert into lote(nombre) values('{nombre}')  """
+        with widget.conn as conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute(sql)
+                print('Lote creado')
+                QMessageBox.about(
+                    widget, f"aGrae GIS:", f"Lote: {nombre} Creado Correctamente.\nCrear una campaña para continuar.")
+            except errors.lookup('23505'):
+                # print('El lote ya existe, ingresa otro nombre o modifica el existente')
+                QMessageBox.about(
+                    widget, f"aGrae GIS:", f"El Lote: {nombre} ya existe.\nIngresa otro Nombre o Modifica el Existente")
+                conn.rollback()
+            except Exception as ex:
+                print(ex)
+                QMessageBox.about(
+                    widget, f"ERROR:", f"Ocurrio un Error")
+                conn.rollback()

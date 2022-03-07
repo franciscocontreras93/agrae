@@ -37,7 +37,7 @@ from .dbconn import DbConnection
 from .utils import AgraeUtils, AgraeToolset
 
 # Import the code for the DockWidget
-from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget, loteFindDialog, loteFilterDialog
+from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget, loteFindDialog, loteFilterDialog, parcelaFindDialog
 import os.path
 from qgis.core import QgsDataSourceUri
 
@@ -129,6 +129,7 @@ class agrae:
         self.mainWindowDialog = None
         self.loteFindDialog = None
         self.loteFilterDialog = None
+        self.parcelaFilterDialog = None
 
         
 
@@ -224,35 +225,41 @@ class agrae:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/agrae/icon.png'
+        icon_path = self.icons_path['agrae_icon']
         self.add_action(
             icon_path,
             text=self.tr(u'aGrae GIS'),
             callback=self.runMain,
             parent=self.iface.mainWindow())
-        search_icon_path = self.icons_path['search_icon_path']
+        search_icon_path = self.icons_path['search_lotes']
         self.add_action(
             search_icon_path,
             text=self.tr(u'Filtrar Lotes'),
+            status_tip=self.tr(u'Filtrar Lotes'),
             callback=self.filtrarLotes,
+            parent=self.iface.mainWindow())
+        search_icon_path = self.icons_path['search_parcela']
+        self.add_action(
+            search_icon_path,
+            text=self.tr(u'Filtrar Parcelas'),
+            status_tip=self.tr(u'Filtrar Parcelas'),
+            callback=self.filtrarParcelas,
             parent=self.iface.mainWindow())
         recintos_icon_path = self.icons_path['layer_upload']
         self.add_action(
             recintos_icon_path,
             text=self.tr(u'Cargar Recintos'),
+            status_tip=self.tr(u'Cargar Recintos'),
             callback=self.uploadRecintos,
             parent=self.iface.mainWindow())
         rel_icon_path = self.icons_path['create_rel']
         self.add_action(
             rel_icon_path,
             text=self.tr(u'Crear Relacion'),
+            status_tip=self.tr(u'Crear Relacion'),
             callback=self.relLote,
             parent=self.iface.mainWindow())
-        # self.add_action(
-        #     '',
-        #     text=self.tr(u'Agregar Objeto'),
-        #     callback=self.runMain,
-        #     parent=self.iface.mainWindow())
+
         self.add_action(
             '',
             text=self.tr(u'Ajustes'),
@@ -277,9 +284,14 @@ class agrae:
         self.loteFindDialog.closingPlugin.disconnect(self.onCloseLoteDialog)
         self.pluginIsActive = False
         self.loteFindDialog.btn_cargar_lote.setEnabled(True)
+
     def onCloseLoteFilterDialog(self):
-        self.loteFilterDialog.closingPlugin.disconnect(
-            self.onCloseLoteFilterDialog)
+        self.loteFilterDialog.closingPlugin.disconnect(self.onCloseLoteFilterDialog)
+        self.pluginIsActive = False
+
+    def onCloseParcelaFilterDialog(self):
+        self.parcelaFilterDialog.closingPlugin.disconnect(
+            self.onCloseParcelaFilterDialog)
         self.pluginIsActive = False
 
     def unload(self):
@@ -662,6 +674,20 @@ class agrae:
             self.loteFilterDialog.closingPlugin.connect(
                 self.onCloseLoteFilterDialog)
             self.loteFilterDialog.show()
-        
-
     
+    def filtrarParcelas(self):
+        if not self.pluginIsActive:
+            self.pluginIsActive = True
+
+            if self.parcelaFilterDialog == None:
+                self.parcelaFilterDialog = parcelaFindDialog()
+
+            self.parcelaFilterDialog.closingPlugin.connect(
+                self.onCloseParcelaFilterDialog)
+            self.parcelaFilterDialog.show()
+
+
+    def testFunction(self): 
+        sql = f'select * from lotes'
+        nombre = 'aGrae Lotes'
+        self.tools.addMapLayer(sql, nombre)

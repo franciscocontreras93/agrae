@@ -37,34 +37,39 @@
    <property name="title">
     <string>Consultar Parcelas</string>
    </property>
-   <widget class="QWidget" name="gridLayoutWidget">
+   <widget class="QWidget" name="horizontalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>31</y>
-      <width>561</width>
-      <height>211</height>
+      <x>20</x>
+      <y>30</y>
+      <width>401</width>
+      <height>22</height>
      </rect>
     </property>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="lineEdit"/>
-     </item>
-     <item row="1" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Buscar:</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="2">
-      <widget class="QPushButton" name="btn_buscar">
-       <property name="text">
-        <string>Buscar</string>
-       </property>
-      </widget>
+     <item>
+      <widget class="QLineEdit" name="lineEdit"/>
      </item>
-     <item row="2" column="0" colspan="3">
+    </layout>
+   </widget>
+   <widget class="QWidget" name="horizontalLayoutWidget_2">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>60</y>
+      <width>511</width>
+      <height>211</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
       <widget class="QTableWidget" name="tableWidget">
        <property name="sizeAdjustPolicy">
         <enum>QAbstractScrollArea::AdjustToContents</enum>
@@ -107,58 +112,53 @@
        </column>
        <column>
         <property name="text">
-         <string>Agregado</string>
+         <string>Cultivo</string>
         </property>
        </column>
        <column>
         <property name="text">
-         <string>Zona</string>
+         <string>Fecha Siembra</string>
         </property>
        </column>
        <column>
         <property name="text">
-         <string>Poligono</string>
+         <string>Fecha Cosecha</string>
         </property>
        </column>
        <column>
         <property name="text">
-         <string>Parcela</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Recinto</string>
+         <string>ID. SIGPAC</string>
         </property>
        </column>
       </widget>
      </item>
     </layout>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>450</x>
-      <y>250</y>
-      <width>111</width>
-      <height>23</height>
+      <x>540</x>
+      <y>60</y>
+      <width>34</width>
+      <height>211</height>
      </rect>
     </property>
-    <property name="text">
-     <string>Cargar Parcela</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushButton_2">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>250</y>
-      <width>111</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Agregar Relacion</string>
-    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
  </widget>

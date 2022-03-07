@@ -95,28 +95,26 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
     closingPlugin = pyqtSignal()
 
     actualizar = pyqtSignal(list)
-    actualizarRel = pyqtSignal(str) 
     sqlSignal = pyqtSignal(str)
+    idParcelaSignal = pyqtSignal(str)
 
     def __init__(self, parent=None):
         """Constructor."""
         super(parcelaFindDialog, self).__init__(parent)
         self.utils = AgraeUtils()
+        self.tools = AgraeToolset()
         self.conn = self.utils.Conn()
+
+        self.idParcela = None
 
         
 
 
-        data = self.dataAuto()
-        lista = [e[0] for e in data]
-        completer = QCompleter(lista)
-        completer.setCaseSensitivity(False)
+        
         self.setupUi(self)
-        self.btn_buscar.clicked.connect(self.buscar)
-        self.lineEdit.setCompleter(completer)       
-        self.tableWidget.horizontalHeader().setStretchLastSection(True)
-        self.pushButton.clicked.connect(self.cargarParcela)
-        self.pushButton_2.clicked.connect(self.insertarIdRelacion)
+        self.UIcomponents()
+        self.buscar()
+        
 
 
 
@@ -126,12 +124,35 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
 
         event.accept()
 
+    def UIcomponents(self):
+        icons_path = self.utils.iconsPath() 
+        data = self.dataAuto()
+        lista = [e[0] for e in data]
+        completer = QCompleter(lista)
+        completer.setCaseSensitivity(False)
+        self.lineEdit.setCompleter(completer)       
+        self.tableWidget.horizontalHeader().setStretchLastSection(True)
+        self.pushButton.setIconSize(QtCore.QSize(20, 20))
+        self.pushButton.setIcon(QIcon(icons_path['load_data']))
+        self.pushButton.setToolTip('Añadir Parcela al Mapa')
+        self.pushButton.clicked.connect(self.cargarParcela)
+        
+        self.pushButton_2.setIconSize(QtCore.QSize(20, 20))
+        self.pushButton_2.setIcon(QIcon(icons_path['add_layer_to_map']))
+        self.pushButton_2.clicked.connect(self.agregarParcelaMapa)
+        self.pushButton_2.setToolTip('Cargar Datos al Formulario')
+
+        self.lineEdit.setClearButtonEnabled(True)
+        line_buscar_action = self.lineEdit.addAction(
+            QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
+        line_buscar_action.triggered.connect(self.buscar)
 
     def data(self, filtro=None):
         if filtro == None:
             cursor = self.conn.cursor()
-            sql = '''select p.idparcela, p.nombre parcela, (case when lp2.parcela >= 1 then 'Si' else 'No' end) relacion ,l.nombre lote , cu.nombre cultivo , 
-            ca.fechasiembra, ca.fechacosecha ,prov.nombre , mcpo.nombre 
+            sql = '''select p.idparcela, p.nombre parcela ,(case when lp2.parcela >= 1 then 'Si' else 'No' end) relacion ,
+            (case when l.nombre is null then '' else l.nombre end) lote ,prov.nombre provincia, mcpo.nombre municipio,  cu.nombre cultivo , 
+            ca.fechasiembra, ca.fechacosecha , p.idsigpac
             from parcela p
             left join loteparcela lp on lp.idparcela = p.idparcela 
             left join lotecampania lc on lc.idlotecampania =lp.idlotecampania 
@@ -140,13 +161,15 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
             left join campania ca on ca.idcampania = lc.idcampania 
             left join cultivo cu on cu.idcultivo = ca.idcultivo 
             join datos.provincia prov on prov.idprovincia = p.provincia 
-            join datos.municipio mcpo on p.municipio = mcpo.idmunicipio '''
+            join datos.municipio mcpo on mcpo.cod_municipio = p.municipio and mcpo.idprovincia = prov.idprovincia
+            order by l.nombre   '''
             cursor.execute(sql)
             data = cursor.fetchall()
         else:
             cursor = self.conn.cursor()
-            sql = f""" select p.idparcela, p.nombre parcela, (case when lp2.parcela >= 1 then 'Si' else 'No' end) relacion ,l.nombre lote , cu.nombre cultivo , 
-            ca.fechasiembra, ca.fechacosecha ,prov.nombre , mcpo.nombre 
+            sql = f""" select p.idparcela, p.nombre parcela ,(case when lp2.parcela >= 1 then 'Si' else 'No' end) relacion ,
+            (case when l.nombre is null then '' else l.nombre end) lote ,prov.nombre provincia, mcpo.nombre municipio,  cu.nombre cultivo , 
+            ca.fechasiembra, ca.fechacosecha , p.idsigpac
             from parcela p
             left join loteparcela lp on lp.idparcela = p.idparcela 
             left join lotecampania lc on lc.idlotecampania =lp.idlotecampania 
@@ -155,8 +178,9 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
             left join campania ca on ca.idcampania = lc.idcampania 
             left join cultivo cu on cu.idcultivo = ca.idcultivo 
             join datos.provincia prov on prov.idprovincia = p.provincia 
-            join datos.municipio mcpo on p.municipio = mcpo.idmunicipio 
-            where p.nombre ilike '%{filtro}%' or l.nombre ilike '%{filtro}%' or prov.nombre ilike '%{filtro}%' or mcpo.nombre ilike '%{filtro}%' order by l.idlote """          
+            join datos.municipio mcpo on mcpo.cod_municipio = p.municipio and mcpo.idprovincia = prov.idprovincia   
+            where p.nombre ilike '%{filtro}%' or l.nombre ilike '%{filtro}%' or prov.nombre ilike '%{filtro}%' or mcpo.nombre ilike '%{filtro}%' or p.idsigpac ilike '%{filtro}%'
+            order by l.nombre """          
             # or p.agregado ilike '%{filtro}%' or p.zona ilike '%{filtro}%' or p.poligono ilike '%{filtro}%' or p.parcela ilike '%{filtro}%' or p.recinto ilike '%{filtro}%' order by p.idparcela """
             cursor.execute(sql)
             data = cursor.fetchall()
@@ -168,7 +192,10 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
 
     def dataAuto(self):
         cursor = self.conn.cursor()
-        sql = "select distinct unnest(array[p.nombre, prov.nombre, mcpo.nombre]) from parcela p left join datos.provincia prov on p.provincia = prov.idprovincia left join datos.municipio mcpo on p.municipio = mcpo.idmunicipio "     
+        sql = """select distinct unnest(array[p.nombre, prov.nombre, mcpo.nombre])
+        from parcela p 
+        left join datos.provincia prov on p.provincia = prov.idprovincia 
+        join datos.municipio mcpo on mcpo.cod_municipio = p.municipio and mcpo.idprovincia = prov.idprovincia  """     
         cursor.execute(sql)
         data = cursor.fetchall()
         return data
@@ -208,6 +235,7 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
             row = self.tableWidget.currentRow()
             # column = self.tableWidget.currentColumn()
             param = self.tableWidget.item(row, 0).text()
+            self.idParcela = param
             sqlQuery = f"""select * from parcela where idparcela = {param} """
             conn = self.conn
             cursor = conn.cursor()
@@ -215,26 +243,27 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
             data = cursor.fetchone()
             dataLista = list(data)
             self.actualizar.emit(dataLista)
+            self.idParcelaSignal.emit(param)
             self.sqlSignal.emit(sqlQuery)
             self.close()
           
         except Exception as ex:
+            print(ex)
 
             QMessageBox.about(self,'aGrae GIS', 'Debe Seleccionar una parcela para agregar') 
         pass
-    def insertarIdRelacion(self):
-        try:
-            row = self.tableWidget.currentRow()
-            idRel = self.tableWidget.item(row, 0).text()
-            self.actualizarRel.emit(idRel)
-            self.close()
-        except Exception as ex:
-            QMessageBox.about(self,'aGrae GIS', 'Debe Seleccionar una parcela para agregar a la relacion')     
-           
+    
+
+    def agregarParcelaMapa(self):
+        row = self.tableWidget.currentRow()
+        self.idParcela = self.tableWidget.item(row,0).text()
+        idsigpac = self.tableWidget.item(row, 9).text()
+        self.tools.cargarParcela(self, idsigpac)
+
 class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
     closingPlugin = pyqtSignal()
     actualizar = pyqtSignal(list)
-    actualizarRel = pyqtSignal(str)  
+    
     def __init__(self, parent=None):
 
         """Constructor."""
@@ -266,11 +295,11 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         self.btn_cargar_lote.clicked.connect(self.cargarLote)
         
         self.pushButton_2.setIconSize(QtCore.QSize(20, 20))
-        self.pushButton_2.setIcon(QIcon(icons_path['add_plus']))
+        self.pushButton_2.setIcon(QIcon(icons_path['link']))
         self.pushButton_2.clicked.connect(self.crearRelacionLoteParcela)
 
         self.pushButton_3.setIconSize(QtCore.QSize(20, 20))
-        self.pushButton_3.setIcon(QIcon(icons_path['drop_rel']))
+        self.pushButton_3.setIcon(QIcon(icons_path['link-slash']))
         self.pushButton_3.clicked.connect(self.dropRelation)
         
         self.btn_reload.setIconSize(QtCore.QSize(20, 20))
@@ -416,22 +445,6 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             pass      
 
 
-    def insertarIdRelacion(self):
-
-        try:
-
-            row = self.tableWidget.currentRow()
-
-            column = self.tableWidget.currentColumn()
-
-            idRel = self.tableWidget.item(row, 0).text()
-
-            self.actualizarRel.emit(idRel)
-            self.close()
-
-        except Exception as ex:
-
-            QMessageBox.about(self, 'aGrae GIS','Debe Seleccionar un lote de la Lista para agregar a la relacion')
                   
     def crearRelacionLoteParcela(self):
         lyr = iface.activeLayer() 
@@ -681,6 +694,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.conn = self.utils.Conn()
         self.style = self.utils.styleSheet()
         self.idlote = None
+        self.idParcela = None
         self.sqlParcela = ''
         self.sqlSegmento = ''
 
@@ -761,22 +775,25 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_add_layer_2.setIconSize(QtCore.QSize(20, 20))
 
         self.btn_par_update.clicked.connect(self.actualizarParcela)
-        self.btn_buscar_parcela_2.clicked.connect(self.parcelaDialog)
-        self.btn_buscar_lote_2.clicked.connect(self.loteDialog)
-        self.btn_rel_create.clicked.connect(self.crearRelacionLoteParcela)
         self.btn_lote_update.clicked.connect(self.actualizarLote)
         self.prov_combo.currentTextChanged.connect(self.indexProvUpdate)
         self.setStyleSheet(self.style)
         self.line_buscar.setCompleter(completerParcela)
         self.line_find_segmento.setCompleter(completerSegmento)
+        self.btn_crear_lote.setIcon(QIcon(icons_path['save']))
+        self.btn_crear_lote.setIconSize(QtCore.QSize(20, 20))
         self.btn_crear_lote.clicked.connect(self.crearLote)
+        self.btn_crear_campania.setIcon(QIcon(icons_path['save']))
+        self.btn_crear_campania.setIconSize(QtCore.QSize(20, 20))
         self.btn_crear_campania.clicked.connect(self.crearCampania)
         self.ln_par_nombre.textChanged.connect(self.validarNombre)
         self.pushButton_3.clicked.connect(self.crearAmbientes)
         self.pushButton_4.clicked.connect(self.segmentoDialog)
-        self.btn_par_create.clicked.connect(self.crearParcela)
         self.pushButton.clicked.connect(self.cargarParcela)
         self.btn_find_segmento.clicked.connect(self.buscarSegmento)
+
+        self.btn_add_lotes.clicked.connect(self.addLotesMap)
+        self.btn_add_parcelas.clicked.connect(self.addParcelasMap)
 
     
         self.btn_add_layer.clicked.connect(self.cargarLote)
@@ -890,87 +907,33 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tools.crearParcela(self)
     
     def crearCampania(self):
-        lote = str(self.line_lote_nombre.text()).upper()
-        idexp = self.line_lote_idexp.text()
-        idcult = self.line_lote_idcultivo.text()
-        dateSiembra = self.lote_dateSiembra.date().toString('yyyy.MM.dd')
-        dateCosecha = self.lote_dateCosecha.date().toString('yyyy.MM.dd')
-        dateFondo = self.date_fondo.date().toString('yyyy.MM.dd')
-        fondoFormula = self.line_fondo_formula.text()
-        fondoPrecio = float(self.line_fondo_precio.text())
-        fondoCalculado = float(self.line_fondo_calculado.text())
-        fondoAjustado = float(self.line_fondo_ajustado.text())
-        fondoAplicado = float(self.line_fondo_aplicado.text())
-        dateCob1 = self.date_cob.date().toString('yyyy.MM.dd')
-        cob1Formula = self.line_cob_formula.text()
-        cob1Precio = float(self.line_cob_precio.text())
-        cob1Calculado = float(self.line_cob_calculado.text())
-        cob1Ajustado = float(self.line_cob_ajustado.text())
-        cob1Aplicado = float(self.line_cob_aplicado.text())
-        dateCob2 = self.date_cob_2.date().toString('yyyy.MM.dd')
-        cob2Formula = self.line_cob_formula_2.text()
-        cob2Precio = float(self.line_cob_precio_2.text())
-        cob2Calculado = float(self.line_cob_calculado_2.text())
-        cob2Ajustado = float(self.line_cob_ajustado_2.text())
-        cob2Aplicado = float(self.line_cob_aplicado_2.text())
-        dateCob3 = self.date_cob_3.date().toString('yyyy.MM.dd')
-        cob3Formula = self.line_cob_formula_3.text()
-        cob3Precio = float(self.line_cob_precio_3.text())
-        cob3Calculado = float(self.line_cob_calculado_3.text())
-        cob3Ajustado = float(self.line_cob_ajustado_3.text())
-        cob3Aplicado = float(self.line_cob_aplicado_3.text())
-        unidadDesprecio = self.ln_und_deprecio.text()
-      
-        sql = f'''
-        insert into campania 
-        values(nextval('campania_idcampania_seq') ,{idexp}, {idcult},'{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, {fondoAjustado},  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, {cob1Ajustado},  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  {cob2Ajustado}, {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, {cob3Ajustado},  {cob3Aplicado} , '{unidadDesprecio}');
-        '''
+        try: 
+            self.tools.crearCampania(self)
+            self.btn_crear_campania.setEnabled(False)
+            self.btn_crear_lote.setEnabled(True)
+            self.line_lote_nombre.setReadOnly(False)
+            self.line_lote_nombre.setText('')
 
-        sql2 = f'''insert into lotecampania(idlote,idcampania) 
-        select ql.idlote, qc.idcampania from (select idlote from lote where nombre ilike '%{lote}%') as ql, (select idcampania from campania order by idcampania desc limit 1) as qc; '''
-       
-        with self.conn as conn:
-            try: 
-                cursor = conn.cursor()
-                cursor.execute(sql)
-                conn.commit()
-                cursor.execute(sql2)
-                conn.commit()
-                QMessageBox.about(self, f"aGrae GIS:",f"Campaña y asociada creada correctamente")
-            except InterfaceError as ie: 
-                conn = self.utils.Conn()
-                cursor = conn.cursor()
-                cursor.execute(sql)
-                QMessageBox.about(self, f"aGrae GIS:", f"Campaña creada correctamente")
-
-
-            except Exception as e: 
-                print(e)
-                QMessageBox.about(self, f"Error: ",f"{e}")         
+        except Exception as ex: 
+            print(ex)
+            pass           
     
-    def crearLote(self): 
-        nombre = str(self.line_lote_nombre.text()).upper()
-        sql = f""" insert into lote(nombre) values('{nombre}')  """
-        with self.conn as conn: 
-            try: 
-                cursor = conn.cursor()
-                cursor.execute(sql)
-                print('Lote creado')
-                QMessageBox.about(
-                    self, f"aGrae GIS:", f"Lote: {nombre} Creado Correctamente.\nCrear Relacion Lote Parcelas.")
-            except errors.lookup('23505'): 
-                print('El lote ya existe, ingresa otro nombre o modifica el existente')
-                QMessageBox.about(self, f"aGrae GIS:",f"El Lote: {nombre} ya existe.\nIngresa otro Nombre o Modifica el Existente")
-                conn.rollback()
-            except Exception as ex: 
-                print(ex)
-                QMessageBox.about(self, f"ERROR:",f"Ocurrio un Error, Revisa la Consola")
-                conn.rollback()
+    def crearLote(self):
+        try: 
+            self.tools.crearLote(self)
+            self.btn_crear_campania.setEnabled(True)
+            self.btn_crear_lote.setEnabled(False)
+            self.line_lote_nombre.setReadOnly(True)
+
+        except Exception as ex:
+            print(ex)
+            pass
+        
 
     def populateParcela(self,data):
         style = "font-weight: bold ; color : red"
         dataStr = [str(e) for e in data]
-        self.lbl_id_parcela.setText(dataStr[1])
+        self.lbl_id_parcela.setText(dataStr[12])
         self.ln_par_nombre.setText(dataStr[2])
         # self.ln_par_provincia.setText(dataStr[3])            
         # if dataStr[11] != None:
@@ -1057,28 +1020,25 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 self.line_cob_ajustado_3.setText(data2[28])
                 self.line_cob_aplicado_3.setText(data2[29])
                 self.btn_lote_update.setEnabled(True)
+                self.btn_crear_campania.setEnabled(True)
             except Exception as ex:
                 print(ex)
                 pass
 
-    def populateRelPar(self,idPar):
-        self.ln_rel_parcela.setText(idPar)
 
-
-    def populateRelLote(self,idLote):
-        self.ln_rel_lote.setText(idLote)
-  
-    def returnSql(self,sql):
-        self.sqlParcela = sql
+    def returnIdParcela(self,param):
+        self.idParcela = param
         # print(self.sqlParcela)
+    def returnSqlParcela(self,sql): 
+        self.sqlParcela = sql
 
     def parcelaDialog(self):       
 
         dialog = parcelaFindDialog()
         dialog.loadData()
         dialog.actualizar.connect(self.populateParcela)
-        dialog.actualizarRel.connect(self.populateRelPar)
-        dialog.sqlSignal.connect(self.returnSql)
+        dialog.sqlSignal.connect(self.returnSqlParcela)
+        dialog.idParcelaSignal.connect(self.returnIdParcela)
 
         dialog.exec_()
     
@@ -1086,7 +1046,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         dialog = loteFindDialog()
         dialog.loadData()
         dialog.actualizar.connect(self.populateLote)
-        dialog.actualizarRel.connect(self.populateRelLote)
         dialog.exec_()  
 
     def expDialog(self):
@@ -1098,23 +1057,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         dialog = cultivoFindDialog()
         dialog.loadData()
         dialog.exec_()
-
-    def crearRelacionLoteParcela(self):
-        idParcela = int(self.ln_rel_parcela.text())
-        idLote = int(self.ln_rel_lote.text())
-        try:         
-            sql = f''' insert into loteparcela(idparcela,idlotecampania) 
-                    values({idParcela},{idLote}) '''
-            cursor = self.conn.cursor()
-            cursor.execute(sql)
-            QMessageBox.about(self, 'aGrae GIS','Se creo la Relacion')
-            self.conn.commit() 
-
-
-
-        except errors.lookup('23505'):
-            QMessageBox.about(self, 'aGrae GIS', 'La parcela ya existe pertenece a un lote.')              
- 
 
 
 
@@ -1184,8 +1126,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.ln_par_poly.setStyleSheet(style)
         self.ln_par_parcela.setStyleSheet(style)
         self.ln_par_recinto.setStyleSheet(style)
-        self.ln_rel_parcela.setStyleSheet(style)
-        self.ln_rel_lote.setStyleSheet(style)
         self.line_lote_nombre.setStyleSheet(style)
         self.line_lote_idexp.setStyleSheet(style)
         self.line_lote_idcultivo.setStyleSheet(style)
@@ -1244,7 +1184,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tools.crearSegmentos(self)
 
     def cargarParcela(self):
-        self.tools.cargarParcela(self)
+        idsigpac = self.lbl_id_parcela.text()
+        self.tools.cargarParcela(self,idsigpac)
 
     def segmentoDialog(self):
         dialog = agraeSegmentoDialog()
@@ -1299,6 +1240,15 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def cargarLote(self):
         self.tools.cargarLote(self)
 
+    def addLotesMap(self):
+        sql = f'select * from lotes'
+        nombre = 'aGrae Lotes'
+        self.tools.addMapLayer(sql, nombre,'idlotecampania')
+
+    def addParcelasMap(self):
+        sql = f'select * from parcela'
+        nombre = 'aGrae Parcelas'
+        self.tools.addMapLayer(sql, nombre,'idparcela')
 
 class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog): 
 
