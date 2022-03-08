@@ -1447,6 +1447,9 @@
     </widget>
    </widget>
    <widget class="QWidget" name="tab_2">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <attribute name="title">
      <string>Analisis </string>
     </attribute>
@@ -1521,7 +1524,7 @@
        <item row="0" column="0">
         <widget class="QTableWidget" name="tableWidget_2">
          <property name="enabled">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <property name="contextMenuPolicy">
           <enum>Qt::CustomContextMenu</enum>
@@ -1630,7 +1633,7 @@
       </attribute>
       <widget class="QPushButton" name="pushButton_4">
        <property name="enabled">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <property name="geometry">
         <rect>
@@ -1684,6 +1687,9 @@
     </widget>
    </widget>
    <widget class="QWidget" name="tab_6">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <attribute name="title">
      <string>Herramientas</string>
     </attribute>
