@@ -1,38 +1,62 @@
-# import psycopg2.extras
-# import psycopg2
-# import random
-# import numpy as np
-# import matplotlib as mpl
-# import matplotlib.pyplot as plt
-# import seaborn as sns
-# # import warnings
-# # warnings.filterwarnings(action='once')
+import sys
+from time import sleep
 
-# sns.set_style('darkgrid')
-# conn = psycopg2.connect(
-#     'host=localhost dbname=agrae user=postgres password=23826405')
-# cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-# cursor.execute(
-#     'select nombre , st_area(st_transform(geometria,25830))/10000  from parcela')
-# # data = [r[1] for r in cursor.fetchall()]
-# result = cursor.fetchall()
-# nombre = [e[0] for e in result]
-# data = [e[1] for e in result]
-
-# print(nombre, data)
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import (
+    QApplication,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 
-# # ypos = np.arange(len(nombre))
-# # plt.xticks(ypos, nombre)
-# # plt.ylabel('Area Parcela (Ha)')
-# # plt.bar(ypos, data)
+class Window(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.clicksCount = 0
+        self.setupUi()
 
-# sns.barplot(nombre,data)
+    def setupUi(self):
+        self.setWindowTitle("Freezing GUI")
+        self.resize(300, 150)
+        self.centralWidget = QWidget()
+        self.setCentralWidget(self.centralWidget)
+        # Create and connect widgets
+        self.clicksLabel = QLabel("Counting: 0 clicks", self)
+        self.clicksLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self.stepLabel = QLabel("Long-Running Step: 0")
+        self.stepLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self.countBtn = QPushButton("Click me!", self)
+        self.countBtn.clicked.connect(self.countClicks)
+        self.longRunningBtn = QPushButton("Long-Running Task!", self)
+        self.longRunningBtn.clicked.connect(self.runLongTask)
+        # Set the layout
+        layout = QVBoxLayout()
+        layout.addWidget(self.clicksLabel)
+        layout.addWidget(self.countBtn)
+        layout.addStretch()
+        layout.addWidget(self.stepLabel)
+        layout.addWidget(self.longRunningBtn)
+        self.centralWidget.setLayout(layout)
 
-# plt.show()\
-# # plt.savefig(r'C:\Users\FRANCISCO\Desktop\demo.png')
+    def countClicks(self):
+        self.clicksCount += 1
+        self.clicksLabel.setText(f"Counting: {self.clicksCount} clicks")
+
+    def reportProgress(self, n):
+        self.stepLabel.setText(f"Long-Running Step: {n}")
+
+    def runLongTask(self):
+        """Long-running task in 5 steps."""
+        for i in range(5):
+            sleep(1)
+            self.reportProgress(i + 1)
 
 
-dictionary = {'1':'algo'}
-print(dictionary['1'])
+app = QApplication(sys.argv)
+win = Window()
+win.show()
+sys.exit(app.exec())
 

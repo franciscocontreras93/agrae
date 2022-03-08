@@ -302,6 +302,8 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         self.pushButton_3.setIcon(QIcon(icons_path['link-slash']))
         self.pushButton_3.clicked.connect(self.dropRelation)
         
+
+        
         self.btn_reload.setIconSize(QtCore.QSize(20, 20))
         self.btn_reload.setIcon(QIcon(icons_path['reload_data']))
         self.btn_reload.clicked.connect(self.lotesReload)
@@ -1045,6 +1047,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def loteDialog(self):     
         dialog = loteFindDialog()
         dialog.loadData()
+        dialog.pushButton_2.setEnabled(False)
+        dialog.pushButton_3.setEnabled(False)
         dialog.actualizar.connect(self.populateLote)
         dialog.exec_()  
 
