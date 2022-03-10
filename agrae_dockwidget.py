@@ -25,7 +25,7 @@ import os
 # from datetime import date
 
 from psycopg2 import OperationalError,InterfaceError, errors, extras
-from PyQt5.QtCore import QRegExp, QDate, Qt
+from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QThread
 from PyQt5.QtGui import QRegExpValidator, QIcon, QPixmap
 from PyQt5.QtWidgets import *
 from qgis.PyQt import QtGui, QtWidgets, uic
@@ -453,7 +453,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         features = lyr.selectedFeatures()         
         row = self.tableWidget.currentRow()
         idLote = self.tableWidget.item(row,0).text()
-        errors = []
+        error = []
         try:
             for f in features: 
                 print(f[1],idLote)       
@@ -467,15 +467,15 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
                     self.conn.commit()
 
                 except errors.lookup('23505'):
-                    errors.append(idParcela)
+                    error.append(idParcela)
                     print(f'La parcela {f[1]} ya existe pertenece a un lote.')
                     self.conn.rollback()
             
-            if len(errors) == 0:
+            if len(error) == 0:
                 QMessageBox.about(self, 'aGrae GIS', f'Se creo la Relacion sin errores ') 
-            elif len(errors) >0 and len(errors) <len(features): 
-                QMessageBox.about(self, 'aGrae GIS', f' Las siguientes parcelas no se pudieron relacionar \n ({errors})')
-            elif len(errors) == len(features): 
+            elif len(error) >0 and len(error) <len(features): 
+                QMessageBox.about(self, 'aGrae GIS', f' Las siguientes parcelas no se pudieron relacionar \n ({error})')
+            elif len(error) == len(features): 
                 QMessageBox.about(self, 'aGrae GIS', f'No se pudieron relacionar las Parcelas seleccionadas.')
 
                 
@@ -483,6 +483,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         except Exception as ex: 
             print(ex)
             QMessageBox.about(self, 'aGrae GIS', f'Ocurrio un Error. ')
+            self.conn.rollback()
 
     def dropRelation(self): 
         lyr = iface.activeLayer()
@@ -599,9 +600,6 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         self.loadData(filtro)
         pass
 
-
-
-
 class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
 
     closingPlugin = pyqtSignal()
@@ -678,7 +676,6 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
         self.loadData(filtro)
         pass
 
-
 class ReadOnlyDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         return
@@ -712,12 +709,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.populateComboMcpo(self.prov_combo.currentData())
         self.setLineFormatValidator()
         self.setStyleLines()
-
-        
-
-
-
-
 
     def UIcomponents(self):
         icons_path = self.utils.iconsPath()
@@ -804,8 +795,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_reload.setIconSize(QtCore.QSize(20, 20))
         self.btn_reload.setToolTip('Buscar todos los lotes')
         self.btn_reload.clicked.connect(self.reloadLotes)
-
-
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -1247,12 +1236,27 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def addLotesMap(self):
         sql = f'select * from lotes'
         nombre = 'aGrae Lotes'
-        self.tools.addMapLayer(sql, nombre,'idlotecampania')
+        self.tools.addMapLayer('lotes',nombre,id='idlotecampania')
 
     def addParcelasMap(self):
         sql = f'select * from parcela'
         nombre = 'aGrae Parcelas'
-        self.tools.addMapLayer(sql, nombre,'idparcela')
+        # self.tools.addMapLayer(sql, nombre,'idparcela')
+        self.tools.addMapLayer('parcela',nombre)
+    def heavyTask(self): 
+        self.thread = QThread()
+        self.worker = Worker()
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(self.worker.addLotesMap)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater) 
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.thread.start()
+        self.btn_add_lotes.setEnabled(False)
+        self.btn_add_lotes.setText('Cargando')
+        self.thread.finished.connect(lambda: self.btn_add_lotes.setEnabled(True))
+        self.thread.finished.connect(lambda: self.btn_add_lotes.setText('Agregar Lotes'))
+
 
 class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog): 
 
@@ -1337,3 +1341,44 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
         completerLotes = QCompleter(listaLotes)
         completerLotes.setCaseSensitivity(False)
         self.line_buscar.setCompleter(completerLotes)
+
+
+class Worker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+
+    tools = AgraeToolset()
+
+    def run(self):
+        for i in range(10+1):
+            sleep(1)
+            self.progress.emit(i + 1)
+        self.finished.emit()
+
+    def addLotesMap(self):
+        sql = f'select * from lotes'
+        nombre = 'aGrae Lotes'  
+        try:
+            uri = QgsDataSourceUri()
+            uri.setConnection('localhost', '5432',
+                          'agrae', 'postgres', '23826405')
+            uri.setDataSource('public','lotes','geometria','')
+            lyr = QgsVectorLayer(uri.uri(False),nombre,'postgres')
+            
+            print(lyr)
+            self.finished.emit()    
+            # self.tools.addMapLayer(sql, nombre, 'idlotecampania')
+        except Exception as ex: 
+            print(ex)
+            self.finished.emit()
+
+        QgsProject.instance().addMapLayer(lyr)             
+        
+
+    def addParcelasMap(self):
+        sql = f'select * from parcela'
+        nombre = 'aGrae Parcelas'
+        
+        tools.addMapLayer(sql, nombre, 'idparcela')
+
+    

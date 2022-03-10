@@ -490,10 +490,16 @@ class AgraeToolset():
                 return code
                 pass
 
-    
-    def addMapLayer(self,sql,nombre,idfield,ogr='postgres'):       
-        
-        uri = self.retUri(sql, 'geometria', idfield)
+    def addMapLayer(self, table, nombre, ogr='postgres', geom='geometria',id=None):
+        dns = self.dns
+        uri = QgsDataSourceUri()
+        uri.setConnection(dns['host'], dns['port'],
+                          dns['dbname'], dns['user'], dns['password'])
+        if id != None:                  
+            uri.setDataSource('public',table,geom,'',id)
+        else: 
+            uri.setDataSource('public',table,geom,'')
+
         layer = QgsVectorLayer(uri.uri(False), f'{nombre}', f'{ogr}')
         QgsProject.instance().addMapLayer(layer)
 

@@ -272,7 +272,7 @@
       <string notr="true">#tabWidget_2::pane{border: 0}</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab_admin_pl">
       <attribute name="title">
@@ -1386,7 +1386,7 @@
          <item>
           <widget class="QPushButton" name="btn_crear_campania">
            <property name="enabled">
-            <bool>false</bool>
+            <bool>true</bool>
            </property>
            <property name="text">
             <string/>
