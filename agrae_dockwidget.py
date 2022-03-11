@@ -286,6 +286,8 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         line_buscar_action = self.lineEdit.addAction(
             QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
         line_buscar_action.triggered.connect(self.buscar)
+
+        self.lineEdit_2.textChanged.connect(self.setButtonEnabled)
         
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         self.tableWidget.setColumnHidden(0,True)
@@ -297,6 +299,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         self.pushButton_2.setIconSize(QtCore.QSize(20, 20))
         self.pushButton_2.setIcon(QIcon(icons_path['link']))
         self.pushButton_2.clicked.connect(self.crearRelacionLoteParcela)
+        
 
         self.pushButton_3.setIconSize(QtCore.QSize(20, 20))
         self.pushButton_3.setIcon(QIcon(icons_path['link-slash']))
@@ -447,25 +450,41 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             QMessageBox.about(self, 'Error','Ocurrio un Error')
             pass      
 
-
+    def setButtonEnabled(self):
+        if self.lineEdit_2.text() != '':
+            self.pushButton_2.setEnabled(True)
+        else: 
+            self.pushButton_2.setEnabled(False)
                   
     def crearRelacionLoteParcela(self):
         lyr = iface.activeLayer() 
-        features = lyr.selectedFeatures()         
+        features = lyr.selectedFeatures()
+        nombreParcelario = str(self.lineEdit_2.text())         
         row = self.tableWidget.currentRow()
         idLote = self.tableWidget.item(row,0).text()
-        error = []
+        error = [] 
+                   
         try:
             for f in features: 
-                print(f[1],idLote)       
+                cursor = self.conn.cursor()
                 idParcela = f[1]
                 try:
+                    sqlRename = f''' update parcela 
+                    set nombre = '{nombreParcelario}'
+                    where idparcela = {idParcela}'''
+                    cursor.execute(sqlRename)
+                    self.conn.commit()
+
                     sql = f''' insert into loteparcela(idparcela,idlotecampania) 
                             values({idParcela},{idLote}) '''
-                    cursor = self.conn.cursor()
+                    
                     cursor.execute(sql)
                     print(f'Se creo la Relacion {idParcela,idLote}')
                     self.conn.commit()
+                    self.pushButton_2.setEnabled(False)
+                    self.lineEdit_2.setText('')
+
+
 
                 except errors.lookup('23505'):
                     error.append(idParcela)
