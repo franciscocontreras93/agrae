@@ -345,7 +345,8 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
                 on sq1.idlotecampania = lc.idlotecampania
             left join campania ca on ca.idcampania = lc.idcampania 
             left join cultivo cu on cu.idcultivo = ca.idcultivo 
-            where l.nombre ilike '%{filtro}%' 
+            where l.nombre ilike '%{filtro}%'
+            or cu.nombre ilike '%{filtro}%' 
             order by ca.fechasiembra asc """
             self.btn_reload.setEnabled(True)
             cursor.execute(sql)
@@ -1295,6 +1296,7 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
         self.btn_add_layer.setIcon(QIcon(icons_path['add_layer_to_map']))
         self.btn_add_layer.setIconSize(QtCore.QSize(20, 20))
         self.btn_add_layer.clicked.connect(self.cargarLote)
+        # self.btn_add_layer.clicked.connect(self.selectedRows)
         
         self.btn_reload.setIcon(QIcon(icons_path['reload_data']))
         self.btn_reload.setIconSize(QtCore.QSize(20, 20))
@@ -1302,9 +1304,9 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
         self.btn_reload.clicked.connect(self.reloadLotes)
 
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
-        self.tableWidget.setColumnHidden(0, True)
-        self.tableWidget.setColumnHidden(4, True)
-        self.tableWidget.setColumnHidden(6, True)
+        # self.tableWidget.setColumnHidden(0, True)
+        # self.tableWidget.setColumnHidden(4, True)
+        # self.tableWidget.setColumnHidden(6, True)
 
 
 
@@ -1340,7 +1342,7 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
         # print(listaLotes)
         completerLotes = QCompleter(listaLotes)
         completerLotes.setCaseSensitivity(False)
-        self.line_buscar.setCompleter(completerLotes)
+        self.line_buscar.setCompleter(completerLotes)              
 
 
 class Worker(QObject):

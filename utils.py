@@ -268,7 +268,11 @@ class AgraeToolset():
             QMessageBox.about(widget, f"aGrae GIS", f"No se pudo almacenar el registro {ex}")
             conn.rollback()
 
-
+    def renameParcela(self,widget=None): 
+        lyr = QgsProject.instance().mapLayersByName('aGrae Parcelas')[0]
+        for f in lyr.selectedFeatures():
+            print(f[1])
+        pass
     def cargarParcela(self,widget, id):
         self.sqlParcela = 'select * from parcela'
         idParcela = widget.idParcela
@@ -369,7 +373,7 @@ class AgraeToolset():
                     widget.tableWidget.setRowCount(0)
                 else:
                     widget.btn_add_layer.setEnabled(True)
-                    status = False
+                    widget.sinceDateStatus = False
                     widget.untilDate.setEnabled(False)
                     self.queryCapaLotes = sqlQuery
                     a = len(data)
@@ -393,9 +397,16 @@ class AgraeToolset():
     
     
     def cargarLote(self,widget):
-            # print('Working')
-            
-            dns = self.dns
+        selected = widget.tableWidget.selectionModel().selectedRows()
+        dns = self.dns
+
+        if len(selected) == 0: 
+            msg = 'Debes seleccionar un lote'
+            QMessageBox.about(widget, "aGrae GIS:", f"{msg}")
+        elif len(selected) >1: 
+            msg = 'Debes seleccionar solo un loteS'
+            QMessageBox.about(widget, "aGrae GIS:", f"{msg}")
+        else:          
             row = widget.tableWidget.currentRow()
             column = widget.tableWidget.currentColumn()
            
