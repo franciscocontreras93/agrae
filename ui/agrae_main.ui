@@ -1386,7 +1386,7 @@
          <item>
           <widget class="QPushButton" name="btn_crear_campania">
            <property name="enabled">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
            <property name="text">
             <string/>

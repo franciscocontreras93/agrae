@@ -586,6 +586,11 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         line_buscar_action.triggered.connect(self.buscar)
         # self.btn_buscar.clicked.connect(self.buscar)
         self.pushButton.clicked.connect(self.selectIdExp)
+        self.pushButton.setIconSize(QtCore.QSize(20, 20))
+        self.pushButton.setIcon(QIcon(icons_path['share']))
+
+        self.pushButton_2.clicked.connect(self.crear)
+
         self.lineEdit.setCompleter(completer)
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
 
@@ -646,6 +651,25 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         filtro = self.lineEdit.text()
         self.loadData(filtro)
         pass
+    
+    def crear(self): 
+        cursor = self.conn.cursor() 
+        nombre = self.lineEdit_2.text()
+        direccion = self.lineEdit_3.text()
+        if nombre != '' and direccion != '': 
+            try:
+                sql = f''' insert into explotacion(nombre,direccion)
+                values('{nombre}','{direccion}') '''
+                cursor.execute(sql)
+                self.conn.commit()
+                QMessageBox.about(self, "aGrae GIS:", "Se creo correctamente")
+            except Exception as ex: 
+                print(ex)
+                QMessageBox.about(self, "Error:", "Error revisa la consola")
+                self.conn.rollback()
+        else: 
+            QMessageBox.about(self, "Error:", "Debes rellenar todos los campos")
+
 
 class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
 
@@ -657,16 +681,37 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
         super(cultivoFindDialog, self).__init__(parent)
         self.utils = AgraeUtils()
         self.conn = self.utils.Conn()
+        self.setupUi(self)
+        self.UIcomponents()
+        
+
+
+    def UIcomponents(self):
+        icons_path = self.utils.iconsPath()
         data = self.dataAuto()
         lista = [e[0] for e in data]
         # print(lista)
         completer = QCompleter(lista)
         completer.setCaseSensitivity(False)
-        self.setupUi(self)
-        self.btn_buscar.clicked.connect(self.buscar)
+
+        self.lineEdit.setClearButtonEnabled(True)
+        line_buscar_action = self.lineEdit.addAction(
+            QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
+        line_buscar_action.triggered.connect(self.buscar)
+
+        # self.lineEdit.returnPressed.connect(self.buscar)
+
+        
+        # self.btn_buscar.clicked.connect(self.buscar)
         self.lineEdit.setCompleter(completer)
+
+    
+
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         self.pushButton.clicked.connect(self.selectIdCultivo)
+        self.pushButton.setIconSize(QtCore.QSize(20, 20))
+        self.pushButton.setIcon(QIcon(icons_path['share']))
+
     
     def selectIdCultivo(self): 
         row = self.tableWidget.currentRow()
@@ -730,7 +775,8 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
 
     def buscar(self):
         filtro = self.lineEdit.text()
-        self.loadData(filtro)
+        if filtro != '':
+            self.loadData(filtro)
         pass
     
     
@@ -973,7 +1019,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def crearLote(self):
         try: 
             self.tools.crearLote(self)
-            # self.btn_crear_campania.setEnabled(True)
+            self.btn_crear_campania.setEnabled(True)
             self.btn_crear_lote.setEnabled(False)
             self.line_lote_nombre.setReadOnly(True)
 
@@ -1072,7 +1118,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 self.line_cob_ajustado_3.setText(data2[28])
                 self.line_cob_aplicado_3.setText(data2[29])
                 self.btn_lote_update.setEnabled(True)
-                self.btn_crear_campania.setEnabled(True)
+                # self.btn_crear_campania.setEnabled(True)
+                # self.line_lote_nombre.setEnabled()
             except Exception as ex:
                 print(ex)
                 pass
@@ -1179,8 +1226,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         else: 
             self.btn_crear_lote.setEnabled(False)
 
-        
-        if self.line_lote_idexp.text() != '' and self.line_lote_idcultivo.text() != '':
+        if self.line_lote_idexp.text() != '' and self.line_lote_idcultivo.text() != '' and self.line_lote_nombre.text() != '':
             self.btn_crear_campania.setEnabled(True)
         else: 
             self.btn_crear_campania.setEnabled(False)

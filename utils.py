@@ -159,6 +159,7 @@ class AgraeUtils():
             'filter_objects': os.path.join(os.path.dirname(__file__), r'ui\icons\filter-solid.svg'),
             'menu': os.path.join(os.path.dirname(__file__), r'ui\icons\ellipsis-solid.svg'),
             'save': os.path.join(os.path.dirname(__file__), r'ui\icons\floppy-disk-solid.svg'),
+            'share': os.path.join(os.path.dirname(__file__), r'ui\icons\share-solid.svg'),
         }
 
         return icons_path
@@ -602,7 +603,7 @@ class AgraeToolset():
                     widget, f"aGrae GIS:", f"El Lote: {nombre} ya existe.\nIngresa otro Nombre o Modifica el Existente")
                 conn.rollback()
                 widget.line_lote_nombre.setText('')
-                widget.line_lote_nombre.setReadOnly(False)
+                # widget.line_lote_nombre.setEnabled(False)
 
             except Exception as ex:
                 print(ex)
@@ -610,4 +611,4 @@ class AgraeToolset():
                     widget, f"ERROR:", f"Ocurrio un Error")
                 conn.rollback()
                 widget.line_lote_nombre.setText('')
-                widget.line_lote_nombre.setReadOnly(False)
+                # widget.line_lote_nombre.setEnabled(False)
