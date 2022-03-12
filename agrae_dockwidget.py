@@ -548,25 +548,47 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
 
 class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
     closingPlugin = pyqtSignal()
+    getIdExp = pyqtSignal(int)
+    
     def __init__(self, parent=None):
         """Constructor."""
         super(expFindDialog, self).__init__(parent)
         self.utils = AgraeUtils()
         self.conn = self.utils.Conn()
-        data = self.dataAuto()
-        lista = [e[0] for e in data]
+        
         # print(lista)
-        completer = QCompleter(lista)
-        completer.setCaseSensitivity(False)
+        
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
         # self.<objectname>, and you can use autoconnect slots - see
         # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-        self.btn_buscar.clicked.connect(self.buscar)
+        self.UIcomponents()
+
+    def selectIdExp(self): 
+        row = self.tableWidget.currentRow()
+        idExp = int(self.tableWidget.item(row,0).text())
+        self.getIdExp.emit(idExp)
+        self.close()
+
+    def UIcomponents(self):
+        
+        data = self.dataAuto()
+        lista = [e[0] for e in data]
+        completer = QCompleter(lista)
+        completer.setCaseSensitivity(False)
+
+        icons_path = self.utils.iconsPath() 
+        self.lineEdit.setClearButtonEnabled(True)
+        line_buscar_action = self.lineEdit.addAction(
+            QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
+        line_buscar_action.triggered.connect(self.buscar)
+        # self.btn_buscar.clicked.connect(self.buscar)
+        self.pushButton.clicked.connect(self.selectIdExp)
         self.lineEdit.setCompleter(completer)
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
+
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -628,6 +650,8 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
 class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
 
     closingPlugin = pyqtSignal()
+    getIdCultivo = pyqtSignal(int)
+
     def __init__(self, parent=None):
         """Constructor."""
         super(cultivoFindDialog, self).__init__(parent)
@@ -642,6 +666,14 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
         self.btn_buscar.clicked.connect(self.buscar)
         self.lineEdit.setCompleter(completer)
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
+        self.pushButton.clicked.connect(self.selectIdCultivo)
+    
+    def selectIdCultivo(self): 
+        row = self.tableWidget.currentRow()
+        idCultivo = int(self.tableWidget.item(row,0).text())
+        self.getIdCultivo.emit(idCultivo)
+        self.close()
+    
     def closeEvent(self, event):
         self.closingPlugin.emit()
         event.accept()
@@ -700,7 +732,8 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
         filtro = self.lineEdit.text()
         self.loadData(filtro)
         pass
-
+    
+    
 class ReadOnlyDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         return
@@ -805,6 +838,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_crear_campania.setIconSize(QtCore.QSize(20, 20))
         self.btn_crear_campania.clicked.connect(self.crearCampania)
         self.ln_par_nombre.textChanged.connect(self.validarNombre)
+        self.line_lote_nombre.textChanged.connect(self.validarNombre)
+        self.line_lote_idexp.textChanged.connect(self.validarNombre)
+        self.line_lote_idcultivo.textChanged.connect(self.validarNombre)
         self.pushButton_3.clicked.connect(self.crearAmbientes)
         self.pushButton_4.clicked.connect(self.segmentoDialog)
         self.pushButton.clicked.connect(self.cargarParcela)
@@ -937,7 +973,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def crearLote(self):
         try: 
             self.tools.crearLote(self)
-            self.btn_crear_campania.setEnabled(True)
+            # self.btn_crear_campania.setEnabled(True)
             self.btn_crear_lote.setEnabled(False)
             self.line_lote_nombre.setReadOnly(True)
 
@@ -1069,12 +1105,26 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def expDialog(self):
         dialog = expFindDialog()
         dialog.loadData()
+        dialog.getIdExp.connect(self.popIdExp)
         dialog.exec_()
     
+    def popIdExp(self, value):
+
+        self.line_lote_idexp.setText(f'{value}')
+
     def cultivoDialog(self):
         dialog = cultivoFindDialog()
         dialog.loadData()
+        dialog.getIdCultivo.connect(self.popIdCultivo)
         dialog.exec_()
+
+    def popIdCultivo(self,value):
+        
+        self.line_lote_idcultivo.setText(f'{value}')
+        
+
+         
+
 
 
 
@@ -1123,15 +1173,19 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.untilDate.setDate(QDate.currentDate())
 
     def validarNombre(self):
-        if self.ln_par_nombre.text() != '':
-            self.btn_par_create.setEnabled(True)
-            self.btn_par_update.setEnabled(True)
-        
-        if self.line_lote_nombre.text() != '':
+                
+        if self.line_lote_nombre.text() != '' : 
             self.btn_crear_lote.setEnabled(True)
-            self.btn_crear_campania.setEnabled(True)
+        else: 
+            self.btn_crear_lote.setEnabled(False)
+
         
-            
+        if self.line_lote_idexp.text() != '' and self.line_lote_idcultivo.text() != '':
+            self.btn_crear_campania.setEnabled(True)
+        else: 
+            self.btn_crear_campania.setEnabled(False)
+
+        
 
 
 

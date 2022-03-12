@@ -601,8 +601,13 @@ class AgraeToolset():
                 QMessageBox.about(
                     widget, f"aGrae GIS:", f"El Lote: {nombre} ya existe.\nIngresa otro Nombre o Modifica el Existente")
                 conn.rollback()
+                widget.line_lote_nombre.setText('')
+                widget.line_lote_nombre.setReadOnly(False)
+
             except Exception as ex:
                 print(ex)
                 QMessageBox.about(
                     widget, f"ERROR:", f"Ocurrio un Error")
                 conn.rollback()
+                widget.line_lote_nombre.setText('')
+                widget.line_lote_nombre.setReadOnly(False)

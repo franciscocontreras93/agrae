@@ -1333,7 +1333,7 @@
          <rect>
           <x>10</x>
           <y>20</y>
-          <width>721</width>
+          <width>431</width>
           <height>51</height>
          </rect>
         </property>
@@ -1344,7 +1344,7 @@
          <item row="0" column="8">
           <widget class="QPushButton" name="btn_crear_lote">
            <property name="enabled">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
            <property name="text">
             <string/>

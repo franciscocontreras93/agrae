@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>200</height>
+    <width>500</width>
+    <height>250</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>400</width>
-    <height>200</height>
+    <width>500</width>
+    <height>250</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>400</width>
-    <height>200</height>
+    <width>500</width>
+    <height>250</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -30,41 +30,53 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>381</width>
-     <height>181</height>
+     <width>481</width>
+     <height>231</height>
     </rect>
    </property>
    <property name="title">
     <string>Consultar Cultivos</string>
    </property>
-   <widget class="QWidget" name="gridLayoutWidget">
+   <widget class="QWidget" name="horizontalLayoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>31</y>
-      <width>361</width>
-      <height>111</height>
+      <y>20</y>
+      <width>461</width>
+      <height>31</height>
      </rect>
     </property>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="lineEdit"/>
-     </item>
-     <item row="1" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Buscar por Nombre:</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="2">
+     <item>
+      <widget class="QLineEdit" name="lineEdit"/>
+     </item>
+     <item>
       <widget class="QPushButton" name="btn_buscar">
        <property name="text">
         <string>Buscar</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="0" colspan="3">
+    </layout>
+   </widget>
+   <widget class="QWidget" name="verticalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>60</y>
+      <width>421</width>
+      <height>161</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
       <widget class="QTableWidget" name="tableWidget">
        <property name="sizeAdjustPolicy">
         <enum>QAbstractScrollArea::AdjustToContents</enum>
@@ -94,18 +106,24 @@
      </item>
     </layout>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QWidget" name="verticalLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>260</x>
-      <y>150</y>
-      <width>111</width>
-      <height>23</height>
+      <x>440</x>
+      <y>60</y>
+      <width>31</width>
+      <height>161</height>
      </rect>
     </property>
-    <property name="text">
-     <string>Crear Cultivo</string>
-    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
  </widget>
