@@ -453,8 +453,13 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
     def setButtonEnabled(self):
         if self.lineEdit_2.text() != '':
             self.pushButton_2.setEnabled(True)
+            self.lineEdit_2.setStyleSheet(
+                'background-color: rgb(255, 255, 255);')
+            
         else: 
             self.pushButton_2.setEnabled(False)
+            self.lineEdit_2.setStyleSheet(
+                'background-color: rgb(255, 94, 94);')
                   
     def crearRelacionLoteParcela(self):
         lyr = iface.activeLayer() 

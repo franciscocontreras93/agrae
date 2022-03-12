@@ -58,7 +58,11 @@
       </widget>
      </item>
      <item row="0" column="3">
-      <widget class="QLineEdit" name="lineEdit_2"/>
+      <widget class="QLineEdit" name="lineEdit_2">
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 94, 94);</string>
+       </property>
+      </widget>
      </item>
      <item row="0" column="2">
       <widget class="QLabel" name="label_2">
@@ -81,6 +85,9 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QTableWidget" name="tableWidget">
+       <property name="styleSheet">
+        <string notr="true">border-color: rgb(255, 0, 0);</string>
+       </property>
        <property name="sizeAdjustPolicy">
         <enum>QAbstractScrollArea::AdjustToContents</enum>
        </property>
