@@ -488,8 +488,8 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
                     cursor.execute(sql)
                     print(f'Se creo la Relacion {idParcela,idLote}')
                     self.conn.commit()
-                    self.pushButton_2.setEnabled(False)
-                    self.lineEdit_2.setText('')
+                    # self.pushButton_2.setEnabled(False)
+                   
 
 
 
@@ -896,6 +896,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         self.btn_add_lotes.clicked.connect(self.addLotesMap)
         self.btn_add_parcelas.clicked.connect(self.addParcelasMap)
+        self.btn_add_segmentos.clicked.connect(self.addSegmentosMap)
 
     
         self.btn_add_layer.clicked.connect(self.cargarLote)
@@ -1363,8 +1364,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def addLotesMap(self):
         sql = f'select * from lotes'
         nombre = 'aGrae Lotes'
-        self.tools.addMapLayer('lotes',nombre,id='idlotecampania')
+        self.tools.addMapLayer('lotes',nombre,id='id')
 
+    def addSegmentosMap(self): 
+        self.tools.addMapLayer('segmentos','aGrae Segmentos',id='id')
     def addParcelasMap(self):
         sql = f'select * from parcela'
         nombre = 'aGrae Parcelas'

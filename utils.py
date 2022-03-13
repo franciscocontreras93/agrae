@@ -316,7 +316,6 @@ class AgraeToolset():
             print(ex)
             QMessageBox.about(
                 widget, f"Error:", f"Debe seleccionar un campo para el Nombre")
-
     def buscarLotes(self,widget,status):
         nombre = widget.line_buscar.text()
         sinceDate = widget.sinceDate.date().toString('yyyy-MM-dd')
@@ -408,9 +407,7 @@ class AgraeToolset():
         
         except Exception as ex:
             print(ex)
-            QMessageBox.about(widget, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)") 
-    
-    
+            QMessageBox.about(widget, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")     
     def cargarLote(self,widget):
         selected = widget.tableWidget.selectionModel().selectedRows()
         dns = self.dns
@@ -419,21 +416,23 @@ class AgraeToolset():
             msg = 'Debes seleccionar un lote'
             QMessageBox.about(widget, "aGrae GIS:", f"{msg}")
         elif len(selected) >1: 
-            msg = 'Debes seleccionar solo un loteS'
+            msg = 'Debes seleccionar solo un lote'
             QMessageBox.about(widget, "aGrae GIS:", f"{msg}")
         else:          
             row = widget.tableWidget.currentRow()
-            column = widget.tableWidget.currentColumn()
-           
+            column = widget.tableWidget.currentColumn()           
             try:
                 idlote = widget.tableWidget.item(row, 0)
                 nombreLote = widget.tableWidget.item(row, 1)
                 nombreParcela = widget.tableWidget.item(row, 2)
                 fecha = widget.tableWidget.item(row, 3)
-                sql = sql = f''' select * from lotes
-                where idlotecampania = {idlote.text()} and lote ilike '%{nombreLote.text()}%' and parcela ilike'%{nombreParcela.text()}%' and fechasiembra = '{fecha.text()}' '''
-                uri = self.retUri(sql, 'geometria', 'idlotecampania')
-                
+                exp = f''' "idlotecampania" = {idlote.text()} and "lote" ilike '%{nombreLote.text()}%' and "parcela" ilike'%{nombreParcela.text()}%' and "fechasiembra" = '{fecha.text()}' '''
+                uri = QgsDataSourceUri()
+                uri.setConnection(dns['host'], dns['port'],
+                                  dns['dbname'], dns['user'], dns['password'])
+                uri.setDataSource('public', 'lotes', 'geometria', exp, 'id')
+
+
                 nombreCapa = f'{nombreLote.text()}-{nombreParcela.text()}-{widget.tableWidget.item(row, 5).text()}'
                 layer = self.iface.addVectorLayer(uri.uri(False), nombreCapa, 'postgres')
                     
@@ -448,10 +447,6 @@ class AgraeToolset():
             except Exception as ex:
                 print(ex)
                 QMessageBox.about(widget, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
-
-    
-
-
     def dataSegmento(self,table):
         lyr = self.iface.activeLayer()
         features = lyr.getFeatures()
@@ -468,8 +463,6 @@ class AgraeToolset():
             for c in range(table.columnCount()):
                 item = QTableWidgetItem(str(df.iloc[r,c]))
                 table.setItem(r,c,item)
-
-    
     def crearSegmento(self,widget,table):
         lyr = self.iface.activeLayer()
         srid = lyr.crs().authid()[5:]
@@ -495,8 +488,6 @@ class AgraeToolset():
         except Exception as ex: 
             print(ex)
             pass
-
-
     def lastCode(self): 
         with self.conn as conn: 
             cursor = conn.cursor()
@@ -515,7 +506,6 @@ class AgraeToolset():
                 code = 'NO DATA'
                 return code
                 pass
-
     def addMapLayer(self, table, nombre, ogr='postgres', geom='geometria',id=None):
         dns = self.dns
         uri = QgsDataSourceUri()
@@ -528,7 +518,6 @@ class AgraeToolset():
 
         layer = QgsVectorLayer(uri.uri(False), f'{nombre}', f'{ogr}')
         QgsProject.instance().addMapLayer(layer)
-
     def retUri(self,sql,geom,id, exp=None, table=None):
         dns = self.dns
         uri = QgsDataSourceUri()
@@ -541,7 +530,6 @@ class AgraeToolset():
 
 
         return uri
-
     def crearCampania(self,widget):
         lote = str(widget.line_lote_nombre.text()).upper()
         idexp = widget.line_lote_idexp.text()
@@ -599,8 +587,7 @@ class AgraeToolset():
 
             except Exception as e: 
                 print(e)
-                QMessageBox.about(widget, f"Error: ",f"{e}")         
-    
+                QMessageBox.about(widget, f"Error: ",f"{e}")           
     def crearLote(self,widget):
         nombre = str(widget.line_lote_nombre.text()).upper()
         sql = f""" insert into lote(nombre) values('{nombre}')  """
