@@ -49,23 +49,23 @@ except:
     import psycopg2
     import psycopg2.extras
 
-# try: 
-#     import numpy as np
-# except:
-#     pip.main(['install', 'numpy'])
-#     import numpy as np
-# try:
-#     import matplotlib as mpl
-#     import matplotlib.pyplot as plt
-# except:
-#     pip.main(['install', 'matplotlib'])
-#     import matplotlib as mpl
-#     import matplotlib.pyplot as plt
-# try: 
-#     import seaborn as sns
-# except:
-#     pip.main(['install', 'seaborn'])
-#     import seaborn as sns
+try: 
+    import numpy as np
+except:
+    pip.main(['install', 'numpy'])
+    import numpy as np
+try:
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+except:
+    pip.main(['install', 'matplotlib'])
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+try: 
+    import seaborn as sns
+except:
+    pip.main(['install', 'seaborn'])
+    import seaborn as sns
 
     
 
@@ -595,11 +595,11 @@ class agrae:
             conn = psycopg2.connect(
                 'host=localhost dbname=agrae user=postgres password=23826405')
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            sql = '''select l.nombre ,sum(st_area(st_transform(p.geometria,25830))/10000) area
-                    from parcela p
-                    join loteparcela lp on p.idparcela = lp.idparcela 
-                    join lote l on l.idlote = lp.idlote
-                    group by l.nombre'''
+            sql = '''select l.nombre, sum(st_area(st_transform(p.geometria,25830))/10000) from lotecampania lc
+                    join lote l on l.idlote = lc.idlote 
+                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
+                    join parcela p on p.idparcela = lp.idparcela 
+                    group by l.nombre '''
             cursor.execute(sql)
             result = cursor.fetchall()
             nombre = [e[0] for e in result]

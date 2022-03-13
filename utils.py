@@ -160,6 +160,7 @@ class AgraeUtils():
             'menu': os.path.join(os.path.dirname(__file__), r'ui\icons\ellipsis-solid.svg'),
             'save': os.path.join(os.path.dirname(__file__), r'ui\icons\floppy-disk-solid.svg'),
             'share': os.path.join(os.path.dirname(__file__), r'ui\icons\share-solid.svg'),
+            'pen-to-square': os.path.join(os.path.dirname(__file__), r'ui\icons\pen-to-square-solid.svg'),
         }
 
         return icons_path
@@ -269,10 +270,23 @@ class AgraeToolset():
             QMessageBox.about(widget, f"aGrae GIS", f"No se pudo almacenar el registro {ex}")
             conn.rollback()
 
-    def renameParcela(self,widget=None): 
+    def renameParcela(self,widget): 
         lyr = QgsProject.instance().mapLayersByName('aGrae Parcelas')[0]
+        nombreParcelario = str(widget.lineEdit_2.text())
+        cursor = self.conn.cursor()
         for f in lyr.selectedFeatures():
-            print(f[1])
+            # print(f[1])
+            idParcela = f[1]
+            if nombreParcelario != '':
+                sqlRename = f''' update parcela
+                set nombre = '{nombreParcelario}'
+                where idparcela = {idParcela}'''
+                cursor.execute(sqlRename)
+                self.conn.commit()
+                print('exitoso')
+            else:
+                pass
+
         pass
     def cargarParcela(self,widget, id):
         self.sqlParcela = 'select * from parcela'
@@ -566,7 +580,7 @@ class AgraeToolset():
         '''
 
         sql2 = f'''insert into lotecampania(idlote,idcampania) 
-        select ql.idlote, qc.idcampania from (select idlote from lote where nombre ilike '%{lote}%') as ql, (select idcampania from campania order by idcampania desc limit 1) as qc; '''
+        select ql.idlote, qc.idcampania from (select idlote from lote where nombre = '{lote}') as ql, (select idcampania from campania order by idcampania desc limit 1) as qc; '''
        
         with self.conn as conn:
             try: 

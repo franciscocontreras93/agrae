@@ -141,6 +141,11 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
         self.pushButton_2.setIcon(QIcon(icons_path['add_layer_to_map']))
         self.pushButton_2.clicked.connect(self.agregarParcelaMapa)
         self.pushButton_2.setToolTip('Cargar Datos al Formulario')
+        
+        self.pushButton_3.setIconSize(QtCore.QSize(20, 20))
+        self.pushButton_3.setIcon(QIcon(icons_path['pen-to-square']))
+        self.pushButton_3.setToolTip('Renombrar Parcelas')
+        self.pushButton_3.clicked.connect(self.renameParcelas)
 
         self.lineEdit.setClearButtonEnabled(True)
         line_buscar_action = self.lineEdit.addAction(
@@ -260,6 +265,9 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
         idsigpac = self.tableWidget.item(row, 9).text()
         self.tools.cargarParcela(self, idsigpac)
 
+    def renameParcelas(self): 
+        self.tools.renameParcela(self)
+
 class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
     closingPlugin = pyqtSignal()
     actualizar = pyqtSignal(list)
@@ -287,7 +295,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
         line_buscar_action.triggered.connect(self.buscar)
 
-        self.lineEdit_2.textChanged.connect(self.setButtonEnabled)
+        # self.lineEdit_2.textChanged.connect(self.setButtonEnabled)
         
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         self.tableWidget.setColumnHidden(0,True)
@@ -464,7 +472,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
     def crearRelacionLoteParcela(self):
         lyr = iface.activeLayer() 
         features = lyr.selectedFeatures()
-        nombreParcelario = str(self.lineEdit_2.text())         
+                
         row = self.tableWidget.currentRow()
         idLote = self.tableWidget.item(row,0).text()
         error = [] 
@@ -473,16 +481,10 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             for f in features: 
                 cursor = self.conn.cursor()
                 idParcela = f[1]
-                try:
-                    sqlRename = f''' update parcela 
-                    set nombre = '{nombreParcelario}'
-                    where idparcela = {idParcela}'''
-                    cursor.execute(sqlRename)
-                    self.conn.commit()
 
+                try:
                     sql = f''' insert into loteparcela(idparcela,idlotecampania) 
-                            values({idParcela},{idLote}) '''
-                    
+                            values({idParcela},{idLote}) '''                    
                     cursor.execute(sql)
                     print(f'Se creo la Relacion {idParcela,idLote}')
                     self.conn.commit()

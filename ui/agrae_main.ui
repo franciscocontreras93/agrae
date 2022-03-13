@@ -44,7 +44,7 @@
     <string notr="true"/>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="lotes_tab">
     <attribute name="title">
@@ -1448,7 +1448,7 @@
    </widget>
    <widget class="QWidget" name="tab_2">
     <property name="enabled">
-     <bool>false</bool>
+     <bool>true</bool>
     </property>
     <attribute name="title">
      <string>Analisis </string>
