@@ -319,6 +319,9 @@ CREATE INDEX unidad_geom_idx
 CREATE INDEX reticula_geom_idx
   ON reticulabase
   USING GIST (geometria);
+CREATE INDEX segmento_geom_idx
+	on segmento
+	using GIST (geometria)
 
 
 create function sp_idparcela_ambiente() 

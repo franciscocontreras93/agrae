@@ -105,29 +105,14 @@ class AgraeUtils():
 
     def segmentosQueryTable(self, param=''):
         if param != '': 
-            sql = f''' select s.idsegmento, l.idlote , ca.idcampania, l.nombre lote, s.segmento , (l.nombre||'-'||s.segmento) cod_control , 
-            ca.fechasiembra, cu.nombre, a.cod_analisis 
-            from segmento s 
-            left join lote l on s.idlote = l.idlote 
-            left join lotecampania lc on lc.idlote = l.idlote 
-            left join campania ca on ca.idcampania = lc.idcampania 
-            left join cultivo cu on cu.idcultivo = ca.idcultivo 
-            left join segmentoanalisis sa on sa.idsegmento = s.idsegmento 
-            left join analisis a on a.idanalisis = sa.idanalisis  
-            where l.nombre ||'-'||s.segmento ilike '%{param}%'
-            or a.cod_analisis ilike '%{param}%' 
-            order by ca.idcampania desc '''
+            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_analisis from segmentos sg 
+            where sg.cod_control ilike '%{param}%'
+            or sg.cod_analisis ilike '%{param}%' 
+            '''
             return sql
         else: 
-            sql = f''' select s.idsegmento, l.idlote , ca.idcampania, l.nombre lote, s.segmento , (l.nombre||'-'||s.segmento) cod_control , 
-            ca.fechasiembra, cu.nombre, a.cod_analisis 
-            from segmento s 
-            left join lote l on s.idlote = l.idlote 
-            left join lotecampania lc on lc.idlote = l.idlote 
-            left join campania ca on ca.idcampania = lc.idcampania 
-            left join cultivo cu on cu.idcultivo = ca.idcultivo 
-            left join segmentoanalisis sa on sa.idsegmento = s.idsegmento 
-            left join analisis a on a.idanalisis = sa.idanalisis   '''
+            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_analisis from segmentos sg 
+            '''
             return sql
     def sqlLoteParcela(self,idlote, nombre, fecha): 
         sql = f'''select l.idlote, l.nombre , lc.fechasiembra, lc.fechacosecha, c.nombre, st_multi(st_union(p.geometria)) geometria from loteparcela lp
@@ -146,6 +131,7 @@ class AgraeUtils():
             'search_icon_path': os.path.join(os.path.dirname(__file__), r'ui\icons\search.svg'),
             'search_lotes': os.path.join(os.path.dirname(__file__), r'ui\icons\search-lotes.svg'),
             'search_parcela': os.path.join(os.path.dirname(__file__), r'ui\icons\search-parcela.svg'),
+            'add_group_layers': os.path.join(os.path.dirname(__file__), r'ui\icons\paperclip-solid.svg'),
             'reload_data': os.path.join(os.path.dirname(__file__), r'ui\icons\reload.svg'),
             'link': os.path.join(os.path.dirname(__file__), r'ui\icons\link-solid.svg'),
             'link-slash': os.path.join(os.path.dirname(__file__), r'ui\icons\link-slash-solid.svg'),
@@ -202,7 +188,7 @@ class AgraeToolset():
                                 {ndvimax},
                                 '{atlas}',
                                 st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))'''
-                        print(f'{oa}-{amb}-{ndvimax}-{atlas}')
+                        # print(f'{oa}-{amb}-{ndvimax}-{atlas}')
                         cursor.execute(sql)
                         conn.commit()
                         
@@ -212,7 +198,8 @@ class AgraeToolset():
                         widget, 'aGrae GIS', 'Debe Seleccionar al menos un ambiente')
 
         except Exception as ex:
-            print(ex)
+            # print(ex)
+            conn.rollback()
             pass
         
     def crearParcela(self,widget=None):
@@ -266,7 +253,7 @@ class AgraeToolset():
             conn.rollback()
 
         except Exception as ex:
-            print(ex)
+            # print(ex)
             QMessageBox.about(widget, f"aGrae GIS", f"No se pudo almacenar el registro {ex}")
             conn.rollback()
 
@@ -283,8 +270,11 @@ class AgraeToolset():
                 where idparcela = {idParcela}'''
                 cursor.execute(sqlRename)
                 self.conn.commit()
-                print('exitoso')
+                widget.lineEdit_2.setText('')
+                # print('exitoso')
             else:
+                self.conn.rollback()
+
                 pass
 
         pass
@@ -297,7 +287,6 @@ class AgraeToolset():
         row = widget.tableWidget.currentRow()
         column = widget.tableWidget.currentColumn()
         try: 
-
             uri = self.retUri(sql, 'geometria', 'idparcela', exp,'parcela')
             nombre = id
             layer = QgsVectorLayer(uri.uri(False), nombre, 'postgres')
@@ -305,17 +294,29 @@ class AgraeToolset():
                 QgsProject.instance().addMapLayer(layer)
                 self.iface.setActiveLayer(layer)
                 self.iface.zoomToActiveLayer()
-                print(f"Capa añadida correctamente ")
-                widget.pushButton.setEnabled(False)
-
+                # print(f"Capa añadida correctamente ")
+                # widget.pushButton.setEnabled(False)
             else:
                 QMessageBox.about(self, "aGrae GIS:",
                                     "La capa no es Valida")
-
         except Exception as ex:
-            print(ex)
+            # print(ex)
             QMessageBox.about(
                 widget, f"Error:", f"Debe seleccionar un campo para el Nombre")
+
+    def cargarGrupoParcelas(self, widget):
+        dns = self.dns
+        row = widget.tableWidget.currentRow() 
+        nombreParcelario = widget.tableWidget.item(row, 1).text()
+        exp = f''' "nombre" ilike '{nombreParcelario}' '''
+        uri = QgsDataSourceUri()
+        uri.setConnection(dns['host'], dns['port'],
+                          dns['dbname'], dns['user'], dns['password'])
+        uri.setDataSource('public', 'parcela', 'geometria', exp, 'idparcela')
+        layer = QgsVectorLayer(uri.uri(False),nombreParcelario,'postgres')
+        QgsProject.instance().addMapLayer(layer)
+        self.iface.setActiveLayer(layer)
+        self.iface.zoomToActiveLayer()
     def buscarLotes(self,widget,status):
         nombre = widget.line_buscar.text()
         sinceDate = widget.sinceDate.date().toString('yyyy-MM-dd')
@@ -406,7 +407,7 @@ class AgraeToolset():
                                                        
         
         except Exception as ex:
-            print(ex)
+            # print(ex)
             QMessageBox.about(widget, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")     
     def cargarLote(self,widget):
         selected = widget.tableWidget.selectionModel().selectedRows()
@@ -440,12 +441,12 @@ class AgraeToolset():
                     QgsProject.instance().addMapLayer(layer)
                     self.iface.setActiveLayer(layer)
                     self.iface.zoomToActiveLayer()
-                    print(f"Capa añadida correctamente ")
+                    # print(f"Capa añadida correctamente ")
                 else:
                     QMessageBox.about(widget, "aGrae GIS:", "Capa invalida.")
             
             except Exception as ex:
-                print(ex)
+                # print(ex)
                 QMessageBox.about(widget, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
     def dataSegmento(self,table):
         lyr = self.iface.activeLayer()
@@ -486,8 +487,57 @@ class AgraeToolset():
 
                 QMessageBox.about(widget, 'aGrae GIS', 'Segmento Cargado Correctamente \na la base de datos')
         except Exception as ex: 
-            print(ex)
+            # print(ex)
             pass
+    
+    def asignarCodigoSegmento(self,widget): 
+        row = widget.tableWidget_2.currentRow()
+        idsegmento = widget.tableWidget_2.item(row, 0).text()
+        idlotecampania = widget.tableWidget_2.item(row, 1).text()
+        analisis = widget.tableWidget_2.item(row, 7).text()
+        print(idsegmento, idlotecampania, analisis)
+        cursor = widget.conn.cursor()
+        sql = f''' insert into segmentoanalisis (idsegmento,idlotecampania,idanalisis)
+                select {idsegmento},{idlotecampania} , qan.idanalisis 
+                from (select idanalisis from analisis where cod_analisis ilike '%{analisis}%') qan '''
+        try:
+            cursor.execute(sql)
+            widget.conn.commit()
+            print('relacionado correctamente')
+        except errors.lookup('23505'):
+            print('Segmento ya pertenece al lote')
+            widget.conn.rollback()
+        except Exception as ex:
+            print(ex)
+            widget.conn.rollback()
+    def cargarSegmentos(self,widget):
+        dns = self.dns
+        # selected = widget.tableWidget.selectionModel().selectedRows()
+        # if len(selected) == 0:
+        #     msg = 'Debes seleccionar un lote'
+        #     QMessageBox.about(widget, "aGrae GIS:", f"{msg}")
+        # elif len(selected) > 1:
+        #     msg = 'Debes seleccionar solo un lote'
+        #     QMessageBox.about(widget, "aGrae GIS:", f"{msg}")
+        # else:
+        row = widget.tableWidget_2.currentRow()
+        idlotecampania = widget.tableWidget_2.item(row,1)
+        lote = widget.tableWidget_2.item(row,2)
+        cultivo = widget.tableWidget_2.item(row,6)
+        exp = f''' "idlotecampania" = {idlotecampania} '''
+        uri = QgsDataSourceUri()
+        uri.setConnection(dns['host'], dns['port'],
+                            dns['dbname'], dns['user'], dns['password'])
+        uri.setDataSource('public', 'segmentos', 'geometria', exp, 'id')
+        nombreCapa = f'Segmentos Lote {lote}-{cultivo}'
+        layer = QgsVectorLayer(uri.uri(False), nombreCapa, 'postgres')
+        if layer is not None and layer.isValid():
+            QgsProject.instance().addMapLayer(layer)
+            self.iface.setActiveLayer(layer)
+            self.iface.zoomToActiveLayer()
+
+
+    
     def lastCode(self): 
         with self.conn as conn: 
             cursor = conn.cursor()
@@ -502,7 +552,7 @@ class AgraeToolset():
                     code = 'NO DATA'
             except Exception as ex:
 
-                print(ex)
+                # print(ex)
                 code = 'NO DATA'
                 return code
                 pass
@@ -586,7 +636,7 @@ class AgraeToolset():
 
 
             except Exception as e: 
-                print(e)
+                # print(e)
                 QMessageBox.about(widget, f"Error: ",f"{e}")           
     def crearLote(self,widget):
         nombre = str(widget.line_lote_nombre.text()).upper()
@@ -595,7 +645,7 @@ class AgraeToolset():
             try:
                 cursor = conn.cursor()
                 cursor.execute(sql)
-                print('Lote creado')
+                # print('Lote creado')
                 QMessageBox.about(
                     widget, f"aGrae GIS:", f"Lote: {nombre} Creado Correctamente.\nCrear una campaña para continuar.")
             except errors.lookup('23505'):
@@ -607,7 +657,7 @@ class AgraeToolset():
                 # widget.line_lote_nombre.setEnabled(False)
 
             except Exception as ex:
-                print(ex)
+                # print(ex)
                 QMessageBox.about(
                     widget, f"ERROR:", f"Ocurrio un Error")
                 conn.rollback()

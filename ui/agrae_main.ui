@@ -44,7 +44,7 @@
     <string notr="true"/>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="lotes_tab">
     <attribute name="title">
@@ -272,7 +272,7 @@
       <string notr="true">#tabWidget_2::pane{border: 0}</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tab_admin_pl">
       <attribute name="title">
@@ -1519,21 +1519,11 @@
        <rect>
         <x>10</x>
         <y>80</y>
-        <width>731</width>
+        <width>671</width>
         <height>341</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_10">
-       <item row="0" column="1">
-        <widget class="QPushButton" name="btn_add_layer_2">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="0">
         <widget class="QTableWidget" name="tableWidget_2">
          <property name="enabled">
@@ -1579,11 +1569,6 @@
          </column>
          <column>
           <property name="text">
-           <string>Id. Lote</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
            <string>Id Campaña</string>
           </property>
          </column>
@@ -1617,6 +1602,38 @@
            <string>Analisis</string>
           </property>
          </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_2">
+      <property name="geometry">
+       <rect>
+        <x>700</x>
+        <y>80</y>
+        <width>34</width>
+        <height>341</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QPushButton" name="btn_add_segmento">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_cod_segmento">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
         </widget>
        </item>
       </layout>

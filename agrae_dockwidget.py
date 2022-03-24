@@ -68,7 +68,7 @@ class agraeDockWidget(QtWidgets.QDockWidget, agraeSidePanel):
         filename = QFileDialog.getOpenFileName(None,'Seleccionar archivo')
         # print(filename[0])
         self.lineEdit.setText(filename[0])
-        print(len(self.lineEdit.text()))
+        # print(len(self.lineEdit.text()))
     def closeEvent(self, event):
         self.closingPlugin.emit()
         event.accept()
@@ -132,20 +132,26 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
         completer.setCaseSensitivity(False)
         self.lineEdit.setCompleter(completer)       
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
+
         self.pushButton.setIconSize(QtCore.QSize(20, 20))
         self.pushButton.setIcon(QIcon(icons_path['load_data']))
-        self.pushButton.setToolTip('Añadir Parcela al Mapa')
+        self.pushButton.setToolTip('Cargar Datos al Formulario')
         self.pushButton.clicked.connect(self.cargarParcela)
         
         self.pushButton_2.setIconSize(QtCore.QSize(20, 20))
         self.pushButton_2.setIcon(QIcon(icons_path['add_layer_to_map']))
         self.pushButton_2.clicked.connect(self.agregarParcelaMapa)
-        self.pushButton_2.setToolTip('Cargar Datos al Formulario')
+        self.pushButton_2.setToolTip('Añadir Parcela al Mapa')
         
         self.pushButton_3.setIconSize(QtCore.QSize(20, 20))
         self.pushButton_3.setIcon(QIcon(icons_path['pen-to-square']))
         self.pushButton_3.setToolTip('Renombrar Parcelas')
         self.pushButton_3.clicked.connect(self.renameParcelas)
+
+        self.pushButton_4.setIconSize(QtCore.QSize(20, 20))
+        self.pushButton_4.setIcon(QIcon(icons_path['add_group_layers']))
+        self.pushButton_4.setToolTip('Añadir grupo de parcelas')
+        self.pushButton_4.clicked.connect(self.agregarGrupoParcelasMapa)
 
         self.lineEdit.setClearButtonEnabled(True)
         line_buscar_action = self.lineEdit.addAction(
@@ -218,7 +224,7 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
                     self.tableWidget.setItem(j, i, item)                 
         except:
             QMessageBox.about(self, "Error:", "No Existen Registros")
-            print('error')
+            # print('error')
 
     def loadData(self,param=None):    
         if param == None:  
@@ -265,6 +271,10 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
         idsigpac = self.tableWidget.item(row, 9).text()
         self.tools.cargarParcela(self, idsigpac)
 
+    def agregarGrupoParcelasMapa(self): 
+        # print('ALGO')
+        self.tools.cargarGrupoParcelas(self)
+
     def renameParcelas(self): 
         self.tools.renameParcela(self)
 
@@ -298,7 +308,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         # self.lineEdit_2.textChanged.connect(self.setButtonEnabled)
         
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
-        self.tableWidget.setColumnHidden(0,True)
+        # self.tableWidget.setColumnHidden(0,True)
         
         self.btn_cargar_lote.setIconSize(QtCore.QSize(20, 20))
         self.btn_cargar_lote.setIcon(QIcon(icons_path['load_data']))        
@@ -483,19 +493,24 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
                 idParcela = f[1]
 
                 try:
-                    sql = f''' insert into loteparcela(idparcela,idlotecampania) 
-                            values({idParcela},{idLote}) '''                    
-                    cursor.execute(sql)
-                    print(f'Se creo la Relacion {idParcela,idLote}')
-                    self.conn.commit()
-                    # self.pushButton_2.setEnabled(False)
+                    if idLote == None:
+                        QMessageBox.about(self, 'aGrae GIS', f'El Lote no tiene una campaña asociada') 
+                    else: 
+                        sql = f''' insert into loteparcela(idparcela,idlotecampania) 
+                                values({idParcela},{idLote}) '''                    
+                        cursor.execute(sql)
+                        # print(f'Se creo la Relacion {idParcela,idLote}')
+                        self.conn.commit()
+                        # self.pushButton_2.setEnabled(False)
                    
 
 
 
                 except errors.lookup('23505'):
                     error.append(idParcela)
-                    print(f'La parcela {f[1]} ya existe pertenece a un lote.')
+                    # print(f'La parcela {f[1]} ya existe pertenece a un lote.')
+                    QMessageBox.about(self, 'aGrae GIS',
+                                      f'La parcela {f[1]} ya existe pertenece a un lote.')
                     self.conn.rollback()
             
             if len(error) == 0:
@@ -529,7 +544,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
                     cursor.execute(sqlCheck)
                     data = cursor.fetchall()
                     if len(data) < 1:
-                        print('No existe la relacion entre la parcela y el lote seleccionado')
+                        # print('No existe la relacion entre la parcela y el lote seleccionado')
                         self.conn.rollback()
                     else:
                         _confirm = QMessageBox.question(
@@ -557,6 +572,7 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         super(expFindDialog, self).__init__(parent)
         self.utils = AgraeUtils()
         self.conn = self.utils.Conn()
+        
         
         # print(lista)
         
@@ -638,7 +654,7 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
                     self.tableWidget.setItem(j, i, item)
         except:
             QMessageBox.about(self, "Error:", "No Existen Registros")
-            print('error')
+            # print('error')
 
     def loadData(self, param=None):
         if param == None:
@@ -764,7 +780,7 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
                     self.tableWidget.setItem(j, i, item)
         except:
             QMessageBox.about(self, "Error:", "No Existen Registros")
-            print('error')
+            # print('error')
 
     def loadData(self, param=None):
         if param == None:
@@ -805,6 +821,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         self.sinceDateStatus = False
 
+        self.dns = self.utils.dns
         
 
         
@@ -835,11 +852,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget.setColumnHidden(6, True) # columna geometria loteparcela
         self.tableWidget.setColumnHidden(0, True)  # columna id lote parcela
 
-        # self.tableWidget_2.setColumnHidden(5, True) # columna geometria segmento
         self.tableWidget_2.horizontalHeader().setStretchLastSection(True)
         self.tableWidget_2.setColumnHidden(0, True)
         self.tableWidget_2.setColumnHidden(1, True)
-        self.tableWidget_2.setColumnHidden(2, True)
 
         delegate = ReadOnlyDelegate(self.tableWidget_2)
         self.tableWidget_2.setItemDelegateForColumn(0, delegate)
@@ -849,7 +864,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget_2.setItemDelegateForColumn(4, delegate)
         self.tableWidget_2.setItemDelegateForColumn(5, delegate)
         self.tableWidget_2.setItemDelegateForColumn(6, delegate)
-        self.tableWidget_2.setItemDelegateForColumn(7, delegate)
+        # self.tableWidget_2.setItemDelegateForColumn(7, delegate)
 
         self.line_buscar.setClearButtonEnabled(True)
         line_par_action = self.ln_par_nombre.addAction(
@@ -870,8 +885,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         self.btn_add_layer.setIcon(QIcon(icons_path['add_layer_to_map']))
         self.btn_add_layer.setIconSize(QtCore.QSize(20, 20))
-        self.btn_add_layer_2.setIcon(QIcon(icons_path['add_layer_to_map']))
-        self.btn_add_layer_2.setIconSize(QtCore.QSize(20, 20))
+        self.btn_add_segmento.setIcon(QIcon(icons_path['add_layer_to_map']))
+        self.btn_add_segmento.setIconSize(QtCore.QSize(20, 20))
+        self.btn_add_segmento.clicked.connect(self.cargarSegmentosLote)
 
         self.btn_par_update.clicked.connect(self.actualizarParcela)
         self.btn_lote_update.clicked.connect(self.actualizarLote)
@@ -897,7 +913,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_add_lotes.clicked.connect(self.addLotesMap)
         self.btn_add_parcelas.clicked.connect(self.addParcelasMap)
         self.btn_add_segmentos.clicked.connect(self.addSegmentosMap)
-
+        self.btn_cod_segmento.clicked.connect(self.codificarSegmento)
     
         self.btn_add_layer.clicked.connect(self.cargarLote)
 
@@ -905,6 +921,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_reload.setIconSize(QtCore.QSize(20, 20))
         self.btn_reload.setToolTip('Buscar todos los lotes')
         self.btn_reload.clicked.connect(self.reloadLotes)
+
+
+
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -1006,7 +1025,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             pass  
     def crearParcela(self):
         self.tools.crearParcela(self)
-    
     def crearCampania(self):
         try: 
             self.tools.crearCampania(self)
@@ -1030,7 +1048,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             print(ex)
             pass
         
-
     def populateParcela(self,data):
         style = "font-weight: bold ; color : red"
         dataStr = [str(e) for e in data]
@@ -1171,12 +1188,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def popIdCultivo(self,value):
         
         self.line_lote_idcultivo.setText(f'{value}')
-        
-
-         
-
-
-
 
     def resetStyleLabels(self):
         style = 'font-weight: normal ; color : black'
@@ -1234,11 +1245,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         else: 
             self.btn_crear_campania.setEnabled(False)
 
-        
-
-
-
-
     def setStyleLines(self):
         style = ''' color: black ; font-weight: bold  '''
         self.ln_par_nombre.setStyleSheet(style)
@@ -1281,7 +1287,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.prov_combo.setStyleSheet("QComboBox { combobox-popup: 0; font-size: 10pt}")
     def indexProvUpdate(self):
         idprov = str(self.prov_combo.currentData())
-        print(idprov)
+        # print(idprov)
         self.mcpo_combo.clear()
         self.populateComboMcpo(idprov)   
     def populateComboMcpo(self,idprov):
@@ -1294,7 +1300,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             for row in datos:
                 self.mcpo_combo.addItem(row["nombre"], row["idmunicipio"])        
         except errors.lookup('22P02'):
-             print('error')
+            #  print('error')
              conn.rollback()
              pass
 
@@ -1317,6 +1323,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         print('prueba buscar segmento')
         param = self.line_find_segmento.text()
         sql = self.utils.segmentosQueryTable(str(param))
+        # sql = 'select * from lotes'
         self.sqlSegmento = sql
         
         try: 
@@ -1336,14 +1343,41 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                         item = QTableWidgetItem(str(data[j][i]))
                         self.tableWidget_2.setItem(j,i,item)
                 
-                self.btn_add_layer_2.setEnabled(True)
+                # self.btn_add_layer_2.setEnabled(True)
         
         except Exception as ex:
             print(ex)
 
-    def agregarSegmento(self): 
-        param 
-            
+    def codificarSegmento(self): 
+        self.tools.asignarCodigoSegmento(self)
+    
+    def cargarSegmentosLote(self): 
+        print('ok')
+        dns = self.dns
+        # selected = widget.tableWidget.selectionModel().selectedRows()
+        # if len(selected) == 0:
+        #     msg = 'Debes seleccionar un lote'
+        #     QMessageBox.about(widget, "aGrae GIS:", f"{msg}")
+        # elif len(selected) > 1:
+        #     msg = 'Debes seleccionar solo un lote'
+        #     QMessageBox.about(widget, "aGrae GIS:", f"{msg}")
+        # else:
+        row = self.tableWidget_2.currentRow()
+        idlotecampania = self.tableWidget_2.item(row, 1).text()
+        lote = self.tableWidget_2.item(row, 2).text()
+        cultivo = self.tableWidget_2.item(row, 6).text()
+        exp = f''' "idlotecampania" = {idlotecampania} '''
+        uri = QgsDataSourceUri()
+        uri.setConnection(dns['host'], dns['port'],
+                          dns['dbname'], dns['user'], dns['password'])
+        uri.setDataSource('public', 'segmentos', 'geometria', exp, 'id')
+        nombreCapa = f'Segmentos Lote {lote}-{cultivo}'
+        layer = QgsVectorLayer(uri.uri(False), nombreCapa, 'postgres')
+        if layer is not None and layer.isValid():
+            QgsProject.instance().addMapLayer(layer)
+            iface.setActiveLayer(layer)
+            iface.zoomToActiveLayer()
+
     def sinceDateChange(self):
         self.sinceDateStatus = True
         d1 = self.sinceDate.date()
@@ -1359,7 +1393,45 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_reload.setEnabled(False)
 
     def cargarLote(self):
+        dns = self.dns
+        row = self.tableWidget.currentRow()
+        idlotecampania = self.tableWidget.item(row, 0).text()
+        loteNombre = self.tableWidget.item(row, 1).text()
+        parcela = self.tableWidget.item(row, 2).text()
+        cultivo = self.tableWidget.item(row, 5).text()
+        sql = f'''select p.idparcela from parcela p, lotes ls
+            where st_within(p.geometria,ls.geometria) and ls.idlotecampania = {idlotecampania}
+            '''
+
+        cursor = self.conn.cursor() 
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        s = ",".join([str(e[0]) for e in data])
+        # print(s) 
+        exp = f''' "idparcela" in ({s}) ''' # print(exp)
+
+        uriSegmentos = QgsDataSourceUri()
+        uriSegmentos.setConnection(dns['host'], dns['port'],
+                          dns['dbname'], dns['user'], dns['password'])
+        uriSegmentos.setDataSource(
+            'public', 'segmentos', 'geometria', f'"idlotecampania" = {idlotecampania}', 'id')
+        lyrSegmentos = QgsVectorLayer(uriSegmentos.uri(
+            False), f'''SEGMENTOS {loteNombre}-{cultivo}''', 'postgres')
+        
+
+        uriParcelas = QgsDataSourceUri()
+        uriParcelas.setConnection(dns['host'], dns['port'],
+                                  dns['dbname'], dns['user'], dns['password'])
+        uriParcelas.setDataSource(
+            'public', 'parcela', 'geometria', exp, 'idparcela')
+        lyrParcelas = QgsVectorLayer(uriParcelas.uri(
+            False), f'{parcela}-{loteNombre}-{cultivo}', 'postgres')
+
+        QgsProject.instance().addMapLayer(lyrSegmentos)
+        QgsProject.instance().addMapLayer(lyrParcelas)
         self.tools.cargarLote(self)
+        
+
 
     def addLotesMap(self):
         sql = f'select * from lotes'
@@ -1387,6 +1459,17 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.thread.finished.connect(lambda: self.btn_add_lotes.setEnabled(True))
         self.thread.finished.connect(lambda: self.btn_add_lotes.setText('Agregar Lotes'))
 
+    
+        
+
+
+        
+
+
+        
+
+        
+        
 
 class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog): 
 
@@ -1496,7 +1579,7 @@ class Worker(QObject):
             uri.setDataSource('public','lotes','geometria','')
             lyr = QgsVectorLayer(uri.uri(False),nombre,'postgres')
             
-            print(lyr)
+            # print(lyr)
             self.finished.emit()    
             # self.tools.addMapLayer(sql, nombre, 'idlotecampania')
         except Exception as ex: 
