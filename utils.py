@@ -8,7 +8,7 @@ from qgis.gui import QgsMessageBar
 from qgis.utils import iface
 from qgis.core import *
 
-from psycopg2 import OperationalError, InterfaceError, errors, extras
+from psycopg2 import OperationalError, InterfaceError, errors, extras,connect
 
 import pandas as pd
 
@@ -52,6 +52,8 @@ class AgraeUtils():
                 return layerList
             except:
                 print('error')
+            finally:
+                conn.close()
             
         pass
     def loadLayers(self):
@@ -66,6 +68,8 @@ class AgraeUtils():
                 return layerList
             except:
                 print('error')
+            finally:
+                conn.close()
             
         pass
 
@@ -170,8 +174,10 @@ class AgraeToolset():
         lyr = self.iface.activeLayer()
         srid = lyr.crs().authid()[5:]
         features = lyr.selectedFeatures()
-        try:
-            with self.conn as conn:
+        print(features)
+        
+        with self.conn as conn:
+            try:
                 cursor = conn.cursor()
                 if len(features) > 0: 
                     for f in features:
@@ -191,91 +197,113 @@ class AgraeToolset():
                         # print(f'{oa}-{amb}-{ndvimax}-{atlas}')
                         cursor.execute(sql)
                         conn.commit()
+                        print(f[0])
                         
                     QMessageBox.about(widget, 'aGrae GIS', 'Ambiente Cargado Correctamente \na la base de datos')
                 else:
                     QMessageBox.about(
                         widget, 'aGrae GIS', 'Debe Seleccionar al menos un ambiente')
 
-        except Exception as ex:
-            # print(ex)
-            conn.rollback()
-            pass
-        
+            except Exception as ex:
+                # print(ex)
+                conn.rollback()
+                pass
+    def cargarAmbientes(self, widget):
+        dns = self.dns
+        row = widget.tableWidget_2.currentRow()
+        idlotecampania = widget.tableWidget_2.item(row, 1)
+        lote = widget.tableWidget_2.item(row, 2)
+        exp = f''' "idlotecampania" = {idlotecampania} '''
+        uri = QgsDataSourceUri()
+        uri.setConnection(dns['host'], dns['port'],
+                          dns['dbname'], dns['user'], dns['password'])
+        uri.setDataSource('public', 'segmentos', 'geometria', exp, 'id')
+        nombreCapa = f'Ambientes Lote {lote}'
+        layer = QgsVectorLayer(uri.uri(False), nombreCapa, 'postgres')
+        if layer is not None and layer.isValid():
+            QgsProject.instance().addMapLayer(layer)
+            self.iface.setActiveLayer(layer)
+            self.iface.zoomToActiveLayer()
+
     def crearParcela(self,widget=None):
         count = 0
         _count = 0
-        try:
-            with self.conn as conn:
+        with self.conn as conn:
+            try:
                 cur = conn.cursor()
-            layer = self.iface.activeLayer()
-            # print(layer.name())
-            features = layer.getFeatures()
-            confirm = QMessageBox.question(
-                widget, 'aGrae GIS', f"Se Cargaran {layer.featureCount()} recintos, de la capa {layer.name()} a la Base de Datos.\nProceder con la carga? ", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            if confirm == QMessageBox.Yes: 
-                for feat in features: 
-                    
-                    ls = feat.geometry().asWkt()
-                    srid = layer.crs().authid()[5:]
-                    name = ''
-                    prov = feat[2]
-                    mcpo = feat[3]
-                    aggregate = feat[4]
-                    zone = feat[5]
-                    poly = feat[6]
-                    allotment = feat[7]
-                    inclosure = feat[8]
-                    idsigpac = feat[0]
+                layer = self.iface.activeLayer()
+                # print(layer.name())
+                features = layer.getFeatures()
+                confirm = QMessageBox.question(
+                    widget, 'aGrae GIS', f"Se Cargaran {layer.featureCount()} recintos, de la capa {layer.name()} a la Base de Datos.\nProceder con la carga? ", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                if confirm == QMessageBox.Yes: 
+                    for feat in features: 
+                        
+                        ls = feat.geometry().asWkt()
+                        srid = layer.crs().authid()[5:]
+                        name = ''
+                        prov = feat[2]
+                        mcpo = feat[3]
+                        aggregate = feat[4]
+                        zone = feat[5]
+                        poly = feat[6]
+                        allotment = feat[7]
+                        inclosure = feat[8]
+                        idsigpac = feat[0]
 
-                    sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria,idsigpac) VALUES('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))),'{idsigpac}')'''
-                    try:
-                        cur.execute(sql)
-                        conn.commit()
-                        count += 1
-                        # print('agregado correctamente')
-                    except errors.lookup('23505'):
-                        # errors.append(idParcela)
-                        _count += 1
-                        # print(f'La parcela {feat[0]} ya existe.')
-                        # QMessageBox.about(widget, f"aGrae GIS:",f'La parcela: {feat[0]} ya existe.')
-                        conn.rollback()
+                        sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria,idsigpac) VALUES('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))),'{idsigpac}')'''
+                        try:
+                            cur.execute(sql)
+                            conn.commit()
+                            count += 1
+                            # print('agregado correctamente')
+                        except errors.lookup('23505'):
+                            # errors.append(idParcela)
+                            _count += 1
+                            # print(f'La parcela {feat[0]} ya existe.')
+                            # QMessageBox.about(widget, f"aGrae GIS:",f'La parcela: {feat[0]} ya existe.')
+                            conn.rollback()
 
-                QMessageBox.about(widget, f"aGrae GIS:",
-                                    f"Se agregaron {count} parcelas correctamente.\nErronas = {_count}")
-            else: 
-                pass
+                    QMessageBox.about(widget, f"aGrae GIS:",
+                                        f"Se agregaron {count} parcelas correctamente.\nErronas = {_count}")
+                else: 
+                    pass
 
 
 
-        except IndexError as ie:
-            QMessageBox.about(widget, f"aGrae GIS {ie}", f"Debe Seleccionar una parcela a cargar.")
-            conn.rollback()
+            except IndexError as ie:
+                QMessageBox.about(widget, f"aGrae GIS {ie}", f"Debe Seleccionar una parcela a cargar.")
+                conn.rollback()
 
-        except Exception as ex:
-            # print(ex)
-            QMessageBox.about(widget, f"aGrae GIS", f"No se pudo almacenar el registro {ex}")
-            conn.rollback()
-
+            except Exception as ex:
+                # print(ex)
+                QMessageBox.about(widget, f"aGrae GIS", f"No se pudo almacenar el registro {ex}")
+                conn.rollback()
     def renameParcela(self,widget): 
         lyr = QgsProject.instance().mapLayersByName('aGrae Parcelas')[0]
         nombreParcelario = str(widget.lineEdit_2.text())
-        cursor = self.conn.cursor()
-        for f in lyr.selectedFeatures():
-            # print(f[1])
-            idParcela = f[1]
-            if nombreParcelario != '':
-                sqlRename = f''' update parcela
-                set nombre = '{nombreParcelario}'
-                where idparcela = {idParcela}'''
-                cursor.execute(sqlRename)
-                self.conn.commit()
-                widget.lineEdit_2.setText('')
-                # print('exitoso')
-            else:
-                self.conn.rollback()
+        with self.conn:
+            try: 
+                cursor = self.conn.cursor()
+                for f in lyr.selectedFeatures():
+                    # print(f[1])
+                    idParcela = f[1]
+                    if nombreParcelario != '':
+                        sqlRename = f''' update parcela
+                        set nombre = '{nombreParcelario}'
+                        where idparcela = {idParcela}'''
+                        cursor.execute(sqlRename)
+                        self.conn.commit()
+                        widget.lineEdit_2.setText('')
+                        # print('exitoso')
+                    else:
+                        self.conn.rollback()
 
-                pass
+                        pass
+            except Exception as ex: 
+                print(ex)
+            finally:
+                conn.close()
 
         pass
     def cargarParcela(self,widget, id):
@@ -323,8 +351,9 @@ class AgraeToolset():
         untilDate = widget.untilDate.date().toString('yyyy-MM-dd')
 
         sqlQuery = ''
-        try: 
-            with self.conn as conn:
+         
+        with self.conn as conn:
+            try:
                 if nombre == '' and status == False:
                     sqlQuery = f'''select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo 
                     from lotecampania lc
@@ -404,11 +433,10 @@ class AgraeToolset():
                             item = QTableWidgetItem(str(data[j][i]))
                             widget.tableWidget.setItem(j,i,item)
                         obj = widget.tableWidget.item(j,1).text()
-                                                       
-        
-        except Exception as ex:
-            # print(ex)
-            QMessageBox.about(widget, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")     
+            except Exception as ex:
+                # print(ex)
+                QMessageBox.about(widget, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")  
+            
     def cargarLote(self,widget):
         selected = widget.tableWidget.selectionModel().selectedRows()
         dns = self.dns
@@ -473,19 +501,22 @@ class AgraeToolset():
         nColumn = table.columnCount()
         try:
             with self.conn as conn:
-                cursor = conn.cursor()
-                for row , f in (zip(range(nRow), features)):
-                    segm = f[0]               
-                    geometria = f.geometry() .asWkt()                                        
-                    sql = f""" insert into segmento(segmento,geometria)
-                                        values
-                                        ({segm},
-                                        st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))"""                   
-                    cursor.execute(sql)
-                    conn.commit()                            
-                    # print(sql)
+                try: 
+                    cursor = conn.cursor()
+                    for row , f in (zip(range(nRow), features)):
+                        segm = f[0]               
+                        geometria = f.geometry() .asWkt()                                        
+                        sql = f""" insert into segmento(segmento,geometria)
+                                            values
+                                            ({segm},
+                                            st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))"""                   
+                        cursor.execute(sql)
+                        conn.commit()                            
+                        # print(sql)
 
-                QMessageBox.about(widget, 'aGrae GIS', 'Segmento Cargado Correctamente \na la base de datos')
+                    QMessageBox.about(widget, 'aGrae GIS', 'Segmento Cargado Correctamente \na la base de datos')
+                finally: 
+                    conn.close()
         except Exception as ex: 
             # print(ex)
             pass
@@ -510,16 +541,11 @@ class AgraeToolset():
         except Exception as ex:
             print(ex)
             widget.conn.rollback()
+        finally: 
+            conn.close()
+            
     def cargarSegmentos(self,widget):
         dns = self.dns
-        # selected = widget.tableWidget.selectionModel().selectedRows()
-        # if len(selected) == 0:
-        #     msg = 'Debes seleccionar un lote'
-        #     QMessageBox.about(widget, "aGrae GIS:", f"{msg}")
-        # elif len(selected) > 1:
-        #     msg = 'Debes seleccionar solo un lote'
-        #     QMessageBox.about(widget, "aGrae GIS:", f"{msg}")
-        # else:
         row = widget.tableWidget_2.currentRow()
         idlotecampania = widget.tableWidget_2.item(row,1)
         lote = widget.tableWidget_2.item(row,2)
@@ -620,7 +646,9 @@ class AgraeToolset():
         sql2 = f'''insert into lotecampania(idlote,idcampania) 
         select ql.idlote, qc.idcampania from (select idlote from lote where nombre = '{lote}') as ql, (select idcampania from campania order by idcampania desc limit 1) as qc; '''
        
-        with self.conn as conn:
+        conn = connect(dbname=self.dns['dbname'], user=self.dns['user'],
+                       password=self.dns['password'], host=self.dns['host'], port=self.dns['port'])
+        with conn:
             try: 
                 cursor = conn.cursor()
                 cursor.execute(sql)
@@ -637,23 +665,33 @@ class AgraeToolset():
 
             except Exception as e: 
                 # print(e)
-                QMessageBox.about(widget, f"Error: ",f"{e}")           
+                QMessageBox.about(widget, f"Error: ",f"{e}")      
+
+            finally: 
+                conn.close()
+               
+
     def crearLote(self,widget):
         nombre = str(widget.line_lote_nombre.text()).upper()
         sql = f""" insert into lote(nombre) values('{nombre}')  """
-        with widget.conn as conn:
+        conn = connect(dbname=self.dns['dbname'], user=self.dns['user'],
+                       password=self.dns['password'], host=self.dns['host'], port=self.dns['port'])
+        with conn:
             try:
                 cursor = conn.cursor()
                 cursor.execute(sql)
                 # print('Lote creado')
                 QMessageBox.about(
                     widget, f"aGrae GIS:", f"Lote: {nombre} Creado Correctamente.\nCrear una campaña para continuar.")
+                conn.commit()
+                
             except errors.lookup('23505'):
                 # print('El lote ya existe, ingresa otro nombre o modifica el existente')
                 QMessageBox.about(
                     widget, f"aGrae GIS:", f"El Lote: {nombre} ya existe.\nIngresa otro Nombre o Modifica el Existente")
                 conn.rollback()
                 widget.line_lote_nombre.setText('')
+                
                 # widget.line_lote_nombre.setEnabled(False)
 
             except Exception as ex:
@@ -662,4 +700,9 @@ class AgraeToolset():
                     widget, f"ERROR:", f"Ocurrio un Error")
                 conn.rollback()
                 widget.line_lote_nombre.setText('')
+                
                 # widget.line_lote_nombre.setEnabled(False)
+            
+            finally:
+                conn.close()
+               

@@ -299,6 +299,9 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
 
     def UIcomponents(self):
         icons_path = self.utils.iconsPath()
+        # columna geometria loteparcela
+        self.tableWidget.setColumnHidden(6, True)
+        self.tableWidget.setColumnHidden(0, True)
 
         self.lineEdit.setClearButtonEnabled(True)
         line_buscar_action = self.lineEdit.addAction(
@@ -922,6 +925,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_reload.setToolTip('Buscar todos los lotes')
         self.btn_reload.clicked.connect(self.reloadLotes)
 
+        self.sinceDate.dateChanged.connect(self.sinceDateChange)
+
 
 
 
@@ -1305,6 +1310,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
              pass
 
     def crearAmbientes(self):
+        print('test')
         self.tools.crearAmbientes(self)
 
     def crearSegmentos(self):
@@ -1354,14 +1360,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def cargarSegmentosLote(self): 
         print('ok')
         dns = self.dns
-        # selected = widget.tableWidget.selectionModel().selectedRows()
-        # if len(selected) == 0:
-        #     msg = 'Debes seleccionar un lote'
-        #     QMessageBox.about(widget, "aGrae GIS:", f"{msg}")
-        # elif len(selected) > 1:
-        #     msg = 'Debes seleccionar solo un lote'
-        #     QMessageBox.about(widget, "aGrae GIS:", f"{msg}")
-        # else:
         row = self.tableWidget_2.currentRow()
         idlotecampania = self.tableWidget_2.item(row, 1).text()
         lote = self.tableWidget_2.item(row, 2).text()
@@ -1379,6 +1377,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             iface.zoomToActiveLayer()
 
     def sinceDateChange(self):
+        # print(self.sinceDate.date().toString())
         self.sinceDateStatus = True
         d1 = self.sinceDate.date()
         self.untilDate.setMinimumDate(d1)
@@ -1418,6 +1417,14 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         lyrSegmentos = QgsVectorLayer(uriSegmentos.uri(
             False), f'''SEGMENTOS {loteNombre}-{cultivo}''', 'postgres')
         
+        uriAmbientes = QgsDataSourceUri() 
+        uriAmbientes.setConnection(dns['host'], dns['port'],
+                                   dns['dbname'], dns['user'], dns['password'])
+        uriAmbientes.setDataSource(
+            'public', 'ambientes', 'geometria', f'"idlotecampania" = {idlotecampania}', 'id')
+        lyrAmbientes = QgsVectorLayer(uriAmbientes.uri(
+            False), f'''AMBIENTES {loteNombre}-{cultivo}''', 'postgres')
+        
 
         uriParcelas = QgsDataSourceUri()
         uriParcelas.setConnection(dns['host'], dns['port'],
@@ -1427,6 +1434,16 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         lyrParcelas = QgsVectorLayer(uriParcelas.uri(
             False), f'{parcela}-{loteNombre}-{cultivo}', 'postgres')
 
+        uriUnidades = QgsDataSourceUri() 
+        uriUnidades.setConnection(dns['host'], dns['port'],
+                                   dns['dbname'], dns['user'], dns['password'])
+        uriUnidades.setDataSource(
+            'public', 'unidades', 'geometria', f'"idlotecampania" = {idlotecampania}', 'id')
+        lyrUnidades = QgsVectorLayer(uriUnidades.uri(
+            False), f'''UNIDADES {loteNombre}-{cultivo}''', 'postgres')
+        
+        QgsProject.instance().addMapLayer(lyrUnidades)
+        QgsProject.instance().addMapLayer(lyrAmbientes)
         QgsProject.instance().addMapLayer(lyrSegmentos)
         QgsProject.instance().addMapLayer(lyrParcelas)
         self.tools.cargarLote(self)
@@ -1458,18 +1475,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_add_lotes.setText('Cargando')
         self.thread.finished.connect(lambda: self.btn_add_lotes.setEnabled(True))
         self.thread.finished.connect(lambda: self.btn_add_lotes.setText('Agregar Lotes'))
-
-    
-        
-
-
-        
-
-
-        
-
-        
-        
+   
 
 class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog): 
 
@@ -1497,7 +1503,9 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
 
     def UIcomponents(self):
         self.lotesCompleter()
-
+        # columna geometria loteparcela
+        self.tableWidget.setColumnHidden(6, True)
+        self.tableWidget.setColumnHidden(0, True)
 
 
         icons_path = self.utils.iconsPath()
