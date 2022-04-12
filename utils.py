@@ -417,6 +417,7 @@ class AgraeToolset():
                     widget.tableWidget.setRowCount(0)
                 else:
                     widget.btn_add_layer.setEnabled(True)
+                    widget.btn_add_layer_2.setEnabled(True)
                     widget.sinceDateStatus = False
                     widget.untilDate.setEnabled(False)
                     self.queryCapaLotes = sqlQuery

@@ -1494,6 +1494,7 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
         self.utils = AgraeUtils()
         self.tools = AgraeToolset()
         self.conn = self.utils.Conn()
+        self.dns = self.utils.dns
         self.UIcomponents()
         self.sinceDateStatus = False
 
@@ -1517,6 +1518,10 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
         self.btn_add_layer.setIconSize(QtCore.QSize(20, 20))
         self.btn_add_layer.clicked.connect(self.cargarLote)
         # self.btn_add_layer.clicked.connect(self.selectedRows)
+        self.btn_add_layer_2.setIconSize(QtCore.QSize(20, 20))
+        self.btn_add_layer_2.setIcon(QIcon(icons_path['add_group_layers']))
+        self.btn_add_layer_2.setToolTip('Añadir grupo de parcelas')
+        self.btn_add_layer_2.clicked.connect(self.cargarLoteData)
         
         self.btn_reload.setIcon(QIcon(icons_path['reload_data']))
         self.btn_reload.setIconSize(QtCore.QSize(20, 20))
@@ -1546,6 +1551,61 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
         self.btn_reload.setEnabled(False)
         
     def cargarLote(self): 
+        self.tools.cargarLote(self)
+    def cargarLoteData(self): 
+        dns = self.dns
+        row = self.tableWidget.currentRow()
+        idlotecampania = self.tableWidget.item(row, 0).text()
+        loteNombre = self.tableWidget.item(row, 1).text()
+        parcela = self.tableWidget.item(row, 2).text()
+        cultivo = self.tableWidget.item(row, 5).text()
+        sql = f'''select p.idparcela from parcela p, lotes ls
+            where st_within(p.geometria,ls.geometria) and ls.idlotecampania = {idlotecampania}
+            '''
+
+        cursor = self.conn.cursor()
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        s = ",".join([str(e[0]) for e in data])
+        # print(s)
+        exp = f''' "idparcela" in ({s}) '''  # print(exp)
+
+        uriSegmentos = QgsDataSourceUri()
+        uriSegmentos.setConnection(dns['host'], dns['port'],
+                                   dns['dbname'], dns['user'], dns['password'])
+        uriSegmentos.setDataSource(
+            'public', 'segmentos', 'geometria', f'"idlotecampania" = {idlotecampania}', 'id')
+        lyrSegmentos = QgsVectorLayer(uriSegmentos.uri(
+            False), f'''SEGMENTOS {loteNombre}-{cultivo}''', 'postgres')
+
+        uriAmbientes = QgsDataSourceUri()
+        uriAmbientes.setConnection(dns['host'], dns['port'],
+                                   dns['dbname'], dns['user'], dns['password'])
+        uriAmbientes.setDataSource(
+            'public', 'ambientes', 'geometria', f'"idlotecampania" = {idlotecampania}', 'id')
+        lyrAmbientes = QgsVectorLayer(uriAmbientes.uri(
+            False), f'''AMBIENTES {loteNombre}-{cultivo}''', 'postgres')
+
+        uriParcelas = QgsDataSourceUri()
+        uriParcelas.setConnection(dns['host'], dns['port'],
+                                  dns['dbname'], dns['user'], dns['password'])
+        uriParcelas.setDataSource(
+            'public', 'parcela', 'geometria', exp, 'idparcela')
+        lyrParcelas = QgsVectorLayer(uriParcelas.uri(
+            False), f'{parcela}-{loteNombre}-{cultivo}', 'postgres')
+
+        uriUnidades = QgsDataSourceUri()
+        uriUnidades.setConnection(dns['host'], dns['port'],
+                                  dns['dbname'], dns['user'], dns['password'])
+        uriUnidades.setDataSource(
+            'public', 'unidades', 'geometria', f'"idlotecampania" = {idlotecampania}', 'id')
+        lyrUnidades = QgsVectorLayer(uriUnidades.uri(
+            False), f'''UNIDADES {loteNombre}-{cultivo}''', 'postgres')
+
+        QgsProject.instance().addMapLayer(lyrUnidades)
+        QgsProject.instance().addMapLayer(lyrAmbientes)
+        QgsProject.instance().addMapLayer(lyrSegmentos)
+        QgsProject.instance().addMapLayer(lyrParcelas)
         self.tools.cargarLote(self)
 
     def lotesCompleter(self):

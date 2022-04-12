@@ -234,6 +234,22 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="btn_add_layer_2">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="toolTip">
+        <string>Añadir Lote al Mapa</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="btn_reload">
        <property name="enabled">
         <bool>false</bool>
