@@ -356,3 +356,108 @@ language plpgsql
 create trigger tr_update_ambiente after insert on segmento 
 for each row 
 execute procedure sp_idparcela_segmento();
+
+
+	(1,1,1,1,'Muy Bajo',0,6),
+	(1,1,1,2,'Bajo',6,12),
+	(1,1,1,3,'Medio',12,	18),
+	(1,1,1,4,'Alto',18,30),
+	(1,1,1,5,'Muy Alto',30,48),
+	(1,1,1,6,'Exceso',48,100000),
+	(1,1,2,1,'Muy Bajo',0,8),
+	(1,1,2,2,'Bajo',8,16),
+	(1,1,2,3,'Medio',16,	24),
+	(1,1,2,4,'Alto',24,40),
+	(1,1,2,5,'Muy Alto',40,64),
+	(1,1,2,6,'Exceso',64,100000),
+	(1,1,3,1,'Muy Bajo',0,10),
+	(1,1,3,2,'Bajo',10,20),
+	(1,1,3,3,'Medio',20,	30),
+	(1,1,3,4,'Alto',30,50),
+	(1,1,3,5,'Muy Alto',50,80),
+	(1,1,3,6,'Exceso',80,100000),
+	(1,2,1,1, 'Muy Bajo',0,4),
+	(1,2,1,2, 'Bajo'	,4,	8),
+	(1,2,1,3, 'Medio'	,8,	12),
+	(1,2,1,4, 'Alto'	,12,20),
+	(1,2,1,5, 'Muy Alto',20,32),
+	(1,2,1,6, 'Exceso'	,32,100000),
+	(1,2,2,1, 'Muy Bajo',0,6),
+	(1,2,2,2, 'Bajo'	,6,12),
+	(1,2,2,3, 'Medio'	,12,18),
+	(1,2,2,4, 'Alto'	,18,30),
+	(1,2,2,5, 'Muy Alto',30,48),
+	(1,2,2,6, 'Exceso'	,48,100000),
+	(1,2,3,1, 'Muy Bajo',0,8),
+	(1,2,3,2, 'Bajo'	,8,16),
+	(1,2,3,3, 'Medio'	,16,24),
+	(1,2,3,4, 'Alto'	,24,40),
+	(1,2,3,5, 'Muy Alto',40,64),
+	(1,2,3,6, 'Exceso'	,64,100000),
+	(1,3,1,1,'Muy Bajo',0,6),
+	(1,3,1,2,'Bajo',6,12),
+	(1,3,1,3,'Medio',12,	18),
+	(1,3,1,4,'Alto',18,30),
+	(1,3,1,5,'Muy Alto',30,48),
+	(1,3,1,6,'Exceso',48,100000),
+	(1,3,2,1,'Muy Bajo',0,8),
+	(1,3,2,2,'Bajo',8,16),
+	(1,3,2,3,'Medio',16,	24),
+	(1,3,2,4,'Alto',24,40),
+	(1,3,2,5,'Muy Alto',40,64),
+	(1,3,2,6,'Exceso',64,100000),
+	(1,3,3,1,'Muy Bajo',0,10),
+	(1,3,3,2,'Bajo',10,20),
+	(1,3,3,3,'Medio',20,	30),
+	(1,3,3,4,'Alto',30,50),
+	(1,3,3,5,'Muy Alto',50,80),
+	(1,3,3,6,'Exceso',80,100000)
+
+	
+	
+	
+	
+	
+CREATE OR REPLACE FUNCTION public.sp_analisis_nitrogeno()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$ 
+begin 
+	update analisis
+	set n_tipo  = subquery.n_tipo,
+		n_nivel = subquery.n_nivel,
+		carb_nivel = subquery.carb_nivel,
+		carb_nivelt = subquery.carb_tipo
+	from (select sqn.tipo n_tipo, sqn.id n_nivel, sqc.tipo carb_tipo, sqc.id carb_nivel, sqp.tipo p_tipo, sqp.nivel p_nivel 
+			from 
+				(select distinct n.tipo,n.id 
+					from analisis.nitrogeno n 
+					where new.n
+					between n.limite_inferior and n.limite_superior ) as sqn,
+				(select distinct c.tipo, c.id 
+					from analisis.carbonatos c
+					where new.carbon
+					between c.limite_inferior and c.limite_superior) as sqc,
+				(select distinct p.tipo, p.nivel 
+					from analisis.fosforo p 
+					where p.metodo = 1 and p.regimen = 1 and p.suelo = new.textura 
+					and new.p 
+					between p.limite_inferior and p.limite_superior) as sqp
+			limit 1) as subquery
+	where idanalisis = new.idanalisis;
+	return new;
+end
+$function$
+;
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

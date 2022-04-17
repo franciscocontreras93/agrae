@@ -22,6 +22,9 @@ agraeDockWidget
 """
 
 import os
+import csv
+import pandas as pd
+import numpy as np
 # from datetime import date
 
 from psycopg2 import OperationalError,InterfaceError, errors, extras
@@ -858,6 +861,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget_2.horizontalHeader().setStretchLastSection(True)
         self.tableWidget_2.setColumnHidden(0, True)
         self.tableWidget_2.setColumnHidden(1, True)
+        self.tableWidget_2.setColumnHidden(3, True)
 
         delegate = ReadOnlyDelegate(self.tableWidget_2)
         self.tableWidget_2.setItemDelegateForColumn(0, delegate)
@@ -889,6 +893,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_add_layer.setIcon(QIcon(icons_path['add_layer_to_map']))
         self.btn_add_layer.setIconSize(QtCore.QSize(20, 20))
         self.btn_add_segmento.setIcon(QIcon(icons_path['add_layer_to_map']))
+        self.btn_add_segmento.setToolTip('Agregar Segmento al Mapa')
         self.btn_add_segmento.setIconSize(QtCore.QSize(20, 20))
         self.btn_add_segmento.clicked.connect(self.cargarSegmentosLote)
 
@@ -916,7 +921,14 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_add_lotes.clicked.connect(self.addLotesMap)
         self.btn_add_parcelas.clicked.connect(self.addParcelasMap)
         self.btn_add_segmentos.clicked.connect(self.addSegmentosMap)
+        self.btn_cod_segmento.setIcon(QIcon(icons_path['pen-to-square']))
+        self.btn_cod_segmento.setIconSize(QtCore.QSize(20, 20))
+        self.btn_cod_segmento.setToolTip('Asignar Codigo a segmento')
         self.btn_cod_segmento.clicked.connect(self.codificarSegmento)
+        self.btn_reporte.setIcon(QIcon(icons_path['export-csv']))
+        self.btn_reporte.setIconSize(QtCore.QSize(20, 20))
+        self.btn_reporte.setToolTip('Generar Reporte')
+        self.btn_reporte.clicked.connect(self.crearReporte)
     
         self.btn_add_layer.clicked.connect(self.cargarLote)
 
@@ -927,6 +939,18 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         self.sinceDate.dateChanged.connect(self.sinceDateChange)
 
+        self.an_load_btn.setIcon(QIcon(icons_path['import']))
+        self.an_load_btn.setIconSize(QtCore.QSize(20, 20))
+        self.an_load_btn.setToolTip('Importar Analitica')
+        self.an_load_btn.clicked.connect(self.cargarAnalitica)
+        
+        self.tableWidget_3.setColumnHidden(0, True)
+        # width = 101.28
+        width = 88.625
+
+        for i in range(0,9): 
+            self.tableWidget_3.setColumnWidth(i, width)
+            
 
 
 
@@ -1326,7 +1350,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     def buscarSegmento(self):
 
-        print('prueba buscar segmento')
+        # print('prueba buscar segmento')
         param = self.line_find_segmento.text()
         sql = self.utils.segmentosQueryTable(str(param))
         # sql = 'select * from lotes'
@@ -1355,8 +1379,65 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             print(ex)
 
     def codificarSegmento(self): 
-        self.tools.asignarCodigoSegmento(self)
+        row = self.tableWidget_2.currentRow()
+        idsegmento = self.tableWidget_2.item(row,0).text()
+        idlotecampania = self.tableWidget_2.item(row,1).text()
+        codigo = self.tableWidget_2.item(row,8).text()
+        regimen = self.tableWidget_2.item(row,3).text()
+
+        sql = "insert into segmentoanalisis (idsegmento,idlotecampania,codigo,regimen) values ({},{},'{}',{})".format(idsegmento,idlotecampania,codigo,regimen)
+
+        with self.conn as conn: 
+            try: 
+                cursor = conn.cursor()
+                cursor.execute(sql)
+                conn.commit()
+                print("Codigo creado correctamente")
+            except Exception as ex:
+                print("{}".format(ex))
+                conn.rollback()
+
+
+
+
+        # self.tools.asignarCodigoSegmento(self)
+        print("{}-{}".format(idsegmento,idlotecampania))
     
+    def crearReporte(self): 
+        # print('Crear Reporte')
+        idx = self.tableWidget_2.selectionModel().selectedRows()
+        header = []
+        data = []
+        # print(len(idx))
+        if len(idx) >0: 
+            reporte_path = self.saveFileDialog()
+            if reporte_path != False: 
+                with open(os.path.join(os.path.dirname(__file__), 'tools/reporte.csv'),'r',newline='') as base: 
+                    csv_reader = csv.reader(base,delimiter=';')
+                    header = next(csv_reader)
+                with open(reporte_path,'w',newline='') as file:
+                    csv_writer = csv.writer(file,delimiter=';')          
+                    csv_writer.writerow(header)
+                    for i in sorted(idx):
+                        idsegmento = self.tableWidget_2.item(i.row(), 0).text()
+                        idlotecampania = self.tableWidget_2.item(i.row(), 1).text()
+
+                        with self.conn:
+                            select = "select idsegmentoanalisis, codigo, regimen from segmentoanalisis where idsegmento = {} and idlotecampania = {}".format(
+                                idsegmento, idlotecampania)
+                            cursor = self.conn.cursor() 
+                            cursor.execute(select)
+                            data = [r for r in list(cursor.fetchall())]
+                    
+                        csv_writer.writerows(data)
+                    self.utils.msgBar('Archivo Creado Correctamente <a href="{}">{}</a>'.format(reporte_path,reporte_path),3,10)
+            else:            
+                QMessageBox.about(self, 'aGrae GIS', 'La ruta ingresada no es valida')
+                # print(data)
+                # print("{}-{}-{}".format(data[0],idsegmento,idlotecampania))
+        else: 
+            print('Debe Seleccionar al menos un segmento')
+
     def cargarSegmentosLote(self): 
         print('ok')
         dns = self.dns
@@ -1475,7 +1556,79 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_add_lotes.setText('Cargando')
         self.thread.finished.connect(lambda: self.btn_add_lotes.setEnabled(True))
         self.thread.finished.connect(lambda: self.btn_add_lotes.setText('Agregar Lotes'))
-   
+    
+    def cargarAnalitica(self): 
+        print('Cargando Analitica')
+       
+        reporte_path = self.openFileDialog() 
+        if reporte_path != False: 
+            self.tableWidget_3.setRowCount(0)
+            self.an_lbl_file.setText(reporte_path)
+           
+            df = pd.read_csv(reporte_path, delimiter=';')
+            df = df.astype(object).replace(np.nan, '')
+
+            columns = [c for c in df.columns]
+            data = [[row['id'],row['COD'],row['N'],row['P'],row['K'],row['pH'],row['CE'],row['CARBON'], row['ceap']] for index,row in df.iterrows()]
+            a = len(data)
+            b = len(data[0])
+            i = 1
+            j = 1
+        
+            self.tableWidget_3.setRowCount(a)
+            self.tableWidget_3.setColumnCount(b)
+            for j in range(a):
+                for i in range(b):
+                    item = QTableWidgetItem(str(data[j][i]))
+                    self.tableWidget_3.setItem(j, i, item)
+                    
+                 
+
+                
+           
+        else: 
+            pass
+
+    def crearAnalitica(self):
+        
+        file_path = str(self.an_lbl_file.text())
+        
+        df = pd.read_csv(file_path,delimiter=';')
+        df1 = df.astype(object).replace(np.nan, None)
+        columns = [c for c in df.columns]
+        print(columns)
+
+        cursor = conn.cursor()
+
+        cursor.execute(' select version()')
+        for index, row in df.iterrows():
+
+            _SQL = f'''INSERT INTO analisis.analitica (idsegmentoanalisis,ceap,ph,ce,carbon,caliza,ca,mg,k,na,n,p,organi,cox,rel_cn,ca_eq,mg_eq,k_eq,na_eq,cic,ca_f,mg_f,k_f,na_f,al,b,fe,mn,cu,zn,s,mo,arcilla,limo,arena,ni,co,ti,"as",pb,cr) VALUES ({row['id']},{row['ceap']},{row['pH']},{row['CE']},{row['CARBON']},{row['CALIZA']},{row['CA']},{row['MG']},{row['K']},{row['NA']},{row['N']},{row['P']},{row['ORGANI']},{row['COX']},{row['REL_CN']},{row['CA_EQ']},{row['MG_EQ']},{row['K_EQ']},{row['NA_EQ']},{row['CIC']},{row['CA_F']},{row['MG_F']},{row['K_F']},{row['NA_F']},{row['AL']},{row['B']},{row['FE']},{row['MN']},{row['CU']},{row['ZN']},{row['S']},{row['MO']},{row['ARCILLA']},{row['LIMO']},{row['ARENA']},{row['NI']},{row['CO']},{row['TI']},{row['AS']},{row['PB']},{row['CR']}); '''
+
+            print(_SQL)   
+            cursor.execute(_SQL)
+            conn.commit()  
+
+
+    def openFileDialog(self): 
+        options = QFileDialog.Options()
+        # options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(
+            self, "aGrae GIS", "", "Todos los archivos (*);;Archivos separados por coma (*.csv)", options=options)
+        if fileName:
+            print(fileName)
+            return fileName
+        else: 
+            return False
+
+    def saveFileDialog(self):
+        options = QFileDialog.Options()
+        fileName, _ = QFileDialog.getSaveFileName(None,"aGrae GIS","","Archivos separados por coma (*.csv)", options=options)
+        if fileName:
+            # print(fileName[0])
+            return fileName
+        else: 
+            return False
 
 class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog): 
 
@@ -1663,4 +1816,3 @@ class Worker(QObject):
         
         tools.addMapLayer(sql, nombre, 'idparcela')
 
-    

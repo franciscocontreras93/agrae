@@ -17,7 +17,7 @@ from .dbconn import DbConnection
 class AgraeUtils():
     
     def __init__(self):
-        
+        self.iface = iface
         self.s = QSettings('agrae','dbConnection')
         self.dns = {
             'dbname': self.s.value('dbname'),
@@ -109,13 +109,13 @@ class AgraeUtils():
 
     def segmentosQueryTable(self, param=''):
         if param != '': 
-            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_analisis from segmentos sg 
+            sql = f''' select sg.id,sg.idlotecampania,sg.lote,sg.regimen,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.codigo from segmentos sg 
             where sg.cod_control ilike '%{param}%'
-            or sg.cod_analisis ilike '%{param}%' 
+            or sg.codigo ilike '%{param}%' 
             '''
             return sql
         else: 
-            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_analisis from segmentos sg 
+            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote,sg.regimen,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.codigo from segmentos sg 
             '''
             return sql
     def sqlLoteParcela(self,idlote, nombre, fecha): 
@@ -151,9 +151,25 @@ class AgraeUtils():
             'save': os.path.join(os.path.dirname(__file__), r'ui\icons\floppy-disk-solid.svg'),
             'share': os.path.join(os.path.dirname(__file__), r'ui\icons\share-solid.svg'),
             'pen-to-square': os.path.join(os.path.dirname(__file__), r'ui\icons\pen-to-square-solid.svg'),
+            'import': os.path.join(os.path.dirname(__file__), r'ui\icons\file-import-solid.svg'),
+            'export-csv': os.path.join(os.path.dirname(__file__), r'ui\icons\file-export-solid.svg'),
         }
 
         return icons_path
+
+    def saveFileDialog(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(
+            self, "QFileDialog.getSaveFileName()", "", "Todos los Archivos (*);;Archivos separados por coma (*.csv)", options=options)
+        if fileName:
+            return fileName
+        else:
+            return False
+
+    def msgBar(self,text:str,level:int,duration:int): 
+        self.iface.messageBar().pushMessage('aGraes GIS', '{}'.format(text), level=level, duration=duration)
+
 class AgraeToolset():
     def __init__(self):
         self.iface = iface
@@ -417,7 +433,7 @@ class AgraeToolset():
                     widget.tableWidget.setRowCount(0)
                 else:
                     widget.btn_add_layer.setEnabled(True)
-                    widget.btn_add_layer_2.setEnabled(True)
+                    # widget.btn_add_layer_2.setEnabled(True)
                     widget.sinceDateStatus = False
                     widget.untilDate.setEnabled(False)
                     self.queryCapaLotes = sqlQuery
@@ -436,6 +452,7 @@ class AgraeToolset():
                         obj = widget.tableWidget.item(j,1).text()
             except Exception as ex:
                 # print(ex)
+                print(ex)
                 QMessageBox.about(widget, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")  
             
     def cargarLote(self,widget):
@@ -528,22 +545,22 @@ class AgraeToolset():
         idlotecampania = widget.tableWidget_2.item(row, 1).text()
         analisis = widget.tableWidget_2.item(row, 7).text()
         print(idsegmento, idlotecampania, analisis)
-        cursor = widget.conn.cursor()
+        cursor = self.conn.cursor()
         sql = f''' insert into segmentoanalisis (idsegmento,idlotecampania,idanalisis)
                 select {idsegmento},{idlotecampania} , qan.idanalisis 
                 from (select idanalisis from analisis where cod_analisis ilike '%{analisis}%') qan '''
         try:
             cursor.execute(sql)
-            widget.conn.commit()
+            self.conn.commit()
             print('relacionado correctamente')
         except errors.lookup('23505'):
             print('Segmento ya pertenece al lote')
-            widget.conn.rollback()
+            self.conn.rollback()
         except Exception as ex:
             print(ex)
-            widget.conn.rollback()
+            self.conn.rollback()
         finally: 
-            conn.close()
+            self.conn.close()
             
     def cargarSegmentos(self,widget):
         dns = self.dns
@@ -562,7 +579,7 @@ class AgraeToolset():
             QgsProject.instance().addMapLayer(layer)
             self.iface.setActiveLayer(layer)
             self.iface.zoomToActiveLayer()
-
+    
 
     
     def lastCode(self): 
@@ -638,10 +655,11 @@ class AgraeToolset():
         cob3Ajustado = float(widget.line_cob_ajustado_3.text())
         cob3Aplicado = float(widget.line_cob_aplicado_3.text())
         unidadDesprecio = widget.ln_und_deprecio.text()
+        regimen = int(widget.line_regimen.text())
       
         sql = f'''
         insert into campania 
-        values(nextval('campania_idcampania_seq') ,{idexp}, {idcult},'{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, {fondoAjustado},  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, {cob1Ajustado},  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  {cob2Ajustado}, {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, {cob3Ajustado},  {cob3Aplicado} , '{unidadDesprecio}');
+        values(nextval('campania_idcampania_seq') ,{idexp}, {idcult},'{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, {fondoAjustado},  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, {cob1Ajustado},  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  {cob2Ajustado}, {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, {cob3Ajustado},  {cob3Aplicado} , '{unidadDesprecio}',{regimen});
         '''
 
         sql2 = f'''insert into lotecampania(idlote,idcampania) 
@@ -707,3 +725,19 @@ class AgraeToolset():
             finally:
                 conn.close()
                
+    def cargarAnalitica(self,path, widget): 
+        file = path        
+        df = pd.read_csv(r"C:\Users\FRANCISCO\Desktop\reporte_16042022.csv",delimiter=';')
+        df = df.astype(object).replace(np.nan, None)       
+        columns = [c for c in df.columns]
+        data = ([f[col] for col in columns] for f in df)
+        df = pd.DataFrame.from_records(data=data, columns=columns)
+
+        nRows, nColumns = df.shape
+        table.setRowCount(nRows)
+        table.setColumnCount(nColumns)
+        table.setHorizontalHeaderLabels(columns)
+        for r in range(table.rowCount()):
+            for c in range(table.columnCount()):
+                item = QTableWidgetItem(str(df.iloc[r, c]))
+                table.setItem(r, c, item)

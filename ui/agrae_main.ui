@@ -44,7 +44,7 @@
     <string notr="true"/>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="lotes_tab">
     <attribute name="title">
@@ -688,6 +688,16 @@
            </item>
            <item row="0" column="5">
             <widget class="QLineEdit" name="ln_und_deprecio"/>
+           </item>
+           <item row="1" column="5">
+            <widget class="QLineEdit" name="line_regimen"/>
+           </item>
+           <item row="1" column="4">
+            <widget class="QLabel" name="label_41">
+             <property name="text">
+              <string>Regimen</string>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -1412,7 +1422,7 @@
      <bool>true</bool>
     </property>
     <attribute name="title">
-     <string>Analisis </string>
+     <string>Segmentos y Ambiente</string>
     </attribute>
     <widget class="QGroupBox" name="groupBox_3">
      <property name="geometry">
@@ -1527,6 +1537,11 @@
          </column>
          <column>
           <property name="text">
+           <string>Regimen</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
            <string>Segmento</string>
           </property>
          </column>
@@ -1584,90 +1599,171 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QPushButton" name="btn_reporte">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>
-    <widget class="QTabWidget" name="tabWidget_5">
+    <widget class="QPushButton" name="pushButton_3">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>450</y>
-       <width>291</width>
-       <height>91</height>
+       <x>20</x>
+       <y>490</y>
+       <width>101</width>
+       <height>31</height>
       </rect>
      </property>
-     <property name="styleSheet">
-      <string notr="true">background-color: rgb(240, 240, 240);</string>
+     <property name="text">
+      <string>Cargar Ambientes</string>
      </property>
-     <property name="tabPosition">
-      <enum>QTabWidget::North</enum>
+    </widget>
+    <widget class="QPushButton" name="pushButton_4">
+     <property name="enabled">
+      <bool>true</bool>
      </property>
-     <property name="currentIndex">
-      <number>0</number>
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>490</y>
+       <width>101</width>
+       <height>31</height>
+      </rect>
      </property>
-     <widget class="QWidget" name="tabWidgetPage2">
-      <attribute name="title">
-       <string>Segmento</string>
-      </attribute>
-      <widget class="QPushButton" name="pushButton_4">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>20</y>
-         <width>109</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Cargar</string>
-       </property>
-      </widget>
-     </widget>
-     <widget class="QWidget" name="tabWidgetPage1">
-      <attribute name="title">
-       <string>Ambiente</string>
-      </attribute>
-      <widget class="QPushButton" name="pushButton_3">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>10</y>
-         <width>79</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Cargar</string>
-       </property>
-      </widget>
-     </widget>
-     <widget class="QWidget" name="tabWidgetPage3">
-      <attribute name="title">
-       <string>Compositor</string>
-      </attribute>
-      <widget class="QPushButton" name="pushButton_2">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>10</y>
-         <width>109</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Generar</string>
-       </property>
-      </widget>
-     </widget>
+     <property name="text">
+      <string>Cargar Segmentos</string>
+     </property>
     </widget>
    </widget>
    <widget class="QWidget" name="tab_6">
     <property name="enabled">
      <bool>true</bool>
     </property>
+    <attribute name="title">
+     <string>Analitica</string>
+    </attribute>
+    <widget class="QWidget" name="verticalLayoutWidget_3">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>50</y>
+       <width>711</width>
+       <height>161</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QTableWidget" name="tableWidget_3">
+        <column>
+         <property name="text">
+          <string>ID</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>COD</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>N</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>P</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>K</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>pH</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>CE</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Carbon</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>CEap</string>
+         </property>
+        </column>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="verticalLayoutWidget_4">
+     <property name="geometry">
+      <rect>
+       <x>730</x>
+       <y>50</y>
+       <width>34</width>
+       <height>161</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QPushButton" name="an_load_btn">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="gridLayoutWidget_12">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>501</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_12" columnstretch="0,1">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_42">
+        <property name="text">
+         <string>Archivo:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="an_lbl_file">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_7">
     <attribute name="title">
      <string>Herramientas</string>
     </attribute>
@@ -1677,7 +1773,7 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>20</x>
+       <x>10</x>
        <y>20</y>
        <width>731</width>
        <height>91</height>
@@ -1726,6 +1822,19 @@
       </property>
       <property name="text">
        <string>Agregar Segmentos</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_2">
+      <property name="geometry">
+       <rect>
+        <x>410</x>
+        <y>40</y>
+        <width>111</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Generar Compositor</string>
       </property>
      </widget>
     </widget>

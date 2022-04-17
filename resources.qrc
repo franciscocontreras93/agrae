@@ -19,5 +19,7 @@
         <file>ui\icons\filter-solid.svg</file>
         <file>ui\icons\ellipsis-solid.svg</file>
         <file>ui\icons\floppy-disk-solid.svg</file>
+        <file>ui\icons\file-import-solid.svg</file>
+        <file>ui\icons\file-export-solid.svg</file>
     </qresource>
 </RCC>
