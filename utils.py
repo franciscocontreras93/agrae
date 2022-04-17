@@ -153,6 +153,7 @@ class AgraeUtils():
             'pen-to-square': os.path.join(os.path.dirname(__file__), r'ui\icons\pen-to-square-solid.svg'),
             'import': os.path.join(os.path.dirname(__file__), r'ui\icons\file-import-solid.svg'),
             'export-csv': os.path.join(os.path.dirname(__file__), r'ui\icons\file-export-solid.svg'),
+            'upload-to-db': os.path.join(os.path.dirname(__file__), r'ui\icons\upload-db.svg'),
         }
 
         return icons_path
@@ -539,7 +540,8 @@ class AgraeToolset():
             # print(ex)
             pass
     
-    def asignarCodigoSegmento(self,widget): 
+    def asignarCodigoSegmento(self,widget):
+        code = self.lastCode() 
         row = widget.tableWidget_2.currentRow()
         idsegmento = widget.tableWidget_2.item(row, 0).text()
         idlotecampania = widget.tableWidget_2.item(row, 1).text()
@@ -561,6 +563,7 @@ class AgraeToolset():
             self.conn.rollback()
         finally: 
             self.conn.close()
+            
             
     def cargarSegmentos(self,widget):
         dns = self.dns
@@ -586,8 +589,8 @@ class AgraeToolset():
         with self.conn as conn: 
             cursor = conn.cursor()
             try: 
-                sql = '''select a.cod_analisis  from analisis a 
-                        order by a.idanalisis desc limit 1'''
+                sql = ''' select s.codigo from segmentoanalisis s 
+                order by s.idsegmentoanalisis desc limit 1'''
                 cursor.execute(sql)
                 code = cursor.fetchone()
                 if len(code) > 0: 
@@ -655,7 +658,7 @@ class AgraeToolset():
         cob3Ajustado = float(widget.line_cob_ajustado_3.text())
         cob3Aplicado = float(widget.line_cob_aplicado_3.text())
         unidadDesprecio = widget.ln_und_deprecio.text()
-        regimen = int(widget.line_regimen.text())
+        regimen = int(widget.cmb_regimen.currentIndex())
       
         sql = f'''
         insert into campania 
@@ -669,12 +672,15 @@ class AgraeToolset():
                        password=self.dns['password'], host=self.dns['host'], port=self.dns['port'])
         with conn:
             try: 
-                cursor = conn.cursor()
-                cursor.execute(sql)
-                conn.commit()
-                cursor.execute(sql2)
-                conn.commit()
-                QMessageBox.about(widget, f"aGrae GIS:",f"Campaña creada y asociada correctamente")
+                if regimen != 0:
+                    cursor = conn.cursor()
+                    cursor.execute(sql)
+                    conn.commit()
+                    cursor.execute(sql2)
+                    conn.commit()
+                    QMessageBox.about(widget, f"aGrae GIS:",f"Campaña creada y asociada correctamente")
+                else: 
+                    QMessageBox.about(widget, f"aGrae GIS:",f"Debe seleccionar un Regimen de Cultivo")
             except InterfaceError as ie: 
                 conn = widget.utils.Conn()
                 cursor = conn.cursor()

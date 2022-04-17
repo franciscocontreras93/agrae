@@ -279,6 +279,9 @@ class agrae:
         self.mainWindowDialog.closingPlugin.disconnect(
             self.onClosePluginMain)
         self.pluginIsActive = False
+        self.mainWindowDialog.tableWidget_3.setRowCount(0)
+        self.mainWindowDialog.an_lbl_file.setText('')
+
 
     def onCloseLoteDialog(self):
         self.loteFindDialog.closingPlugin.disconnect(self.onCloseLoteDialog)

@@ -828,7 +828,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.sinceDateStatus = False
 
         self.dns = self.utils.dns
-        
+
+        self.lastCode = self.tools.lastCode()
+        self.editTexturaStatus = False
 
         
               
@@ -871,7 +873,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget_2.setItemDelegateForColumn(4, delegate)
         self.tableWidget_2.setItemDelegateForColumn(5, delegate)
         self.tableWidget_2.setItemDelegateForColumn(6, delegate)
-        # self.tableWidget_2.setItemDelegateForColumn(7, delegate)
+        self.tableWidget_2.setItemDelegateForColumn(7, delegate)
 
         self.line_buscar.setClearButtonEnabled(True)
         line_par_action = self.ln_par_nombre.addAction(
@@ -898,6 +900,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_add_segmento.clicked.connect(self.cargarSegmentosLote)
 
         self.btn_par_update.clicked.connect(self.actualizarParcela)
+        self.btn_lote_update.setIcon(QIcon(icons_path['pen-to-square']))
+        self.btn_lote_update.setIconSize(QtCore.QSize(20, 20))
         self.btn_lote_update.clicked.connect(self.actualizarLote)
         self.prov_combo.currentTextChanged.connect(self.indexProvUpdate)
         self.setStyleSheet(self.style)
@@ -944,13 +948,29 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.an_load_btn.setToolTip('Importar Analitica')
         self.an_load_btn.clicked.connect(self.cargarAnalitica)
         
-        self.tableWidget_3.setColumnHidden(0, True)
-        # width = 101.28
-        width = 88.625
+        self.an_save_bd.setIcon(QIcon(icons_path['upload-to-db']))
+        self.an_save_bd.setIconSize(QtCore.QSize(20, 20))
+        self.an_save_bd.setToolTip('Guardar en BD')
+        self.an_save_bd.clicked.connect(self.crearAnalitica)
 
+        
+        self.lbl_lastCode.setText(self.lastCode)
+
+        self.tableWidget_3.setColumnHidden(0, True)
         for i in range(0,9): 
-            self.tableWidget_3.setColumnWidth(i, width)
+            self.tableWidget_3.setColumnWidth(i, 86)
             
+        self.tableWidget_4.setColumnHidden(0, True)
+        self.loadTextura()
+
+        self.an_edit_textura_btn.setIcon(QIcon(icons_path['pen-to-square']))
+        self.an_edit_textura_btn.setIconSize(QtCore.QSize(20, 20))
+        self.an_edit_textura_btn.setToolTip('Editar Textura')
+        self.an_edit_textura_btn.clicked.connect(self.editTextura)
+        self.an_save_textura_btn.setIcon(QIcon(icons_path['save']))
+        self.an_save_textura_btn.setIconSize(QtCore.QSize(20, 20))
+        self.an_save_textura_btn.setToolTip('Guardar Valores')
+        self.an_save_textura_btn.clicked.connect(self.saveTextura)
 
 
 
@@ -1385,23 +1405,31 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         codigo = self.tableWidget_2.item(row,8).text()
         regimen = self.tableWidget_2.item(row,3).text()
 
-        sql = "insert into segmentoanalisis (idsegmento,idlotecampania,codigo,regimen) values ({},{},'{}',{})".format(idsegmento,idlotecampania,codigo,regimen)
-
-        with self.conn as conn: 
-            try: 
-                cursor = conn.cursor()
-                cursor.execute(sql)
-                conn.commit()
-                print("Codigo creado correctamente")
-            except Exception as ex:
-                print("{}".format(ex))
-                conn.rollback()
+        idx = self.tableWidget_2.selectionModel().selectedRows()
+        if len(idx) > 0:
+            for i in sorted(idx):
+                    idsegmento = self.tableWidget_2.item(i.row(), 0).text()
+                    idlotecampania = self.tableWidget_2.item(i.row(), 1).text()
+                    codigo = self.tableWidget_2.item(i.row(),8).text()
+                    regimen = self.tableWidget_2.item(i.row(),3).text()        
+                    sql = "insert into segmentoanalisis (idsegmento,idlotecampania,codigo,regimen) values ({},{},'{}',{})".format(idsegmento,idlotecampania,codigo,regimen)
+                    with self.conn as conn: 
+                        try: 
+                            cursor = conn.cursor()
+                            cursor.execute(sql)
+                            conn.commit()
+                            self.lastCode = self.tools.lastCode()
+                            print("Codigo creado correctamente")
+                            self.lbl_lastCode.setText(self.lastCode)
+                        except Exception as ex:
+                            print("{}".format(ex))
+                            conn.rollback()
 
 
 
 
         # self.tools.asignarCodigoSegmento(self)
-        print("{}-{}".format(idsegmento,idlotecampania))
+        # print("{}-{}".format(idsegmento,idlotecampania))
     
     def crearReporte(self): 
         # print('Crear Reporte')
@@ -1567,47 +1595,140 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
            
             df = pd.read_csv(reporte_path, delimiter=';')
             df = df.astype(object).replace(np.nan, '')
-
-            columns = [c for c in df.columns]
-            data = [[row['id'],row['COD'],row['N'],row['P'],row['K'],row['pH'],row['CE'],row['CARBON'], row['ceap']] for index,row in df.iterrows()]
-            a = len(data)
-            b = len(data[0])
-            i = 1
-            j = 1
-        
-            self.tableWidget_3.setRowCount(a)
-            self.tableWidget_3.setColumnCount(b)
-            for j in range(a):
-                for i in range(b):
-                    item = QTableWidgetItem(str(data[j][i]))
-                    self.tableWidget_3.setItem(j, i, item)
-                    
-                 
-
+            try: 
+                columns = [c for c in df.columns]
+                data = [[row['id'],row['COD'],row['N'],row['P'],row['K'],row['pH'],row['CE'],row['CARBON'], row['ceap']] for index,row in df.iterrows()]
+                a = len(data)
+                b = len(data[0])
+                i = 1
+                j = 1
+            
+                self.tableWidget_3.setRowCount(a)
+                self.tableWidget_3.setColumnCount(b)
+                for j in range(a):
+                    for i in range(b):
+                        item = QTableWidgetItem(str(data[j][i]))
+                        self.tableWidget_3.setItem(j, i, item)
+                self.an_save_bd.setEnabled(True)    
+            except KeyError as ke: 
+                print('{}'.format(ke))
+                QMessageBox.about(self, 'aGrae GIS', 'El archivo no cumple con el formato establecido.\nIntenta Nuevamente. ')
+            
                 
            
         else: 
             pass
 
-    def crearAnalitica(self):
-        
-        file_path = str(self.an_lbl_file.text())
-        
+    def crearAnalitica(self):        
+        file_path = str(self.an_lbl_file.text())        
         df = pd.read_csv(file_path,delimiter=';')
-        df1 = df.astype(object).replace(np.nan, None)
+        df1 = df.astype(object).replace(np.nan, 'NULL')
         columns = [c for c in df.columns]
-        print(columns)
+        # print(columns)   
+        with self.conn: 
+            cursor = self.conn.cursor()
+            try:                
+                for index, row in df1.iterrows():
+                    try: 
+                        _SQL = f'''INSERT INTO analisis.analitica (idsegmentoanalisis,ceap,ph,ce,carbon,caliza,ca,mg,k,na,n,p,organi,cox,rel_cn,ca_eq,mg_eq,k_eq,na_eq,cic,ca_f,mg_f,k_f,na_f,al,b,fe,mn,cu,zn,s,mo,arcilla,limo,arena,ni,co,ti,"as",pb,cr) VALUES ({row['id']},{row['ceap']},{row['pH']},{row['CE']},{row['CARBON']},{row['CALIZA']},{row['CA']},{row['MG']},{row['K']},{row['NA']},{row['N']},{row['P']},{row['ORGANI']},{row['COX']},{row['REL_CN']},{row['CA_EQ']},{row['MG_EQ']},{row['K_EQ']},{row['NA_EQ']},{row['CIC']},{row['CA_F']},{row['MG_F']},{row['K_F']},{row['NA_F']},{row['AL']},{row['B']},{row['FE']},{row['MN']},{row['CU']},{row['ZN']},{row['S']},{row['MO']},{row['ARCILLA']},{row['LIMO']},{row['ARENA']},{row['NI']},{row['CO']},{row['TI']},{row['AS']},{row['PB']},{row['CR']}); '''
 
-        cursor = conn.cursor()
+                        # print(_SQL)   
+                        cursor.execute(_SQL)
+                        self.conn.commit()  
+                    except errors.lookup('23505'):
+                        QMessageBox.about(self, 'aGrae GIS','El analisis: {} con codigo: {} ya existe en la base de datos.\nComprueba la informacion'.format(row['id'],row['COD']))
+                        self.conn.rollback()
+                        pass                        
+                self.an_save_bd.setEnabled(False)
+                self.utils.msgBar('Analitica cargada correctamente',0,5)
+            except Exception as ex:
+                print(ex)
 
-        cursor.execute(' select version()')
-        for index, row in df.iterrows():
 
-            _SQL = f'''INSERT INTO analisis.analitica (idsegmentoanalisis,ceap,ph,ce,carbon,caliza,ca,mg,k,na,n,p,organi,cox,rel_cn,ca_eq,mg_eq,k_eq,na_eq,cic,ca_f,mg_f,k_f,na_f,al,b,fe,mn,cu,zn,s,mo,arcilla,limo,arena,ni,co,ti,"as",pb,cr) VALUES ({row['id']},{row['ceap']},{row['pH']},{row['CE']},{row['CARBON']},{row['CALIZA']},{row['CA']},{row['MG']},{row['K']},{row['NA']},{row['N']},{row['P']},{row['ORGANI']},{row['COX']},{row['REL_CN']},{row['CA_EQ']},{row['MG_EQ']},{row['K_EQ']},{row['NA_EQ']},{row['CIC']},{row['CA_F']},{row['MG_F']},{row['K_F']},{row['NA_F']},{row['AL']},{row['B']},{row['FE']},{row['MN']},{row['CU']},{row['ZN']},{row['S']},{row['MO']},{row['ARCILLA']},{row['LIMO']},{row['ARENA']},{row['NI']},{row['CO']},{row['TI']},{row['AS']},{row['PB']},{row['CR']}); '''
+            
+    
 
-            print(_SQL)   
-            cursor.execute(_SQL)
-            conn.commit()  
+
+    def loadTextura(self): 
+        sql = 'select * from analisis.textura order by idtextura '
+        with self.conn: 
+            cursor = self.conn.cursor() 
+            cursor.execute(sql)
+            data = cursor.fetchall() 
+            a = len(data)
+            b = len(data[0])
+            i = 1
+            j = 1                      
+            self.tableWidget_4.setRowCount(a)
+            self.tableWidget_4.setColumnCount(b)
+            for j in range(a):
+                for i in range(b):
+                    item = QTableWidgetItem(str(data[j][i]))
+                    self.tableWidget_4.setItem(j, i, item)
+
+    def editTextura(self):
+        if self.editTexturaStatus == False:
+            self.tableWidget_4.setEditTriggers(QAbstractItemView.AllEditTriggers)
+            self.editTexturaStatus = True
+            self.an_save_textura_btn.setEnabled(True)
+        else: 
+            self.tableWidget_4.setEditTriggers(QAbstractItemView.NoEditTriggers)
+            self.editTexturaStatus = False
+            self.an_save_textura_btn.setEnabled(False)
+    
+    def saveTextura(self):
+        confirm = QMessageBox.question(
+            self, 'aGrae GIS', f"Seguro quiere Actualizar Los valores de textura?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if confirm == QMessageBox.Yes:
+            try: 
+                for r in range(self.tableWidget_4.rowCount()): 
+                    id =  self.tableWidget_4.item(r,0).text()
+                    categoria =  self.tableWidget_4.item(r,1).text()
+                    grupo =  self.tableWidget_4.item(r,2).text()
+                    arena_i =  self.tableWidget_4.item(r,3).text()
+                    arena_s =  self.tableWidget_4.item(r,4).text()
+                    limo_i =  self.tableWidget_4.item(r,5).text()
+                    limo_s =  self.tableWidget_4.item(r,6).text()
+                    arcilla_i =  self.tableWidget_4.item(r,7).text()
+                    arcilla_s =  self.tableWidget_4.item(r,8).text()
+                    ceap_i =  self.tableWidget_4.item(r,9).text()
+                    ceap_s =  self.tableWidget_4.item(r,10).text()
+                    cra =  self.tableWidget_4.item(r,11).text()
+                    hsg =  self.tableWidget_4.item(r,12).text()
+                    grupo_label =  self.tableWidget_4.item(r,13).text()
+                    sql = f"""update analisis.textura set 
+                            categoria = '{categoria}',
+                            grupo = {grupo},
+                            arena_i = {arena_i},
+                            arena_s = {arena_s},
+                            limo_i = {limo_i},
+                            limo_s = {limo_s},
+                            arcilla_i = {arcilla_i},
+                            arcilla_s = {arcilla_s},
+                            ceap_i = {ceap_i}, 
+                            ceap_s = {ceap_s},
+                            cra_cod = {cra},
+                            hsg = '{hsg}',
+                            grupo_label = '{grupo_label}'
+                            where idtextura = {id}
+                            """
+                    with self.conn:
+                        try:
+                            cursor = self.conn.cursor() 
+                            cursor.execute(sql)
+                            self.conn.commit()
+                            print('textura: {} actualizada correctamente'.format(id))
+                        except Exception as ex:
+                            print(ex) 
+                
+                self.utils.msgBar('Parametros de Textura Actualizados Correctamente', 3, 5)
+            
+            except Exception as ex: 
+                print(ex)
+                QMessageBox.about(self, 'aGrae GIS','Ocurrio un Error')
+            
+            
+
 
 
     def openFileDialog(self): 
