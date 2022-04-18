@@ -272,7 +272,7 @@
       <string notr="true">#tabWidget_2::pane{border: 0}</string>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_admin_pl">
       <attribute name="title">
@@ -1709,7 +1709,7 @@
     <widget class="QWidget" name="verticalLayoutWidget_4">
      <property name="geometry">
       <rect>
-       <x>710</x>
+       <x>720</x>
        <y>50</y>
        <width>34</width>
        <height>141</height>
@@ -1727,6 +1727,16 @@
        <widget class="QPushButton" name="an_save_bd">
         <property name="enabled">
          <bool>false</bool>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="an_params">
+        <property name="enabled">
+         <bool>true</bool>
         </property>
         <property name="text">
          <string/>
@@ -1837,153 +1847,6 @@
        <string>CEap</string>
       </property>
      </column>
-    </widget>
-    <widget class="QTabWidget" name="tabWidget_4">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>210</y>
-       <width>761</width>
-       <height>341</height>
-      </rect>
-     </property>
-     <widget class="QWidget" name="tab_8">
-      <attribute name="title">
-       <string>Param. Textura</string>
-      </attribute>
-      <widget class="QTableWidget" name="tableWidget_4">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>10</y>
-         <width>691</width>
-         <height>291</height>
-        </rect>
-       </property>
-       <property name="sizeAdjustPolicy">
-        <enum>QAbstractScrollArea::AdjustToContents</enum>
-       </property>
-       <property name="editTriggers">
-        <set>QAbstractItemView::NoEditTriggers</set>
-       </property>
-       <property name="alternatingRowColors">
-        <bool>true</bool>
-       </property>
-       <attribute name="horizontalHeaderDefaultSectionSize">
-        <number>100</number>
-       </attribute>
-       <attribute name="horizontalHeaderMinimumSectionSize">
-        <number>56</number>
-       </attribute>
-       <column>
-        <property name="text">
-         <string>id</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Categoria</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Grupo</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Arena (Li)</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Arena (Ls)</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Limo (Li)</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Limo (Ls)</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Arcilla (Li)</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Arcilla (Ls)</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>CEap (Li)</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>CEap (Ls)</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>CRA</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>HSG</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Grupo</string>
-        </property>
-       </column>
-      </widget>
-      <widget class="QWidget" name="verticalLayoutWidget_3">
-       <property name="geometry">
-        <rect>
-         <x>710</x>
-         <y>10</y>
-         <width>34</width>
-         <height>181</height>
-        </rect>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <item>
-         <widget class="QPushButton" name="an_edit_textura_btn">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="an_save_textura_btn">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </widget>
-     <widget class="QWidget" name="tab_11">
-      <attribute name="title">
-       <string>Tab 2</string>
-      </attribute>
-     </widget>
     </widget>
    </widget>
    <widget class="QWidget" name="tab_7">

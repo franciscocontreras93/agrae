@@ -154,6 +154,7 @@ class AgraeUtils():
             'import': os.path.join(os.path.dirname(__file__), r'ui\icons\file-import-solid.svg'),
             'export-csv': os.path.join(os.path.dirname(__file__), r'ui\icons\file-export-solid.svg'),
             'upload-to-db': os.path.join(os.path.dirname(__file__), r'ui\icons\upload-db.svg'),
+            'settings': os.path.join(os.path.dirname(__file__), r'ui\icons\gear-solid.svg'),
         }
 
         return icons_path

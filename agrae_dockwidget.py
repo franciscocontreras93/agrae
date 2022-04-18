@@ -35,7 +35,7 @@ from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QSettings
 from qgis.core import *
 from qgis.utils import iface
-from .agrae_dialogs import agraeSegmentoDialog
+from .agrae_dialogs import agraeSegmentoDialog, agraeParametrosDialog
 from .utils import AgraeUtils, AgraeToolset
 
 from .agraeTools import agraeToolset
@@ -952,7 +952,11 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.an_save_bd.setIconSize(QtCore.QSize(20, 20))
         self.an_save_bd.setToolTip('Guardar en BD')
         self.an_save_bd.clicked.connect(self.crearAnalitica)
-
+        
+        self.an_params.setIcon(QIcon(icons_path['settings']))
+        self.an_params.setIconSize(QtCore.QSize(20, 20))
+        self.an_params.setToolTip('Parametros Analiticos')
+        self.an_params.clicked.connect(self.paramsDialog)
         
         self.lbl_lastCode.setText(self.lastCode)
 
@@ -960,17 +964,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         for i in range(0,9): 
             self.tableWidget_3.setColumnWidth(i, 86)
             
-        self.tableWidget_4.setColumnHidden(0, True)
-        self.loadTextura()
 
-        self.an_edit_textura_btn.setIcon(QIcon(icons_path['pen-to-square']))
-        self.an_edit_textura_btn.setIconSize(QtCore.QSize(20, 20))
-        self.an_edit_textura_btn.setToolTip('Editar Textura')
-        self.an_edit_textura_btn.clicked.connect(self.editTextura)
-        self.an_save_textura_btn.setIcon(QIcon(icons_path['save']))
-        self.an_save_textura_btn.setIconSize(QtCore.QSize(20, 20))
-        self.an_save_textura_btn.setToolTip('Guardar Valores')
-        self.an_save_textura_btn.clicked.connect(self.saveTextura)
+
+
 
 
 
@@ -1368,6 +1364,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         dialog = agraeSegmentoDialog()
         dialog.exec_() 
 
+    def paramsDialog(self): 
+        dialog = agraeParametrosDialog()
+        dialog.exec_() 
     def buscarSegmento(self):
 
         # print('prueba buscar segmento')
@@ -1643,93 +1642,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 self.utils.msgBar('Analitica cargada correctamente',0,5)
             except Exception as ex:
                 print(ex)
-
-
-            
-    
-
-
-    def loadTextura(self): 
-        sql = 'select * from analisis.textura order by idtextura '
-        with self.conn: 
-            cursor = self.conn.cursor() 
-            cursor.execute(sql)
-            data = cursor.fetchall() 
-            a = len(data)
-            b = len(data[0])
-            i = 1
-            j = 1                      
-            self.tableWidget_4.setRowCount(a)
-            self.tableWidget_4.setColumnCount(b)
-            for j in range(a):
-                for i in range(b):
-                    item = QTableWidgetItem(str(data[j][i]))
-                    self.tableWidget_4.setItem(j, i, item)
-
-    def editTextura(self):
-        if self.editTexturaStatus == False:
-            self.tableWidget_4.setEditTriggers(QAbstractItemView.AllEditTriggers)
-            self.editTexturaStatus = True
-            self.an_save_textura_btn.setEnabled(True)
-        else: 
-            self.tableWidget_4.setEditTriggers(QAbstractItemView.NoEditTriggers)
-            self.editTexturaStatus = False
-            self.an_save_textura_btn.setEnabled(False)
-    
-    def saveTextura(self):
-        confirm = QMessageBox.question(
-            self, 'aGrae GIS', f"Seguro quiere Actualizar Los valores de textura?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if confirm == QMessageBox.Yes:
-            try: 
-                for r in range(self.tableWidget_4.rowCount()): 
-                    id =  self.tableWidget_4.item(r,0).text()
-                    categoria =  self.tableWidget_4.item(r,1).text()
-                    grupo =  self.tableWidget_4.item(r,2).text()
-                    arena_i =  self.tableWidget_4.item(r,3).text()
-                    arena_s =  self.tableWidget_4.item(r,4).text()
-                    limo_i =  self.tableWidget_4.item(r,5).text()
-                    limo_s =  self.tableWidget_4.item(r,6).text()
-                    arcilla_i =  self.tableWidget_4.item(r,7).text()
-                    arcilla_s =  self.tableWidget_4.item(r,8).text()
-                    ceap_i =  self.tableWidget_4.item(r,9).text()
-                    ceap_s =  self.tableWidget_4.item(r,10).text()
-                    cra =  self.tableWidget_4.item(r,11).text()
-                    hsg =  self.tableWidget_4.item(r,12).text()
-                    grupo_label =  self.tableWidget_4.item(r,13).text()
-                    sql = f"""update analisis.textura set 
-                            categoria = '{categoria}',
-                            grupo = {grupo},
-                            arena_i = {arena_i},
-                            arena_s = {arena_s},
-                            limo_i = {limo_i},
-                            limo_s = {limo_s},
-                            arcilla_i = {arcilla_i},
-                            arcilla_s = {arcilla_s},
-                            ceap_i = {ceap_i}, 
-                            ceap_s = {ceap_s},
-                            cra_cod = {cra},
-                            hsg = '{hsg}',
-                            grupo_label = '{grupo_label}'
-                            where idtextura = {id}
-                            """
-                    with self.conn:
-                        try:
-                            cursor = self.conn.cursor() 
-                            cursor.execute(sql)
-                            self.conn.commit()
-                            print('textura: {} actualizada correctamente'.format(id))
-                        except Exception as ex:
-                            print(ex) 
-                
-                self.utils.msgBar('Parametros de Textura Actualizados Correctamente', 3, 5)
-            
-            except Exception as ex: 
-                print(ex)
-                QMessageBox.about(self, 'aGrae GIS','Ocurrio un Error')
-            
-            
-
-
 
     def openFileDialog(self): 
         options = QFileDialog.Options()

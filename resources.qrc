@@ -22,5 +22,6 @@
         <file>ui\icons\file-import-solid.svg</file>
         <file>ui\icons\file-export-solid.svg</file>
         <file>ui\icons\upload-db.svg</file>
+        <file>ui\icons\gear-solid.svg</file>
     </qresource>
 </RCC>
