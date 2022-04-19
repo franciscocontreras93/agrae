@@ -748,3 +748,35 @@ class AgraeToolset():
             for c in range(table.columnCount()):
                 item = QTableWidgetItem(str(df.iloc[r, c]))
                 table.setItem(r, c, item)
+
+
+    def populateTable(self,sql,widget, action=False):
+        
+        with self.conn:
+                cursor = self.conn.cursor()
+                cursor.execute(sql)
+                data = cursor.fetchall()
+                a = len(data)
+                b = len(data[0])
+                i = 1
+                j = 1
+                widget.setRowCount(a)
+                widget.setColumnCount(b)
+                for j in range(a):
+                    for i in range(b):
+                        item = QTableWidgetItem(str(data[j][i]))
+                        widget.setItem(j, i, item)
+
+
+
+    def editionMode(self, variable, table, button): 
+        if variable == False:
+            table.setEditTriggers(QAbstractItemView.AllEditTriggers)
+            variable = True
+            button.setEnabled(True)
+            print('editando')
+        else:
+            table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+            variable = False
+            button.setEnabled(False)
+            print('nada')

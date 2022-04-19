@@ -41,7 +41,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>3</number>
    </property>
    <property name="tabsClosable">
     <bool>false</bool>
@@ -51,7 +51,7 @@
    </property>
    <widget class="QWidget" name="tab_8">
     <attribute name="title">
-     <string>Param. Textura</string>
+     <string>Textura</string>
     </attribute>
     <widget class="QTableWidget" name="tableWidget_1">
      <property name="enabled">
@@ -183,7 +183,7 @@
    </widget>
    <widget class="QWidget" name="tab_11">
     <attribute name="title">
-     <string>Param. pH</string>
+     <string>pH</string>
     </attribute>
     <widget class="QWidget" name="verticalLayoutWidget_4">
      <property name="geometry">
@@ -265,7 +265,7 @@
    </widget>
    <widget class="QWidget" name="tab">
     <attribute name="title">
-     <string>Param. CE</string>
+     <string>Conductividad Electrica</string>
     </attribute>
     <widget class="QTableWidget" name="tableWidget_3">
      <property name="enabled">
@@ -339,6 +339,190 @@
       </item>
       <item>
        <widget class="QPushButton" name="an_save_ce">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_2">
+    <attribute name="title">
+     <string>Carbonatos</string>
+    </attribute>
+    <widget class="QWidget" name="verticalLayoutWidget_6">
+     <property name="geometry">
+      <rect>
+       <x>730</x>
+       <y>10</y>
+       <width>34</width>
+       <height>211</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_6">
+      <item>
+       <widget class="QPushButton" name="an_edit_carbon">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="an_save_carbon">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="an_add_carbon">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="an_remove_carbon">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QTableWidget" name="tableWidget_4">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>711</width>
+       <height>331</height>
+      </rect>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QAbstractScrollArea::AdjustToContentsOnFirstShow</enum>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="alternatingRowColors">
+      <bool>true</bool>
+     </property>
+     <attribute name="horizontalHeaderDefaultSectionSize">
+      <number>178</number>
+     </attribute>
+     <attribute name="horizontalHeaderMinimumSectionSize">
+      <number>56</number>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>id</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Tipo</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Li</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Ls</string>
+      </property>
+     </column>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_3">
+    <attribute name="title">
+     <string>Caliza Activa</string>
+    </attribute>
+    <widget class="QTableWidget" name="tableWidget_5">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>711</width>
+       <height>331</height>
+      </rect>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QAbstractScrollArea::AdjustToContentsOnFirstShow</enum>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="alternatingRowColors">
+      <bool>true</bool>
+     </property>
+     <attribute name="horizontalHeaderDefaultSectionSize">
+      <number>178</number>
+     </attribute>
+     <attribute name="horizontalHeaderMinimumSectionSize">
+      <number>56</number>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>id</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Tipo</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Li</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Ls</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QWidget" name="verticalLayoutWidget_7">
+     <property name="geometry">
+      <rect>
+       <x>730</x>
+       <y>10</y>
+       <width>34</width>
+       <height>181</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_7">
+      <item>
+       <widget class="QPushButton" name="an_edit_ca">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="an_save_ca">
         <property name="enabled">
          <bool>false</bool>
         </property>
