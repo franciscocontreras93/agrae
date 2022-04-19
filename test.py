@@ -1,23 +1,31 @@
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWebEngineWidgets import *
+import plotly.express as px
 
-import pandas as pd
-import numpy as np
-import psycopg2
 
-conn = psycopg2.connect("dbname=agrae user=postgres password=23826405 host=localhost")
-cursor = conn.cursor()
+class Widget(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.button = QtWidgets.QPushButton('Plot', self)
+        self.browser = QtWebEngineWidgets.QWebEngineView(self)
 
-cursor.execute(' select version()')
+        vlayout = QtWidgets.QVBoxLayout(self)
+        vlayout.addWidget(self.button, alignment=QtCore.Qt.AlignHCenter)
+        vlayout.addWidget(self.browser)
 
-df = pd.read_csv(r"C:\Users\FRANCISCO\Desktop\reporte_16042022.csv",delimiter=';')
-df1 = df.astype(object).replace(np.nan, 'NULL')
-columns = [c for c in df.columns]
-print(columns)
+        self.button.clicked.connect(self.show_graph)
+        self.resize(1000, 800)
 
-for index, row in df1.iterrows():
-    _SQL = f'''INSERT INTO analisis.analitica (idsegmentoanalisis,ceap,ph,ce,carbon,caliza,ca,mg,k,na,n,p,organi,cox,rel_cn,ca_eq,mg_eq,k_eq,na_eq,cic,ca_f,mg_f,k_f,na_f,al,b,fe,mn,cu,zn,s,mo,arcilla,limo,arena,ni,co,ti,"as",pb,cr) VALUES ({row['id']},{row['ceap']},{row['pH']},{row['CE']},{row['CARBON']},{row['CALIZA']},{row['CA']},{row['MG']},{row['K']},{row['NA']},{row['N']},{row['P']},{row['ORGANI']},{row['COX']},{row['REL_CN']},{row['CA_EQ']},{row['MG_EQ']},{row['K_EQ']},{row['NA_EQ']},{row['CIC']},{row['CA_F']},{row['MG_F']},{row['K_F']},{row['NA_F']},{row['AL']},{row['B']},{row['FE']},{row['MN']},{row['CU']},{row['ZN']},{row['S']},{row['MO']},{row['ARCILLA']},{row['LIMO']},{row['ARENA']},{row['NI']},{row['CO']},{row['TI']},{row['AS']},{row['PB']},{row['CR']}); '''
+    def show_graph(self):
+        df = px.data.tips()
+        fig = px.box(df, x="day", y="total_bill", color="smoker")
+        # or "inclusive", or "linear" by default
+        fig.update_traces(quartilemethod="exclusive")
+        self.browser.setHtml(fig.to_html(include_plotlyjs='cdn'))
 
-    print(_SQL)   
-    cursor.execute(_SQL)
-    conn.commit()
-    
-        
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication([])
+    widget = Widget()
+    widget.show()
+    app.exec()
