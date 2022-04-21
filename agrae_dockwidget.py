@@ -957,12 +957,16 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.an_params.setIconSize(QtCore.QSize(20, 20))
         self.an_params.setToolTip('Parametros Analiticos')
         self.an_params.clicked.connect(self.paramsDialog)
+
         
         self.lbl_lastCode.setText(self.lastCode)
 
         self.tableWidget_3.setColumnHidden(0, True)
-        for i in range(0,9): 
-            self.tableWidget_3.setColumnWidth(i, 86)
+        self.tableWidget_3.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+
+        self.seg_combo.currentIndexChanged.connect(self.onChangeComboSemento)
+        # for i in range(0,9): 
+        #     self.tableWidget_3.setColumnWidth(i, 86)
             
 
 
@@ -972,6 +976,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
+        # self.tableWidget_3.setRowCount(0)
         event.accept()
 
     def dataAutoParcela(self): 
@@ -1586,6 +1591,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     
     def cargarAnalitica(self): 
         print('Cargando Analitica')
+        
        
         reporte_path = self.openFileDialog() 
         if reporte_path != False: 
@@ -1596,7 +1602,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             df = df.astype(object).replace(np.nan, '')
             try: 
                 columns = [c for c in df.columns]
-                data = [[row['id'],row['COD'],row['N'],row['P'],row['K'],row['pH'],row['CE'],row['CARBON'], row['ceap']] for index,row in df.iterrows()]
+                data = [[row['id'],row['COD'],row['N'],row['P'],row['K'],row['pH'],row['CE'],row['CARBON'], row['ceap'],row['CALIZA'],row['CA'],row['MG'],row['NA'],row['ORGANI']] for index,row in df.iterrows()]
                 a = len(data)
                 b = len(data[0])
                 i = 1
@@ -1609,6 +1615,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                         item = QTableWidgetItem(str(data[j][i]))
                         self.tableWidget_3.setItem(j, i, item)
                 self.an_save_bd.setEnabled(True)    
+                self.an_params.setEnabled(True)
+                self.seg_combo.clear()
+                self.onChangeTableData()
+                self.populateComboSegmento()
             except KeyError as ke: 
                 print('{}'.format(ke))
                 QMessageBox.about(self, 'aGrae GIS', 'El archivo no cumple con el formato establecido.\nIntenta Nuevamente. ')
@@ -1662,6 +1672,78 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             return fileName
         else: 
             return False
+
+    def populateComboSegmento(self):
+        self.seg_combo.setStyleSheet("QComboBox { combobox-popup: 0; }")
+        rowCount = self.tableWidget_3.rowCount()
+        # print('PRELOAD TEST')
+        for r in range(rowCount): 
+            # print(self.tableWidget_3.item(r,0).text())
+            if r != '' or r != None:
+                self.seg_combo.addItem(self.tableWidget_3.item(r, 1).text(),r)
+
+    def onChangeComboSemento(self,i): 
+        # print("comboSegmento: Row {} Cod {}".format(self.seg_combo.itemData(),i)
+        try: 
+            organi =  float(self.tableWidget_3.item(i,13).text())
+            cox = organi / 1.32 #! CONSTANTE 1.32 COX
+            self.cox_lbl.setText('{} %'.format(round((cox*100),5)))
+            N = float(self.tableWidget_3.item(i,2).text())
+            rel_cn = cox / N #! VALOR ADIMENSIONAL 
+            self.rel_cn_lbl.setText('{}'.format(round((rel_cn),5)))
+            CA = float(self.tableWidget_3.item(i,10).text())
+            CA_eq = CA / 200 #! CONSTANTE 200 CA_EQ 
+            self.ca_eq_lbl.setText('{} meq/100g'.format(round((CA_eq),5)))
+            MG = float(self.tableWidget_3.item(i,11).text())
+            MG_eq = MG / 120 #! CONSTANTE 120 MG_EQ
+            self.mg_eq_lbl.setText('{} meq/100g'.format(round((MG_eq), 5)))
+            K = float(self.tableWidget_3.item(i,4).text())
+            K_eq = K / 390 #! CONSTANTE K_EQ 
+            self.k_eq_lbl.setText('{} meq/100g'.format(round((K_eq), 5)))
+            NA = float(self.tableWidget_3.item(i,12).text())
+            NA_eq = NA / 220 #! CONSTANTE K_EQ 
+            self.na_eq_lbl.setText('{} meq/100g'.format(round((NA_eq), 5)))
+            datos = [CA_eq, MG_eq, K_eq, NA_eq]
+            cic = sum(datos)
+            self.cic_lbl.setText('{} meq/100g'.format(round((cic), 5)))
+            CA_F = round((CA_eq/cic),2)
+            self.ca_f_lbl.setText('{} %'.format((CA_F*100)))
+            MG_F = round((MG_eq/cic),2)
+            self.mg_f_lbl.setText('{} %'.format((MG_F*100)))
+            K_F = round((K_eq/cic),2)
+            self.k_f_lbl.setText('{} %'.format((K_F*100)))
+            # NA_F = round((NA_eq/cic),2)
+            NA_F = round((1-(CA_F+MG_F+K_F)/100),2)
+            self.na_f_lbl.setText('{} %'.format((NA_F)))
+        except AttributeError as ar: 
+            print(ar)
+            pass
+        except ValueError as ve: 
+            print(ve)
+            pass
+        
+
+
+
+        
+        print(self.seg_combo.itemText(i))
+        print(self.seg_combo.itemData(i)) 
+
+    def onChangeTableData(self):
+        
+        self.cox_lbl.setText('')
+        self.rel_cn_lbl.setText('')
+        self.ca_eq_lbl.setText('')
+        self.mg_eq_lbl.setText('')
+        self.k_eq_lbl.setText('')
+        self.na_eq_lbl.setText('')
+        self.cic_lbl.setText('')
+        self.ca_f_lbl.setText('')
+        self.mg_f_lbl.setText('')
+        self.k_f_lbl.setText('')
+        self.na_f_lbl.setText('')
+
+
 
 class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog): 
 
