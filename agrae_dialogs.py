@@ -85,16 +85,20 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
         self.tableWidget_5.setColumnHidden(0, True)     
         self.tableWidget_6.setColumnHidden(0, True)     
         self.tableWidget_7.setColumnHidden(0, True) 
-        # self.tableWidget_8.setColumnHidden(0, True) 
+        self.tableWidget_8.setColumnHidden(0, True) 
+        self.tableWidget_9.setColumnHidden(0, True) 
 
         self.setButtonActions(self.an_edit_textura_btn, self.an_save_textura_btn, self.an_add_textura, self.an_remove_textura, self.tableWidget_1, 0)
-        self.setButtonActions(self.an_edit_ph, self.an_save_ph, self.an_add_ph, self.an_remove_ph, self.tableWidget_2, 1)
-        self.setButtonActions(self.an_edit_ce, self.an_save_ce, self.an_add_ce, self.an_remove_ce, self.tableWidget_3, 2)
-        self.setButtonActions(self.an_edit_carbon, self.an_save_carbon, self.an_add_carbon, self.an_remove_carbon, self.tableWidget_4, 3)
-        self.setButtonActions(self.an_edit_ca, self.an_save_ca, self.an_add_ca, self.an_remove_ca, self.tableWidget_5, 4)
-        self.setButtonActions(self.an_edit_cic, self.an_save_cic, self.an_add_cic, self.an_remove_cic, self.tableWidget_6, 5)
-        self.setButtonActions(self.an_edit_calcio, self.an_save_calcio, self.an_add_calcio, self.an_remove_calcio, self.tableWidget_7,6)
-        self.setButtonActions(self.an_edit_magnesio, self.an_save_magnesio, self.an_add_magnesio, self.an_remove_magnesio, self.tableWidget_8,7)
+        self.setButtonActions(self.an_edit_ph, self.an_save_ph, self.an_add_ph, self.an_remove_ph, self.tableWidget_2, 1,2,3)
+        self.setButtonActions(self.an_edit_ce, self.an_save_ce, self.an_add_ce, self.an_remove_ce, self.tableWidget_3, 2,2,3)
+        self.setButtonActions(self.an_edit_carbon, self.an_save_carbon, self.an_add_carbon, self.an_remove_carbon, self.tableWidget_4, 3,2,3)
+        self.setButtonActions(self.an_edit_ca, self.an_save_ca, self.an_add_ca, self.an_remove_ca, self.tableWidget_5, 4,2,3)
+        self.setButtonActions(self.an_edit_cic, self.an_save_cic, self.an_add_cic, self.an_remove_cic, self.tableWidget_6, 5,2,3)
+        self.setButtonActions(self.an_edit_calcio, self.an_save_calcio, self.an_add_calcio, self.an_remove_calcio, self.tableWidget_7,6,4,5)
+        self.setButtonActions(self.an_edit_magnesio, self.an_save_magnesio, self.an_add_magnesio, self.an_remove_magnesio, self.tableWidget_8,7,4,5)
+        self.setButtonActions(self.an_edit_potasio, self.an_save_potasio, self.an_add_potasio, self.an_remove_potasio, self.tableWidget_9,8,5,6)
+        self.setButtonActions(self.an_edit_sodio, self.an_save_sodio, self.an_add_sodio, self.an_remove_sodio, self.tableWidget_10,9,3,4)
+        self.setButtonActions(self.an_edit_nitrogeno, self.an_save_nitrogeno, self.an_add_nitrogeno, self.an_remove_nitrogeno, self.tableWidget_11,10,2,3)
 
         self.tableWidget_2.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
@@ -121,6 +125,14 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
         self.tableWidget_8.horizontalHeader().setSectionResizeMode(4, QtWidgets.QHeaderView.ResizeToContents)
         self.tableWidget_8.horizontalHeader().setSectionResizeMode(5, QtWidgets.QHeaderView.ResizeToContents)
         self.tableWidget_8.horizontalHeader().setSectionResizeMode(6, QtWidgets.QHeaderView.Stretch)
+
+
+        self.tableWidget_9.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        self.tableWidget_9.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
+        self.tableWidget_9.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+        self.tableWidget_9.horizontalHeader().setSectionResizeMode(4, QtWidgets.QHeaderView.ResizeToContents)
+        self.tableWidget_9.horizontalHeader().setSectionResizeMode(5, QtWidgets.QHeaderView.Stretch)
+        self.tableWidget_9.horizontalHeader().setSectionResizeMode(6, QtWidgets.QHeaderView.Stretch)
         
 
 
@@ -693,11 +705,14 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
                         li = self.tableWidget_7.item(r, 4).text()
                         ls = self.tableWidget_7.item(r, 5).text()
                         incremento = self.tableWidget_7.item(r,6).text()
+                        if incremento == 'None':
+                            incremento = 0
                         sql = f"""update analisis.calcio set
                                 suelo = {suelo}, 
                                 tipo = '{tipo}',
                                 limite_inferior = {li},
-                                limite_superior = {ls}
+                                limite_superior = {ls},
+                                incremento = {incremento}
                                 where id = {id}
                                 """
                         with self.conn:
@@ -759,6 +774,7 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
                 except Exception as ex:
                     print(ex)
                     QMessageBox.about(self, 'aGrae GIS', 'Ocurrio un Error')
+        # MAGNESIO
         elif i == 7: 
             confirm = QMessageBox.question(
                 self, 'aGrae GIS', f"Seguro quiere Actualizar Los valores de Magnesio?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -771,11 +787,14 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
                         li = self.tableWidget_8.item(r, 4).text()
                         ls = self.tableWidget_8.item(r, 5).text()
                         incremento = self.tableWidget_8.item(r,6).text()
+                        if incremento == 'None':
+                            incremento = 0
                         sql = f"""update analisis.magnesio set
                                 suelo = {suelo}, 
                                 tipo = '{tipo}',
                                 limite_inferior = {li},
-                                limite_superior = {ls}
+                                limite_superior = {ls},
+                                incremento = {incremento}
                                 where id = {id}
                                 """
                         with self.conn:
@@ -837,13 +856,247 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
                 except Exception as ex:
                     print(ex)
                     QMessageBox.about(self, 'aGrae GIS', 'Ocurrio un Error')
+        # POTASIO
+        elif i == 8:
+            confirm = QMessageBox.question(
+                self, 'aGrae GIS', f"Seguro quiere Actualizar Los valores de Magnesio?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if confirm == QMessageBox.Yes:
+                try:
+                    for r in range(self.initialRowCount):
+                        id = self.tableWidget_9.item(r, 0).text()
+                        regimen = self.tableWidget_9.item(r, 1).text()
+                        suelo = self.tableWidget_9.item(r, 2).text()
+                        nivel = self.tableWidget_9.item(r, 3).text()
+                        tipo = self.tableWidget_9.item(r, 4).text()
+                        li = self.tableWidget_9.item(r, 5).text()
+                        ls = self.tableWidget_9.item(r, 6).text()
+                        incremento = self.tableWidget_9.item(r, 7).text()
+                        if incremento == 'None':
+                            incremento = 0
+                        sql = f"""update analisis.potasio set
+                                regimen = {regimen},
+                                suelo = {suelo}, 
+                                nivel = {nivel}, 
+                                tipo = '{tipo}',
+                                limite_inferior = {li},
+                                limite_superior = {ls},
+                                incremento = {incremento}
+                                where id = {id}
+                                """
+                        with self.conn:
+                            try:
+                                cursor = self.conn.cursor()
+                                cursor.execute(sql)
+                                self.conn.commit()
+                            except Exception as ex:
+                                print(ex)
+                    if self.tableWidget_9.rowCount() > self.initialRowCount:
+                        for r in range(self.initialRowCount, self.tableWidget_9.rowCount()):
+                            if self.tableWidget_9.item(r, 1) != None and self.tableWidget_9.item(r, 2) != None and self.tableWidget_9.item(r, 3) != None:
+                                regimen = self.tableWidget_9.item(r, 1).text()
+                                suelo = self.tableWidget_9.item(r, 2).text()
+                                nivel = self.tableWidget_9.item(r, 3).text()
+                                tipo = self.tableWidget_9.item(r, 4).text()
+                                li = self.tableWidget_9.item(r, 5).text()
+                                ls = self.tableWidget_9.item(r, 6).text()
+                                incremento = self.tableWidget_9.item(r, 7).text()
+                                sql = f"""insert into analisis.potasio(regimen,suelo,nivel,tipo,limite_inferior,limite_superior,incremento) 
+                                values({regimen},{suelo},{nivel},'{tipo}',{li},{ls},{incremento})"""
+                                with self.conn:
+                                    try:
+                                        cursor = self.conn.cursor()
+                                        cursor.execute(sql)
+                                        self.conn.commit()
+                                        # print(
+                                        #     'Carbonato: {} actualizado correctamente'.format(id))
+                                    except Exception as ex:
+                                        print('error ingresando')
+                                        print(ex)
+                                        self.conn.rollback()
+                    if len(self.removeIds) > 0:
+                        for r in self.removeIds:
+                            confirm = QMessageBox.question(
+                                self, 'aGrae GIS', f"Desea Borrar los registros?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                            if confirm == QMessageBox.Yes:
+                                sql = f"""delete from analisis.potasio                                
+                                    where id = {int(r)}"""
+                                with self.conn:
+                                    cursor = self.conn.cursor()
+                                    try:
+                                        cursor.execute(sql)
+                                        self.conn.commit()
+                                    except Exception as ex:
+                                        print(ex)
+                                        self.conn.rollback()
+                                for row in self.removeRows:
+                                    self.tableWidget_9.removeRow(row)
+                            else:
+                                pass
+                    self.removeIds = []
+                    self.removeRows = []
+                    self.loadData(i)
+                    self.editionMode(self.tableWidget_9, self.an_save_potasio,
+                                     self.an_add_potasio, self.an_remove_potasio)
 
+                    self.utils.msgBar(
+                        'Parametros de Carbonatos Actualizados Correctamente', 3, 5)
+
+                except Exception as ex:
+                    print(ex)
+                    QMessageBox.about(self, 'aGrae GIS', 'Ocurrio un Error')
+
+        # SODIO
+        elif i == 9:
+            confirm = QMessageBox.question(
+                self, 'aGrae GIS', f"Seguro quiere Actualizar Los valores de Magnesio?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if confirm == QMessageBox.Yes:
+                try:
+                    for r in range(self.initialRowCount):
+                        id = self.tableWidget_10.item(r, 0).text()
+                        suelo = self.tableWidget_10.item(r, 1).text()
+                        tipo = self.tableWidget_10.item(r, 2).text()
+                        li = self.tableWidget_10.item(r, 3).text()
+                        ls = self.tableWidget_10.item(r, 4).text()
+                        incremento = self.tableWidget_10.item(r, 5).text()
+                        if incremento == 'None':
+                            incremento = 0
+                        sql = f"""update analisis.sodio set
+                                suelo = {suelo}, 
+                                tipo = '{tipo}',
+                                limite_inferior = {li},
+                                limite_superior = {ls},
+                                incremento = {incremento}
+                                where id = {id}
+                                """
+                        with self.conn:
+                            try:
+                                cursor = self.conn.cursor()
+                                cursor.execute(sql)
+                                self.conn.commit()
+                            except Exception as ex:
+                                print(ex)
+                    if self.tableWidget_10.rowCount() > self.initialRowCount:
+                        for r in range(self.initialRowCount, self.tableWidget_10.rowCount()):
+                            if self.tableWidget_10.item(r, 1) != None and self.tableWidget_10.item(r, 2) != None and self.tableWidget_10.item(r, 3) != None:
+                                suelo = self.tableWidget_10.item(r, 1).text()
+                                tipo = self.tableWidget_10.item(r, 2).text()
+                                li = self.tableWidget_10.item(r, 3).text()
+                                ls = self.tableWidget_10.item(r, 4).text()
+                                incremento = self.tableWidget_10.item(
+                                    r, 5).text()
+                                sql = f"""insert into analisis.sodio(suelo,tipo,limite_inferior,limite_superior,incremento) 
+                                values({suelo},'{tipo}',{li},{ls},{incremento})"""
+                                with self.conn:
+                                    try:
+                                        cursor = self.conn.cursor()
+                                        cursor.execute(sql)
+                                        self.conn.commit()
+                                    except Exception as ex:
+                                        print('error ingresando')
+                                        print(ex)
+                                        self.conn.rollback()
+                    if len(self.removeIds) > 0:
+                        for r in self.removeIds:
+                            confirm = QMessageBox.question(
+                                self, 'aGrae GIS', f"Desea Borrar los registros?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                            if confirm == QMessageBox.Yes:
+                                sql = f"""delete from analisis.sodio                                
+                                    where id = {int(r)}"""
+                                with self.conn:
+                                    cursor = self.conn.cursor()
+                                    try:
+                                        cursor.execute(sql)
+                                        self.conn.commit()
+                                    except Exception as ex:
+                                        print(ex)
+                                        self.conn.rollback()
+                                for row in self.removeRows:
+                                    self.tableWidget_10.removeRow(row)
+                            else:
+                                pass
+                    self.removeIds = []
+                    self.removeRows = []
+                    self.loadData(i)
+                    self.editionMode(
+                        self.tableWidget_10, self.an_save_sodio, self.an_add_sodio, self.an_remove_sodio)
+                except:
+                    pass
+        # NITROGENO
+        elif i == 10:
+            confirm = QMessageBox.question(
+                self, 'aGrae GIS', f"Seguro quiere Actualizar Los valores de Magnesio?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if confirm == QMessageBox.Yes:
+                try:
+                    for r in range(self.initialRowCount):
+                        id = self.tableWidget_11.item(r, 0).text()
+                        tipo = self.tableWidget_11.item(r, 1).text()
+                        li = self.tableWidget_11.item(r, 2).text()
+                        ls = self.tableWidget_11.item(r, 3).text()
+                        incremento = self.tableWidget_11.item(r, 4).text()
+                        if incremento == 'None':
+                            incremento = 0
+                        sql = f"""update analisis.nitrogeno set
+                                tipo = '{tipo}',
+                                limite_inferior = {li},
+                                limite_superior = {ls},
+                                incremento = {incremento}
+                                where id = {id}
+                                """
+                        with self.conn:
+                            try:
+                                cursor = self.conn.cursor()
+                                cursor.execute(sql)
+                                self.conn.commit()
+                            except Exception as ex:
+                                print(ex)
+                    if self.tableWidget_11.rowCount() > self.initialRowCount:
+                        for r in range(self.initialRowCount, self.tableWidget_11.rowCount()):
+                            if self.tableWidget_11.item(r, 1) != None :
+                                tipo = self.tableWidget_11.item(r, 1).text()
+                                li = self.tableWidget_11.item(r, 2).text()
+                                ls = self.tableWidget_11.item(r, 3).text()
+                                incremento = self.tableWidget_11.item(r, 4).text()
+                                sql = f"""insert into analisis.nitrogeno(tipo,limite_inferior,limite_superior,incremento) 
+                                values('{tipo}',{li},{ls},{incremento})"""
+                                with self.conn:
+                                    try:
+                                        cursor = self.conn.cursor()
+                                        cursor.execute(sql)
+                                        self.conn.commit()
+                                    except Exception as ex:
+                                        print('error ingresando')
+                                        print(ex)
+                                        self.conn.rollback()
+                            else: 
+                                print('Algo falla')
+                    if len(self.removeIds) > 0:
+                        for r in self.removeIds:
+                            confirm = QMessageBox.question(
+                                self, 'aGrae GIS', f"Desea Borrar los registros?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                            if confirm == QMessageBox.Yes:
+                                sql = f"""delete from analisis.nitrogeno                                
+                                    where id = {int(r)}"""
+                                with self.conn:
+                                    cursor = self.conn.cursor()
+                                    try:
+                                        cursor.execute(sql)
+                                        self.conn.commit()
+                                    except Exception as ex:
+                                        print(ex)
+                                        self.conn.rollback()
+                                for row in self.removeRows:
+                                    self.tableWidget_11.removeRow(row)
+                            else:
+                                pass
+                    self.removeIds = []
+                    self.removeRows = []
+                    self.loadData(i)
+                    self.editionMode(
+                        self.tableWidget_11, self.an_save_nitrogeno, self.an_add_nitrogeno, self.an_remove_nitrogeno)
+                except:
+                    pass
     
-    
-    
-    
-    
-    def setButtonActions(self,btn_edit,btn_save,btn_add,btn_remove,table,i):
+    def setButtonActions(self,btn_edit,btn_save,btn_add,btn_remove,table,i,c=None,v=None):
         icons_path = self.utils.iconsPath()
         btn_edit.setIcon(QIcon(icons_path['pen-to-square']))
         btn_edit.setIconSize(QtCore.QSize(20, 20))
@@ -856,7 +1109,7 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
         btn_add.setIcon(QIcon(icons_path['add_plus']))
         btn_add.setIconSize(QtCore.QSize(20, 20))
         btn_add.setToolTip('Añadir Registro')
-        btn_add.clicked.connect(lambda: self.addNewDataRow(table))
+        btn_add.clicked.connect(lambda: self.addNewDataRow(table,c,v))
         btn_remove.setIcon(QIcon(icons_path['drop_rel']))
         btn_remove.setIconSize(QtCore.QSize(20, 20))
         btn_remove.setToolTip('Eliminar Registro')
@@ -865,6 +1118,7 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
 
             
     def loadData(self,i):
+        self.editStatus = False
         if i == None:
             # print(i)
             sql = 'select * from analisis.textura order by idtextura '
@@ -901,6 +1155,18 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
             # print(i)
             sql = 'select distinct m.id,m.suelo, t.grupo_label tipo_suelo,m.tipo ,m.limite_inferior , m.limite_superior , m.incremento from analisis.magnesio m left join analisis.textura t on t.grupo = m.suelo order by m.suelo '
             self.tools.populateTable(sql,self.tableWidget_8)
+        elif i == 8:
+            # print(i)
+            sql = 'select * from analisis.potasio order by id'
+            self.tools.populateTable(sql,self.tableWidget_9)
+        elif i == 9:
+            # print(i)
+            sql = 'select * from analisis.sodio order by id'
+            self.tools.populateTable(sql,self.tableWidget_10)
+        elif i == 10:
+            # print(i)
+            sql = 'select * from analisis.nitrogeno order by id'
+            self.tools.populateTable(sql,self.tableWidget_11)
 
     def editionMode(self,table,b1,b2,b3): 
         if self.editStatus == False:
@@ -922,7 +1188,7 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
             b3.setEnabled(False)
 
     
-    def addNewDataRow(self,table): 
+    def addNewDataRow(self,table,c=None,v=None): 
         # print('TEST ADD')
         delegate = ColorDelegateGreen(table)
 
@@ -930,7 +1196,11 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
         rowCount = table.rowCount()
         
         table.setItem(rowCount-1,0, QTableWidgetItem(str(int(table.item(rowCount-2,0).text())+1)))
-        table.setItem(rowCount-1,4, QTableWidgetItem(str(table.item(rowCount-2,5).text())))
+        if c != None and v != None:
+            if table.item(rowCount-2, v) != None:
+                table.setItem(rowCount-1,c, QTableWidgetItem(str(table.item(rowCount-2,v).text())))
+            else: 
+                pass
         rowCount = table.rowCount()-1
         table.setItemDelegateForRow(rowCount, delegate)
 

@@ -1736,7 +1736,7 @@
       <item>
        <widget class="QPushButton" name="an_params">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="text">
          <string/>
@@ -1809,67 +1809,67 @@
      </column>
      <column>
       <property name="text">
-       <string>1 COD</string>
+       <string>COD</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>2 N</string>
+       <string>N</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>3 P</string>
+       <string>P</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>4 K</string>
+       <string>K</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>5 pH</string>
+       <string>pH</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>6 CE</string>
+       <string>CE</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>7 Carbon</string>
+       <string>Carbon</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>8 CEap</string>
+       <string>CEap</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>9 Caliza</string>
+       <string>Caliza</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>10 CA</string>
+       <string>CA</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>11 MG</string>
+       <string>MG</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>12 NA</string>
+       <string>NA</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>13 ORGANI</string>
+       <string>ORGANI</string>
       </property>
      </column>
     </widget>
