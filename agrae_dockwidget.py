@@ -25,6 +25,8 @@ import os
 import csv
 import pandas as pd
 import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 # from datetime import date
 
 from psycopg2 import OperationalError,InterfaceError, errors, extras
@@ -36,7 +38,7 @@ from qgis.PyQt.QtCore import pyqtSignal, QSettings
 from qgis.core import *
 from qgis.utils import iface
 from .agrae_dialogs import agraeSegmentoDialog, agraeParametrosDialog
-from .utils import AgraeUtils, AgraeToolset
+from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic
 
 from .agraeTools import agraeToolset
 from .resources import *
@@ -818,6 +820,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         self.utils = AgraeUtils()
         self.tools = AgraeToolset()
+        self.analitic = AgraeAnalitic()
         self.conn = self.utils.Conn()
         self.style = self.utils.styleSheet()
         self.idlote = None
@@ -935,6 +938,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_reporte.clicked.connect(self.crearReporte)
     
         self.btn_add_layer.clicked.connect(self.cargarLote)
+
 
         self.btn_reload.setIcon(QIcon(icons_path['reload_data']))
         self.btn_reload.setIconSize(QtCore.QSize(20, 20))
@@ -1715,6 +1719,15 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             # NA_F = round((NA_eq/cic),2)
             NA_F = round((1-(CA_F+MG_F+K_F)/100),2)
             self.na_f_lbl.setText('{} %'.format((NA_F)))
+            ph = float(self.tableWidget_3.item(i, 5).text())
+            self.valueClass('ph', ph, 'tipo','limite_inferior','limite_superior', self.tableWidget_4,0,1)
+            ce = float(self.tableWidget_3.item(i, 6).text())
+            self.valueClass('conductividad_electrica', ce, 'tipo','limite_i','limite_s', self.tableWidget_4,1,1)
+            self.valueClass('conductividad_electrica', ce, 'influencia','limite_i','limite_s', self.tableWidget_4,1,2)
+            caliza = float(self.tableWidget_3.item(i, 9).text())
+            self.valueClass('caliza_activa', caliza, 'tipo','limite_i','limite_s', self.tableWidget_4,2,1)
+            nitrogeno = float(self.tableWidget_3.item(i, 2).text())
+            self.valueClass('nitrogeno', nitrogeno, 'tipo','limite_inferior', 'limite_superior', self.tableWidget_4, 3, 1)
         except AttributeError as ar: 
             print(ar)
             pass
@@ -1726,8 +1739,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
 
         
-        print(self.seg_combo.itemText(i))
-        print(self.seg_combo.itemData(i)) 
+        # print(self.seg_combo.itemText(i))
+        # print(self.seg_combo.itemData(i)) 
 
     def onChangeTableData(self):
         
@@ -1743,7 +1756,15 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.k_f_lbl.setText('')
         self.na_f_lbl.setText('')
 
-
+    def valueClass(self, table, value, clase, li, ls, widget, row, column, id='id'):
+        clase = self.analitic.classification(table=table,value=value,clase=clase,li=li,ls=ls)
+        # id = self.analitic.classification(
+        #     table=table, value=value, clase=id)
+        i_value =QTableWidgetItem(str(value))
+        i_clase = QTableWidgetItem(str(clase))
+        widget.setItem(row,0,i_value)
+        widget.setItem(row,column,i_clase)
+        pass
 
 class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog): 
 

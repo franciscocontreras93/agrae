@@ -1,4 +1,5 @@
 import os
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QGuiApplication
@@ -11,6 +12,8 @@ from qgis.core import *
 from psycopg2 import OperationalError, InterfaceError, errors, extras,connect
 
 import pandas as pd
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 
 from .dbconn import DbConnection
 
@@ -780,3 +783,45 @@ class AgraeToolset():
             variable = False
             button.setEnabled(False)
             print('nada')
+
+
+class AgraeAnalitic(): 
+    def __init__(self):
+        self.s = QSettings('agrae', 'dbConnection')
+        self.dns = {
+            'dbname': self.s.value('dbname'),
+            'user': self.s.value('dbuser'),
+            'password': self.s.value('dbpass'),
+            'host': self.s.value('dbhost'),
+            'port': self.s.value('dbport')
+        }
+        self.conn = DbConnection.connection(
+            self.dns['dbname'], self.dns['user'], self.dns['password'], self.dns['host'], self.dns['port'])
+        pass
+    
+    def classification(self,table,value,clase,li,ls): 
+        sql = 'select * from analisis.{} where {} between {} and {}'.format(table,value,li,ls)
+        with self.conn: 
+            cursor = self.conn.cursor(cursor_factory=extras.RealDictCursor)
+            cursor.execute(sql)
+            data = cursor.fetchone()
+            
+            return data[clase]
+       
+        
+    def phColor(self,l):
+        colors = {
+            1: 'rgb(250, 55, 13)',
+            2: 'rgb(250, 121, 13)',
+            3: 'rgb(250, 211, 13)',
+            4: 'rgb(125, 250, 13)',
+            5: 'rgb(250, 121, 13)',
+            6:  'rgb(22, 200, 13)',
+            7:  'rgb(13, 186, 200)',
+            8:  'rgb(13, 95, 200)',
+            9:  'rgb(115, 13, 200)'
+
+        } 
+        if l in colors: 
+            return colors[l]
+

@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import *
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import pyqtSignal
 
-from .utils import AgraeUtils,AgraeToolset
+from .utils import AgraeUtils, AgraeToolset
 
 agraeSegmentoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/parcela_dialog.ui'))
 
@@ -57,6 +57,7 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
 
         self.tools = AgraeToolset()
         self.utils = AgraeUtils()
+        
         self.conn = self.utils.Conn()
         
         self.editStatus = False
