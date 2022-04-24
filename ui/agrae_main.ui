@@ -2372,6 +2372,11 @@
        </row>
        <row>
         <property name="text">
+         <string>Carbonatos</string>
+        </property>
+       </row>
+       <row>
+        <property name="text">
          <string>Caliza Activa </string>
         </property>
        </row>
@@ -2392,7 +2397,7 @@
        </column>
        <column>
         <property name="text">
-         <string>Influencia</string>
+         <string>Inf / Inc</string>
         </property>
        </column>
        <item row="0" column="1">

@@ -967,6 +967,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         self.tableWidget_3.setColumnHidden(0, True)
         self.tableWidget_3.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        self.tableWidget_4.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
         self.seg_combo.currentIndexChanged.connect(self.onChangeComboSemento)
         # for i in range(0,9): 
@@ -1724,10 +1725,16 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             ce = float(self.tableWidget_3.item(i, 6).text())
             self.valueClass('conductividad_electrica', ce, 'tipo','limite_i','limite_s', self.tableWidget_4,1,1)
             self.valueClass('conductividad_electrica', ce, 'influencia','limite_i','limite_s', self.tableWidget_4,1,2)
+            carbonato = float(self.tableWidget_3.item(i, 7).text())
+            self.valueClass('carbonatos', carbonato, 'tipo',
+                            'limite_inferior', 'limite_superior', self.tableWidget_4, 2, 1)
             caliza = float(self.tableWidget_3.item(i, 9).text())
-            self.valueClass('caliza_activa', caliza, 'tipo','limite_i','limite_s', self.tableWidget_4,2,1)
+            self.valueClass('caliza_activa', caliza, 'tipo',
+                            'limite_i', 'limite_s', self.tableWidget_4, 3, 1)
             nitrogeno = float(self.tableWidget_3.item(i, 2).text())
-            self.valueClass('nitrogeno', nitrogeno, 'tipo','limite_inferior', 'limite_superior', self.tableWidget_4, 3, 1)
+            self.valueClass('nitrogeno', nitrogeno, 'tipo','limite_inferior', 'limite_superior', self.tableWidget_4, 4, 1)
+            self.valueClass('nitrogeno', nitrogeno, 'incremento','limite_inferior', 'limite_superior', self.tableWidget_4, 4, 2)
+
         except AttributeError as ar: 
             print(ar)
             pass

@@ -61,11 +61,6 @@ except:
     pip.main(['install', 'matplotlib'])
     import matplotlib as mpl
     import matplotlib.pyplot as plt
-# try: 
-#     import seaborn as sns
-# except:
-#     pip.main(['install', 'seaborn'])
-#     import seaborn as sns
 
     
 
