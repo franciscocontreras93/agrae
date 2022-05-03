@@ -37,7 +37,7 @@ from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QSettings
 from qgis.core import *
 from qgis.utils import iface
-from .agrae_dialogs import agraeSegmentoDialog, agraeParametrosDialog
+from .agrae_dialogs import agraeSegmentoDialog, agraeParametrosDialog, cultivoFindDialog
 from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic
 
 from .agraeTools import agraeToolset
@@ -696,116 +696,6 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         else: 
             QMessageBox.about(self, "Error:", "Debes rellenar todos los campos")
 
-
-class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
-
-    closingPlugin = pyqtSignal()
-    getIdCultivo = pyqtSignal(int)
-
-    def __init__(self, parent=None):
-        """Constructor."""
-        super(cultivoFindDialog, self).__init__(parent)
-        self.utils = AgraeUtils()
-        self.conn = self.utils.Conn()
-        self.setupUi(self)
-        self.UIcomponents()
-        
-
-
-    def UIcomponents(self):
-        icons_path = self.utils.iconsPath()
-        data = self.dataAuto()
-        lista = [e[0] for e in data]
-        # print(lista)
-        completer = QCompleter(lista)
-        completer.setCaseSensitivity(False)
-
-        self.lineEdit.setClearButtonEnabled(True)
-        line_buscar_action = self.lineEdit.addAction(
-            QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
-        line_buscar_action.triggered.connect(self.buscar)
-
-        # self.lineEdit.returnPressed.connect(self.buscar)
-
-        
-        # self.btn_buscar.clicked.connect(self.buscar)
-        self.lineEdit.setCompleter(completer)
-
-    
-
-        self.tableWidget.horizontalHeader().setStretchLastSection(True)
-        self.pushButton.clicked.connect(self.selectIdCultivo)
-        self.pushButton.setIconSize(QtCore.QSize(20, 20))
-        self.pushButton.setIcon(QIcon(icons_path['share']))
-
-    
-    def selectIdCultivo(self): 
-        row = self.tableWidget.currentRow()
-        idCultivo = int(self.tableWidget.item(row,0).text())
-        self.getIdCultivo.emit(idCultivo)
-        self.close()
-    
-    def closeEvent(self, event):
-        self.closingPlugin.emit()
-        event.accept()
-
-    def data(self, filtro=None):
-        if filtro == None:
-            cursor = self.conn.cursor()
-            sql = "select idcultivo,nombre from cultivo order by idcultivo"
-            cursor.execute(sql)
-            data = cursor.fetchall()
-        else:
-            cursor = self.conn.cursor()
-            sql = f"select idcultivo,nombre from cultivo where nombre ilike '%{filtro}%' order by idcultivo"
-            cursor.execute(sql)
-            data = cursor.fetchall()
-        if len(data) >= 1:
-            return data
-        elif len(data) == 0:
-            data = [0, 0]
-            return data
-
-    def dataAuto(self):
-        cursor = self.conn.cursor()
-        sql = "select nombre from cultivo"
-        cursor.execute(sql)
-        data = cursor.fetchall()
-        return data
-
-
-    def populate(self, data):
-        try:
-            a = len(data)
-            b = len(data[0])
-            i = 1
-            j = 1
-            self.tableWidget.setRowCount(a)
-            self.tableWidget.setColumnCount(b)
-            for j in range(a):
-                for i in range(b):
-                    item = QTableWidgetItem(str(data[j][i]))
-                    self.tableWidget.setItem(j, i, item)
-        except:
-            QMessageBox.about(self, "Error:", "No Existen Registros")
-            # print('error')
-
-    def loadData(self, param=None):
-        if param == None:
-            data = self.data()
-            self.populate(data)
-        else:
-            data = self.data(param)
-            self.populate(data)
-        pass
-
-    def buscar(self):
-        filtro = self.lineEdit.text()
-        if filtro != '':
-            self.loadData(filtro)
-        pass
-    
-    
 class ReadOnlyDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         return

@@ -11,6 +11,199 @@ from .utils import AgraeUtils, AgraeToolset
 agraeSegmentoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/parcela_dialog.ui'))
 
 agraeParametrosDialog, _ =  uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/params_dialog.ui'))
+agraeCultivoDialog, _ = uic.loadUiType(os.path.join(
+    os.path.dirname(__file__), 'ui/dialogs/cultivo_dialog.ui'))
+
+
+class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
+
+    closingPlugin = pyqtSignal()
+    getIdCultivo = pyqtSignal(int)
+
+    def __init__(self, parent=None):
+        """Constructor."""
+        super(cultivoFindDialog, self).__init__(parent)
+        self.utils = AgraeUtils()
+        self.conn = self.utils.Conn()
+        self.setupUi(self)
+        self.UIcomponents()
+        self.editStatus = False
+        self.initialRowCount = None
+
+    def UIcomponents(self):
+        icons_path = self.utils.iconsPath()
+        data = self.dataAuto()
+        lista = [e[0] for e in data]
+        # print(lista)
+        completer = QCompleter(lista)
+        completer.setCaseSensitivity(False)
+
+        self.lineEdit.setClearButtonEnabled(True)
+        line_buscar_action = self.lineEdit.addAction(
+            QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
+        line_buscar_action.triggered.connect(self.buscar)
+
+
+        # self.lineEdit.returnPressed.connect(self.buscar)
+
+        # self.btn_buscar.clicked.connect(self.buscar)
+        self.lineEdit.setCompleter(completer)
+
+        self.tableWidget.horizontalHeader().setStretchLastSection(True)
+        self.pushButton.clicked.connect(self.selectIdCultivo)
+        self.pushButton.setIconSize(QtCore.QSize(20, 20))
+        self.pushButton.setIcon(QIcon(icons_path['share']))
+
+        self.edit_btn.setIcon(QIcon(icons_path['pen-to-square']))
+        self.edit_btn.setIconSize(QtCore.QSize(20, 20))
+        self.edit_btn.setToolTip('Editar Valores')
+        self.edit_btn.clicked.connect(lambda:  self.editionMode(self.tableWidget))
+        
+        self.save_btn.setIcon(QIcon(icons_path['save']))
+        self.save_btn.setIconSize(QtCore.QSize(20, 20))
+        self.save_btn.setToolTip('Editar Valores')
+        self.save_btn.clicked.connect(lambda:  self.editionMode(self.tableWidget))
+        
+            
+       
+
+    def selectIdCultivo(self):
+        row = self.tableWidget.currentRow()
+        idCultivo = int(self.tableWidget.item(row, 0).text())
+        self.getIdCultivo.emit(idCultivo)
+        self.close()
+
+    def closeEvent(self, event):
+        self.closingPlugin.emit()
+        event.accept()
+
+    def data(self, filtro=None):
+        if filtro == None:
+            cursor = self.conn.cursor()
+            sql = "select  * from cultivo order by idcultivo"
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        else:
+            cursor = self.conn.cursor()
+            sql = f"select * from cultivo where nombre ilike '%{filtro}%' order by idcultivo"
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        if len(data) >= 1:
+            return data
+        elif len(data) == 0:
+            data = [0, 0]
+            return data
+
+    def dataAuto(self):
+        cursor = self.conn.cursor()
+        sql = "select nombre from cultivo"
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        return data
+
+    def populate(self, data):
+        try:
+            # print(data)
+            a = len(data)
+            b = len(data[0])
+            i = 1
+            j = 1
+            self.tableWidget.setRowCount(a)
+            self.tableWidget.setColumnCount(b)
+            for j in range(a):
+                for i in range(b):
+                    item = QTableWidgetItem(str(data[j][i]))
+                    self.tableWidget.setItem(j, i, item)
+            
+            self.tableWidget.setColumnHidden(18, True)
+
+        except:
+            QMessageBox.about(self, "Error:", "No Existen Registros")
+            # print('error')
+
+    def loadData(self, param=None):
+        if param == None:
+            data = self.data()
+            self.populate(data)
+        else:
+            data = self.data(param)
+            self.populate(data)
+        pass
+
+    def buscar(self):
+        filtro = self.lineEdit.text()
+        if filtro != '':
+            self.loadData(filtro)
+        pass
+    
+    def editionMode(self, table):
+        if self.editStatus == False:
+            print('editando')
+            table.setEditTriggers(QAbstractItemView.AllEditTriggers)
+            # delegateCalcio = self.readOnlyColumn(self.tableWidget_7)
+            # self.tableWidget_7.setItemDelegateForColumn(2, delegateCalcio)
+            self.editStatus = True
+            self.initialRowCount = table.rowCount()
+            # self.tableWidget.itemChanged.connect(self.test)
+            # b1.setEnabled(True)
+            # b2.setEnabled(True)
+            # b3.setEnabled(True)
+
+        else:
+            table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+            self.editStatus = False
+            self.initialRowCount = 0
+            # self.tableWidget.itemChanged.disconnect()
+            # b1.setEnabled(False)
+            # b2.setEnabled(False)
+            # b3.setEnabled(False)
+
+    def saveData(self):         
+        confirm = QMessageBox.question(
+            self, 'aGrae GIS', f"Seguro quiere Actualizar Los valores de textura?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if confirm == QMessageBox.Yes:           
+            for r in range(self.tableWidget.rowCount()):
+                id = self.tableWidget.item(r, 0).text()
+                categoria = self.tableWidget.item(r, 1).text()
+                grupo = self.tableWidget.item(r, 2).text()
+                arena_i = self.tableWidget.item(r, 3).text()
+                arena_s = self.tableWidget.item(r, 4).text()
+                limo_i = self.tableWidget.item(r, 5).text()
+                limo_s = self.tableWidget.item(r, 6).text()
+                arcilla_i = self.tableWidget.item(r, 7).text()
+                arcilla_s = self.tableWidget.item(r, 8).text()
+                ceap_i = self.tableWidget.item(r, 9).text()
+                ceap_s = self.tableWidget.item(r, 10).text()
+                cra = self.tableWidget.item(r, 11).text()
+                hsg = self.tableWidget.item(r, 12).text()
+                grupo_label = self.tableWidget.item(r, 13).text()
+                sql = f"""update analisis.textura set 
+                        categoria = '{categoria}',
+                        grupo = {grupo},
+                        arena_i = {arena_i},
+                        arena_s = {arena_s},
+                        limo_i = {limo_i},
+                        limo_s = {limo_s},
+                        arcilla_i = {arcilla_i},
+                        arcilla_s = {arcilla_s},
+                        ceap_i = {ceap_i}, 
+                        ceap_s = {ceap_s},
+                        cra_cod = {cra},
+                        hsg = '{hsg}',
+                        grupo_label = '{grupo_label}'
+                        where idtextura = {id}
+                        """
+                with self.conn:
+                    try:
+                        cursor = self.conn.cursor()
+                        cursor.execute(sql)
+                        self.conn.commit()
+                    except Exception as ex:
+                        print(ex)
+
+    def test(self,item):
+        print('Cambio en Columna {} Fila {}'.format(item.column(),item.row()))
+        pass
 
 class agraeSegmentoDialog(QtWidgets.QDialog, agraeSegmentoDialog):
 
