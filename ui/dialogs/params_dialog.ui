@@ -41,7 +41,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>10</number>
+    <number>11</number>
    </property>
    <property name="tabsClosable">
     <bool>false</bool>
@@ -732,7 +732,7 @@
        <x>10</x>
        <y>10</y>
        <width>711</width>
-       <height>331</height>
+       <height>251</height>
       </rect>
      </property>
      <property name="sizeAdjustPolicy">
@@ -835,6 +835,55 @@
       </item>
      </layout>
     </widget>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>270</y>
+       <width>331</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Tipo Suelo</string>
+     </property>
+     <widget class="QWidget" name="horizontalLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>311</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QRadioButton" name="arenoso_radio">
+         <property name="text">
+          <string>Arenoso</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="franco_radio">
+         <property name="text">
+          <string>Franco</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="arcilloso_radio">
+         <property name="text">
+          <string>Arcilloso</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </widget>
    <widget class="QWidget" name="tab_6">
     <attribute name="title">
@@ -898,7 +947,7 @@
        <x>10</x>
        <y>10</y>
        <width>711</width>
-       <height>331</height>
+       <height>251</height>
       </rect>
      </property>
      <property name="sizeAdjustPolicy">
@@ -951,6 +1000,55 @@
        <string>Incremento</string>
       </property>
      </column>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>270</y>
+       <width>331</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Tipo Suelo</string>
+     </property>
+     <widget class="QWidget" name="horizontalLayoutWidget_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>311</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QRadioButton" name="arenoso_radio_2">
+         <property name="text">
+          <string>Arenoso</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="franco_radio_2">
+         <property name="text">
+          <string>Franco</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="arcilloso_radio_2">
+         <property name="text">
+          <string>Arcilloso</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </widget>
    <widget class="QWidget" name="tab_7">
@@ -1015,7 +1113,7 @@
        <x>10</x>
        <y>10</y>
        <width>711</width>
-       <height>331</height>
+       <height>251</height>
       </rect>
      </property>
      <property name="sizeAdjustPolicy">
@@ -1040,12 +1138,22 @@
      </column>
      <column>
       <property name="text">
-       <string>Regimen</string>
+       <string>G. Regimen</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Tipo Regimen</string>
       </property>
      </column>
      <column>
       <property name="text">
        <string>G. Suelo</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Tipo Suelo</string>
       </property>
      </column>
      <column>
@@ -1073,6 +1181,104 @@
        <string>Inc</string>
       </property>
      </column>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>270</y>
+       <width>241</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Tipo Suelo</string>
+     </property>
+     <widget class="QWidget" name="horizontalLayoutWidget_3">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>211</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QRadioButton" name="arenoso_radio_3">
+         <property name="text">
+          <string>Arenoso</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="franco_radio_3">
+         <property name="text">
+          <string>Franco</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="arcilloso_radio_3">
+         <property name="text">
+          <string>Arcilloso</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_4">
+     <property name="geometry">
+      <rect>
+       <x>270</x>
+       <y>270</y>
+       <width>241</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Tipo Regimen</string>
+     </property>
+     <widget class="QWidget" name="horizontalLayoutWidget_4">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>226</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QRadioButton" name="regadio_radio">
+         <property name="text">
+          <string>Regadio</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="semi_radio">
+         <property name="text">
+          <string>Semi-Regadio</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="secano_radio">
+         <property name="text">
+          <string>Secano</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </widget>
    <widget class="QWidget" name="tab_9">
@@ -1137,7 +1343,7 @@
        <x>10</x>
        <y>10</y>
        <width>711</width>
-       <height>331</height>
+       <height>251</height>
       </rect>
      </property>
      <property name="sizeAdjustPolicy">
@@ -1185,6 +1391,55 @@
        <string>Incremento</string>
       </property>
      </column>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_5">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>270</y>
+       <width>331</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Tipo Suelo</string>
+     </property>
+     <widget class="QWidget" name="horizontalLayoutWidget_5">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>311</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <item>
+        <widget class="QRadioButton" name="arenoso_radio_4">
+         <property name="text">
+          <string>Arenoso</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="franco_radio_4">
+         <property name="text">
+          <string>Franco</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="arcilloso_radio_4">
+         <property name="text">
+          <string>Arcilloso</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </widget>
    <widget class="QWidget" name="tab_10">
@@ -1292,6 +1547,268 @@
        </widget>
       </item>
      </layout>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_12">
+    <attribute name="title">
+     <string>Fosforo</string>
+    </attribute>
+    <widget class="QTableWidget" name="tableWidget_12">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>711</width>
+       <height>251</height>
+      </rect>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QAbstractScrollArea::AdjustToContentsOnFirstShow</enum>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="alternatingRowColors">
+      <bool>true</bool>
+     </property>
+     <attribute name="horizontalHeaderDefaultSectionSize">
+      <number>178</number>
+     </attribute>
+     <attribute name="horizontalHeaderMinimumSectionSize">
+      <number>56</number>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>id</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Metodo</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>regimen</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Suelo</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Tipo</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Li</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Ls</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Incremento</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QWidget" name="verticalLayoutWidget_14">
+     <property name="geometry">
+      <rect>
+       <x>730</x>
+       <y>10</y>
+       <width>34</width>
+       <height>211</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_14">
+      <item>
+       <widget class="QPushButton" name="an_edit_fosforo">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="an_save_fosforo">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="an_add_fosforo">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="an_remove_fosforo">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_6">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>280</y>
+       <width>241</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Tipo Suelo</string>
+     </property>
+     <widget class="QWidget" name="horizontalLayoutWidget_6">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>211</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <item>
+        <widget class="QRadioButton" name="arenoso_radio_5">
+         <property name="text">
+          <string>Arenoso</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="franco_radio_5">
+         <property name="text">
+          <string>Franco</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="arcilloso_radio_5">
+         <property name="text">
+          <string>Arcilloso</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_7">
+     <property name="geometry">
+      <rect>
+       <x>480</x>
+       <y>280</y>
+       <width>241</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Tipo Regimen</string>
+     </property>
+     <widget class="QWidget" name="horizontalLayoutWidget_7">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>226</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
+       <item>
+        <widget class="QRadioButton" name="regadio_radio_2">
+         <property name="text">
+          <string>Regadio</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="semi_radio_2">
+         <property name="text">
+          <string>Semi-Regadio</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="secano_radio_2">
+         <property name="text">
+          <string>Secano</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_8">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>280</y>
+       <width>191</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Metodo</string>
+     </property>
+     <widget class="QWidget" name="horizontalLayoutWidget_9">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>171</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_9">
+       <item>
+        <widget class="QRadioButton" name="metodo1_radio">
+         <property name="text">
+          <string>1</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="metodo2_radio">
+         <property name="text">
+          <string>2</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </widget>
   </widget>

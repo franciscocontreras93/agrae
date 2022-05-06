@@ -321,17 +321,49 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
         self.tableWidget_8.horizontalHeader().setSectionResizeMode(6, QtWidgets.QHeaderView.Stretch)
 
 
-        self.tableWidget_9.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-        self.tableWidget_9.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
-        self.tableWidget_9.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+        self.tableWidget_9.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        self.tableWidget_9.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        self.tableWidget_9.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)
         self.tableWidget_9.horizontalHeader().setSectionResizeMode(4, QtWidgets.QHeaderView.ResizeToContents)
         self.tableWidget_9.horizontalHeader().setSectionResizeMode(5, QtWidgets.QHeaderView.Stretch)
         self.tableWidget_9.horizontalHeader().setSectionResizeMode(6, QtWidgets.QHeaderView.Stretch)
+        self.tableWidget_9.horizontalHeader().setSectionResizeMode(7, QtWidgets.QHeaderView.Stretch)
+        self.tableWidget_9.horizontalHeader().setSectionResizeMode(8, QtWidgets.QHeaderView.Stretch)
+        self.tableWidget_9.horizontalHeader().setSectionResizeMode(9, QtWidgets.QHeaderView.Stretch)
         
 
 
         
+        self.arenoso_radio.clicked.connect(lambda: self.check_suelo(6,1))
+        self.franco_radio.clicked.connect(lambda: self.check_suelo(6,2))
+        self.arcilloso_radio.clicked.connect(lambda: self.check_suelo(6,3))
         
+        self.arenoso_radio_2.clicked.connect(lambda: self.check_suelo(7,1))
+        self.franco_radio_2.clicked.connect(lambda: self.check_suelo(7,2))
+        self.arcilloso_radio_2.clicked.connect(lambda: self.check_suelo(7,3))
+
+        self.arenoso_radio_3.clicked.connect(lambda: self.check_suelo(8,1,r1=self.regadio_radio,r2=self.semi_radio,r3=self.secano_radio,regimen=True))
+        self.franco_radio_3.clicked.connect(lambda: self.check_suelo(8,2,r1=self.regadio_radio,r2=self.semi_radio,r3=self.secano_radio,regimen=True))
+        self.arcilloso_radio_3.clicked.connect(lambda: self.check_suelo(8, 3, r1=self.regadio_radio, r2=self.semi_radio, r3=self.secano_radio, regimen=True))        
+        self.regadio_radio.clicked.connect(lambda: self.check_regimen(8,1,r1=self.arenoso_radio_3,r2=self.franco_radio_3,r3=self.arcilloso_radio_3))
+        self.semi_radio.clicked.connect(lambda: self.check_regimen(8,2,r1=self.arenoso_radio_3,r2=self.franco_radio_3,r3=self.arcilloso_radio_3))
+        self.secano_radio.clicked.connect(lambda: self.check_regimen(8,3,r1=self.arenoso_radio_3,r2=self.franco_radio_3,r3=self.arcilloso_radio_3))
+
+        self.arenoso_radio_4.clicked.connect(lambda: self.check_suelo(9, 1))
+        self.franco_radio_4.clicked.connect(lambda: self.check_suelo(9, 2))
+        self.arcilloso_radio_4.clicked.connect(lambda: self.check_suelo(9, 3))
+
+
+        self.metodo1_radio.clicked.connect(lambda: self.check_metodo(11,1,r1=self.regadio_radio_2,r2=self.semi_radio_2,r3=self.secano_radio_2,s1=self.arenoso_radio_5,s2=self.franco_radio_5,s3=self.arcilloso_radio_5))
+        self.metodo2_radio.clicked.connect(lambda: self.check_metodo(11,2,r1=self.regadio_radio_2,r2=self.semi_radio_2,r3=self.secano_radio_2,s1=self.arenoso_radio_5,s2=self.franco_radio_5,s3=self.arcilloso_radio_5))
+
+
+
+
+        self.regadio_radio_2.clicked.connect(lambda: self.check_regimen(8,1,s1=self.arenoso_radio_5,s2=self.franco_radio_5,s3=self.arcilloso_radio_5,metodo=True))
+        self.semi_radio_2.clicked.connect(lambda: self.check_regimen(8,2,s1=self.arenoso_radio_5,s2=self.franco_radio_5,s3=self.arcilloso_radio_5,metodo=True))
+        self.secano_radio_2.clicked.connect(lambda: self.check_regimen(
+            8, 3, s1=self.arenoso_radio_5, s2=self.franco_radio_5, s3=self.arcilloso_radio_5, metodo=True))
         pass
     
 
@@ -889,7 +921,7 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
         # CALCIO
         elif i == 6: 
             confirm = QMessageBox.question(
-                self, 'aGrae GIS', f"Seguro quiere Actualizar Los valores de Carbonatos?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                self, 'aGrae GIS', f"Seguro quiere Actualizar Los valores de Calcio?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if confirm == QMessageBox.Yes:
                 try:
                     for r in range(self.initialRowCount):
@@ -963,7 +995,7 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
                                      self.an_add_calcio, self.an_remove_calcio)
 
                     self.utils.msgBar(
-                        'Parametros de Carbonatos Actualizados Correctamente', 3, 5)
+                        'Parametros de Calcio Actualizados Correctamente', 3, 5)
 
                 except Exception as ex:
                     print(ex)
@@ -1059,12 +1091,12 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
                     for r in range(self.initialRowCount):
                         id = self.tableWidget_9.item(r, 0).text()
                         regimen = self.tableWidget_9.item(r, 1).text()
-                        suelo = self.tableWidget_9.item(r, 2).text()
-                        nivel = self.tableWidget_9.item(r, 3).text()
-                        tipo = self.tableWidget_9.item(r, 4).text()
-                        li = self.tableWidget_9.item(r, 5).text()
-                        ls = self.tableWidget_9.item(r, 6).text()
-                        incremento = self.tableWidget_9.item(r, 7).text()
+                        suelo = self.tableWidget_9.item(r, 3).text()
+                        nivel = self.tableWidget_9.item(r, 5).text()
+                        tipo = self.tableWidget_9.item(r, 6).text()
+                        li = self.tableWidget_9.item(r, 7).text()
+                        ls = self.tableWidget_9.item(r, 8).text()
+                        incremento = self.tableWidget_9.item(r, 9).text()
                         if incremento == 'None':
                             incremento = 0
                         sql = f"""update analisis.potasio set
@@ -1088,12 +1120,12 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
                         for r in range(self.initialRowCount, self.tableWidget_9.rowCount()):
                             if self.tableWidget_9.item(r, 1) != None and self.tableWidget_9.item(r, 2) != None and self.tableWidget_9.item(r, 3) != None:
                                 regimen = self.tableWidget_9.item(r, 1).text()
-                                suelo = self.tableWidget_9.item(r, 2).text()
-                                nivel = self.tableWidget_9.item(r, 3).text()
-                                tipo = self.tableWidget_9.item(r, 4).text()
-                                li = self.tableWidget_9.item(r, 5).text()
-                                ls = self.tableWidget_9.item(r, 6).text()
-                                incremento = self.tableWidget_9.item(r, 7).text()
+                                suelo = self.tableWidget_9.item(r, 3).text()
+                                nivel = self.tableWidget_9.item(r, 5).text()
+                                tipo = self.tableWidget_9.item(r, 6).text()
+                                li = self.tableWidget_9.item(r, 7).text()
+                                ls = self.tableWidget_9.item(r, 8).text()
+                                incremento = self.tableWidget_9.item(r, 9).text()
                                 sql = f"""insert into analisis.potasio(regimen,suelo,nivel,tipo,limite_inferior,limite_superior,incremento) 
                                 values({regimen},{suelo},{nivel},'{tipo}',{li},{ls},{incremento})"""
                                 with self.conn:
@@ -1290,6 +1322,84 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
                 except:
                     pass
     
+        elif i == 11:
+            confirm = QMessageBox.question(
+                self, 'aGrae GIS', f"Seguro quiere Actualizar Los valores de Magnesio?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if confirm == QMessageBox.Yes:
+                try:
+                    for r in range(self.initialRowCount):
+                        id = self.tableWidget_11.item(r, 0).text()
+                        tipo = self.tableWidget_11.item(r, 1).text()
+                        li = self.tableWidget_11.item(r, 2).text()
+                        ls = self.tableWidget_11.item(r, 3).text()
+                        incremento = self.tableWidget_11.item(r, 4).text()
+                        if incremento == 'None':
+                            incremento = 0
+                        sql = f"""update analisis.nitrogeno set
+                                tipo = '{tipo}',
+                                limite_inferior = {li},
+                                limite_superior = {ls},
+                                incremento = {incremento}
+                                where id = {id}
+                                """
+                        with self.conn:
+                            try:
+                                cursor = self.conn.cursor()
+                                cursor.execute(sql)
+                                self.conn.commit()
+                            except Exception as ex:
+                                print(ex)
+                    if self.tableWidget_11.rowCount() > self.initialRowCount:
+                        for r in range(self.initialRowCount, self.tableWidget_11.rowCount()):
+                            if self.tableWidget_11.item(r, 1) != None:
+                                tipo = self.tableWidget_11.item(r, 1).text()
+                                li = self.tableWidget_11.item(r, 2).text()
+                                ls = self.tableWidget_11.item(r, 3).text()
+                                incremento = self.tableWidget_11.item(
+                                    r, 4).text()
+                                sql = f"""insert into analisis.nitrogeno(tipo,limite_inferior,limite_superior,incremento) 
+                                values('{tipo}',{li},{ls},{incremento})"""
+                                with self.conn:
+                                    try:
+                                        cursor = self.conn.cursor()
+                                        cursor.execute(sql)
+                                        self.conn.commit()
+                                    except Exception as ex:
+                                        print('error ingresando')
+                                        print(ex)
+                                        self.conn.rollback()
+                            else:
+                                print('Algo falla')
+                    if len(self.removeIds) > 0:
+                        for r in self.removeIds:
+                            confirm = QMessageBox.question(
+                                self, 'aGrae GIS', f"Desea Borrar los registros?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                            if confirm == QMessageBox.Yes:
+                                sql = f"""delete from analisis.nitrogeno                                
+                                    where id = {int(r)}"""
+                                with self.conn:
+                                    cursor = self.conn.cursor()
+                                    try:
+                                        cursor.execute(sql)
+                                        self.conn.commit()
+                                    except Exception as ex:
+                                        print(ex)
+                                        self.conn.rollback()
+                                for row in self.removeRows:
+                                    self.tableWidget_11.removeRow(row)
+                            else:
+                                pass
+                    self.removeIds = []
+                    self.removeRows = []
+                    self.loadData(i)
+                    self.editionMode(
+                        self.tableWidget_11, self.an_save_nitrogeno, self.an_add_nitrogeno, self.an_remove_nitrogeno)
+                except:
+                    pass
+
+    
+    
+    
     def setButtonActions(self,btn_edit,btn_save,btn_add,btn_remove,table,i,c=None,v=None):
         icons_path = self.utils.iconsPath()
         btn_edit.setIcon(QIcon(icons_path['pen-to-square']))
@@ -1311,7 +1421,7 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
             lambda: self.selectDeleteDataRow(table))
 
             
-    def loadData(self,i):
+    def loadData(self,i,suelo=1,regimen=1,metodo=1):
         self.editStatus = False
         if i == None:
             # print(i)
@@ -1343,24 +1453,47 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
             self.tools.populateTable(sql,self.tableWidget_6)
         elif i == 6:
             # print(i)
-            sql = 'select distinct ca.id,ca.suelo, t.grupo_label tipo_suelo,ca.tipo ,ca.limite_inferior , ca.limite_superior , ca.incremento from analisis.calcio ca left join analisis.textura t on t.grupo = ca.suelo order by ca.suelo  '
-            self.tools.populateTable(sql,self.tableWidget_7)
+            if suelo:
+                sql = 'select distinct ca.id,ca.suelo, t.grupo_label tipo_suelo,ca.tipo ,ca.limite_inferior , ca.limite_superior , ca.incremento from analisis.calcio ca left join analisis.textura t on t.grupo = ca.suelo where ca.suelo = {} order by ca.id  '.format(suelo)
+                self.tools.populateTable(sql, self.tableWidget_7)
+                
+            
         elif i == 7:
             # print(i)
-            sql = 'select distinct m.id,m.suelo, t.grupo_label tipo_suelo,m.tipo ,m.limite_inferior , m.limite_superior , m.incremento from analisis.magnesio m left join analisis.textura t on t.grupo = m.suelo order by m.suelo '
-            self.tools.populateTable(sql,self.tableWidget_8)
+            if suelo: 
+                sql = 'select distinct m.id,m.suelo, t.grupo_label tipo_suelo,m.tipo ,m.limite_inferior , m.limite_superior , m.incremento from analisis.magnesio m left join analisis.textura t on t.grupo = m.suelo where m.suelo = {} order by m.limite_inferior '.format(
+                    suelo)
+                self.tools.populateTable(sql,self.tableWidget_8)
+
         elif i == 8:
             # print(i)
-            sql = 'select * from analisis.potasio order by id'
-            self.tools.populateTable(sql,self.tableWidget_9)
+            if regimen and suelo:
+                sql = 'select distinct k.id,k.regimen,r.nombre, k.suelo,t.grupo_label tipo_suelo, k.nivel,k.tipo, k.limite_inferior, k.limite_superior,k.incremento from analisis.potasio k left join analisis.textura t on t.grupo = k.suelo left join analisis.regimen r on r.id  = k.regimen  where k.regimen = {} and k.suelo = {} order by k.limite_inferior'.format(regimen,suelo)
+                self.tools.populateTable(sql,self.tableWidget_9)
         elif i == 9:
             # print(i)
-            sql = 'select * from analisis.sodio order by id'
-            self.tools.populateTable(sql,self.tableWidget_10)
+            if suelo: 
+                sql = 'select * from analisis.sodio where suelo = {} order by id'.format(suelo)
+                self.tools.populateTable(sql,self.tableWidget_10)
         elif i == 10:
             # print(i)
             sql = 'select * from analisis.nitrogeno order by id'
             self.tools.populateTable(sql,self.tableWidget_11)
+        elif i == 11:
+            # print(i)
+            if metodo == 2:
+                if regimen == 3:  
+                    sql = 'select id,metodo,regimen,suelo,tipo,limite_inferior ,limite_inferior ,incremento from analisis.fosforo f  where metodo = {} and regimen = 2 order by limite_inferior'.format(
+                        metodo)
+                    self.tools.populateTable(sql,self.tableWidget_12)
+                else:
+                    sql = 'select id,metodo,regimen,suelo,tipo,limite_inferior ,limite_inferior ,incremento from analisis.fosforo f  where metodo = {} and regimen = {} order by limite_inferior'.format(
+                        metodo, regimen)
+                    self.tools.populateTable(sql,self.tableWidget_12)
+            else:  
+                sql = 'select id,metodo,regimen,suelo,tipo,limite_inferior ,limite_inferior ,incremento from analisis.fosforo f  where metodo = {} and suelo = {} and regimen = {} order by limite_inferior'.format(
+                    metodo, suelo, regimen)
+                self.tools.populateTable(sql,self.tableWidget_12)
 
     def editionMode(self,table,b1,b2,b3): 
         if self.editStatus == False:
@@ -1427,6 +1560,76 @@ class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog):
     def readOnlyColumn(self,table): 
         delegate = ReadOnlyDelegate(table)
         return delegate
+
+    def check_suelo(self,i,s,r1,r2,r3,regimen=False,metodo=False):
+        if regimen:
+             if r1.isChecked(): 
+                 self.loadData(i, suelo=s,regimen=1)
+             if r2.isChecked(): 
+                 self.loadData(i, suelo=s,regimen=2)
+             if r3.isChecked(): 
+                 self.loadData(i, suelo=s,regimen=3)
+
+        else:
+            self.loadData(i,s)
+            pass
+    def check_regimen(self,i,r,s1,s2,s3,metodo=False):
+        if metodo==True: 
+
+            if s1.isChecked() and self.metodo1_radio.isChecked(): 
+                self.loadData(i,suelo=1,regimen=r,metodo=1)
+            if s2.isChecked() and self.metodo1_radio.isChecked():            
+                self.loadData(i,suelo=2,regimen=r,metodo=1)
+            if s3.isChecked() and self.metodo1_radio.isChecked():
+                self.loadData(i, suelo=3, regimen=r, metodo=1)
+            if s1.isChecked() and self.metodo2_radio.isChecked():
+                self.loadData(i, suelo=1, regimen=r, metodo=2)
+            if s2.isChecked() and self.metodo2_radio.isChecked():
+                self.loadData(i, suelo=2, regimen=r, metodo=2)
+            if s3.isChecked() and self.metodo2_radio.isChecked():
+                self.loadData(i, suelo=3, regimen=r, metodo=2)
+            pass
+        else:
+            if s1.isChecked(): 
+                self.loadData(i,suelo=1,regimen=r)
+            if s2.isChecked():            
+                self.loadData(i,suelo=2,regimen=r)
+            if s3.isChecked():
+                self.loadData(i,suelo=3,regimen=r)
+        pass
+
+    def check_metodo(self,i,m,r1,r2,r3,s1,s2,s3): 
+        if s1.isChecked() and r1.isChecked(): 
+            self.loadData(i,suelo=1,regimen=1,metodo=m)
+            pass
+        elif s1.isChecked() and r2.isChecked():
+            self.loadData(i,suelo=1,regimen=2,metodo=m) 
+            pass
+        elif s1.isChecked() and r3.isChecked():
+            self.loadData(i,suelo=1,regimen=3,metodo=m) 
+            pass
+        elif s2.isChecked() and r1.isChecked():
+            self.loadData(i,suelo=2,regimen=1,metodo=m) 
+            pass
+        elif s2.isChecked() and r2.isChecked():
+            self.loadData(i,suelo=2,regimen=2,metodo=m) 
+            pass
+        elif s2.isChecked() and r3.isChecked():
+            self.loadData(i,suelo=2,regimen=3,metodo=m) 
+            pass
+        elif s3.isChecked() and r1.isChecked():
+            self.loadData(i,suelo=3,regimen=1,metodo=m) 
+            pass
+        elif s3.isChecked() and r2.isChecked():
+            self.loadData(i,suelo=3,regimen=2,metodo=m) 
+            pass
+        elif s3.isChecked() and r3.isChecked():
+            self.loadData(i,suelo=3,regimen=3,metodo=m) 
+            pass
+
+
+        
+
 
 class ColorDelegateRed(QtWidgets.QStyledItemDelegate):
 

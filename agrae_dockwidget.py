@@ -1579,42 +1579,49 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     def onChangeComboSemento(self,i): 
         # print("comboSegmento: Row {} Cod {}".format(self.seg_combo.itemData(),i)
-        try: 
-            organi =  float(self.tableWidget_3.item(i,13).text())
-            cox = organi / 1.32 #! CONSTANTE 1.32 COX
-            self.cox_lbl.setText('{} %'.format(round((cox*100),5)))
-            N = float(self.tableWidget_3.item(i,2).text())
-            rel_cn = cox / N #! VALOR ADIMENSIONAL 
-            self.rel_cn_lbl.setText('{}'.format(round((rel_cn),5)))
-            CA = float(self.tableWidget_3.item(i,10).text())
-            CA_eq = CA / 200 #! CONSTANTE 200 CA_EQ 
-            self.ca_eq_lbl.setText('{} meq/100g'.format(round((CA_eq),5)))
-            MG = float(self.tableWidget_3.item(i,11).text())
-            MG_eq = MG / 120 #! CONSTANTE 120 MG_EQ
+        self.precalculo(i)
+        pass
+    
+    def precalculo(self,i):
+        try:
+            organi = float(self.tableWidget_3.item(i, 13).text())
+            cox = organi / 1.32  # ! CONSTANTE 1.32 COX
+            self.cox_lbl.setText('{} %'.format(round((cox*100), 5)))
+            N = float(self.tableWidget_3.item(i, 2).text())
+            rel_cn = cox / N * 100  # ! VALOR ADIMENSIONAL
+            self.rel_cn_lbl.setText('{}'.format(round((rel_cn), 5)))
+            CA = float(self.tableWidget_3.item(i, 10).text())
+            CA_eq = CA / 200  # ! CONSTANTE 200 CA_EQ
+            self.ca_eq_lbl.setText('{} meq/100g'.format(round((CA_eq), 5)))
+            MG = float(self.tableWidget_3.item(i, 11).text())
+            MG_eq = MG / 120  # ! CONSTANTE 120 MG_EQ
             self.mg_eq_lbl.setText('{} meq/100g'.format(round((MG_eq), 5)))
-            K = float(self.tableWidget_3.item(i,4).text())
-            K_eq = K / 390 #! CONSTANTE K_EQ 
+            K = float(self.tableWidget_3.item(i, 4).text())
+            K_eq = K / 390  # ! CONSTANTE K_EQ
             self.k_eq_lbl.setText('{} meq/100g'.format(round((K_eq), 5)))
-            NA = float(self.tableWidget_3.item(i,12).text())
-            NA_eq = NA / 220 #! CONSTANTE K_EQ 
+            NA = float(self.tableWidget_3.item(i, 12).text())
+            NA_eq = NA / 220  # ! CONSTANTE K_EQ
             self.na_eq_lbl.setText('{} meq/100g'.format(round((NA_eq), 5)))
             datos = [CA_eq, MG_eq, K_eq, NA_eq]
             cic = sum(datos)
             self.cic_lbl.setText('{} meq/100g'.format(round((cic), 5)))
-            CA_F = round((CA_eq/cic),2)
+            CA_F = round((CA_eq/cic), 2)
             self.ca_f_lbl.setText('{} %'.format((CA_F*100)))
-            MG_F = round((MG_eq/cic),2)
+            MG_F = round((MG_eq/cic), 2)
             self.mg_f_lbl.setText('{} %'.format((MG_F*100)))
-            K_F = round((K_eq/cic),2)
+            K_F = round((K_eq/cic), 2)
             self.k_f_lbl.setText('{} %'.format((K_F*100)))
             # NA_F = round((NA_eq/cic),2)
-            NA_F = round((1-(CA_F+MG_F+K_F)/100),2)
+            NA_F = round((1-(CA_F+MG_F+K_F)/100), 2)
             self.na_f_lbl.setText('{} %'.format((NA_F)))
             ph = float(self.tableWidget_3.item(i, 5).text())
-            self.valueClass('ph', ph, 'tipo','limite_inferior','limite_superior', self.tableWidget_4,0,1)
+            self.valueClass('ph', ph, 'tipo', 'limite_inferior',
+                            'limite_superior', self.tableWidget_4, 0, 1)
             ce = float(self.tableWidget_3.item(i, 6).text())
-            self.valueClass('conductividad_electrica', ce, 'tipo','limite_i','limite_s', self.tableWidget_4,1,1)
-            self.valueClass('conductividad_electrica', ce, 'influencia','limite_i','limite_s', self.tableWidget_4,1,2)
+            self.valueClass('conductividad_electrica', ce, 'tipo',
+                            'limite_i', 'limite_s', self.tableWidget_4, 1, 1)
+            self.valueClass('conductividad_electrica', ce, 'influencia',
+                            'limite_i', 'limite_s', self.tableWidget_4, 1, 2)
             carbonato = float(self.tableWidget_3.item(i, 7).text())
             self.valueClass('carbonatos', carbonato, 'tipo',
                             'limite_inferior', 'limite_superior', self.tableWidget_4, 2, 1)
@@ -1622,16 +1629,17 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             self.valueClass('caliza_activa', caliza, 'tipo',
                             'limite_i', 'limite_s', self.tableWidget_4, 3, 1)
             nitrogeno = float(self.tableWidget_3.item(i, 2).text())
-            self.valueClass('nitrogeno', nitrogeno, 'tipo','limite_inferior', 'limite_superior', self.tableWidget_4, 4, 1)
-            self.valueClass('nitrogeno', nitrogeno, 'incremento','limite_inferior', 'limite_superior', self.tableWidget_4, 4, 2)
+            self.valueClass('nitrogeno', nitrogeno, 'tipo', 'limite_inferior',
+                            'limite_superior', self.tableWidget_4, 4, 1)
+            self.valueClass('nitrogeno', nitrogeno, 'incremento',
+                            'limite_inferior', 'limite_superior', self.tableWidget_4, 4, 2)
 
-        except AttributeError as ar: 
+        except AttributeError as ar:
             print(ar)
             pass
-        except ValueError as ve: 
+        except ValueError as ve:
             print(ve)
             pass
-        
 
 
 
