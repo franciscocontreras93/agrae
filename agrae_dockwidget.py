@@ -27,21 +27,28 @@ import pandas as pd
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import psycopg2
 # from datetime import date
 
 from psycopg2 import OperationalError,InterfaceError, errors, extras
-from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QThread
-from PyQt5.QtGui import QRegExpValidator, QIcon, QPixmap
+from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QThread, QAbstractTableModel
+from PyQt5.QtGui import QRegExpValidator, QIcon, QPixmap, QFont
 from PyQt5.QtWidgets import *
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QSettings
 from qgis.core import *
 from qgis.utils import iface
 from .agrae_dialogs import agraeSegmentoDialog, agraeParametrosDialog, cultivoFindDialog
-from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic
+from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic, TableModel
 
 from .agraeTools import agraeToolset
 from .resources import *
+
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from PyQt5 import QtCore, QtWidgets
+import sys
+import matplotlib
 
 
 
@@ -55,6 +62,8 @@ agraeLoteDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/
 agraeLoteParcelaDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/loteparcela_dialog.ui'))
 agraeExpDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/exp_dialog.ui'))
 agraeCultivoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/cultivo_dialog.ui'))
+
+agraeAnaliticaDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/analitica_dialog.ui'))
 
 class agraeDockWidget(QtWidgets.QDockWidget, agraeSidePanel):
     closingPlugin = pyqtSignal()
@@ -109,13 +118,7 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
         self.utils = AgraeUtils()
         self.tools = AgraeToolset()
         self.conn = self.utils.Conn()
-
-        self.idParcela = None
-
-        
-
-
-        
+        self.idParcela = None     
         self.setupUi(self)
         self.UIcomponents()
         self.buscar()
@@ -704,6 +707,7 @@ class ReadOnlyDelegate(QtWidgets.QStyledItemDelegate):
 class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     closingPlugin = pyqtSignal()
+    dataSignal = pyqtSignal(tuple)
     def __init__(self, parent=None):
         """Constructor."""      
         super(agraeMainWidget, self).__init__(parent)  
@@ -750,7 +754,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         # columna geometria lote parcela
-        self.tableWidget.setColumnHidden(6, True) # columna geometria loteparcela
+        # self.tableWidget.setColumnHidden(6, True) # columna geometria loteparcela
         self.tableWidget.setColumnHidden(0, True)  # columna id lote parcela
 
         self.tableWidget_2.horizontalHeader().setStretchLastSection(True)
@@ -769,6 +773,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget_2.setItemDelegateForColumn(7, delegate)
 
         self.line_buscar.setClearButtonEnabled(True)
+        line_buscar_action = self.line_buscar.addAction(
+                    QIcon(icons_path['search_icon_path']), self.line_buscar.TrailingPosition)
+        line_buscar_action.triggered.connect(self.buscarLotes)
         line_par_action = self.ln_par_nombre.addAction(
             QIcon(icons_path['search_icon_path']), self.ln_par_nombre.TrailingPosition)
         line_par_action.triggered.connect(self.parcelaDialog)
@@ -781,12 +788,21 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         line_loteidcultivo_action = self.line_lote_idcultivo.addAction(
             QIcon(icons_path['search_icon_path']), self.line_lote_idcultivo.TrailingPosition)
         line_loteidcultivo_action.triggered.connect(self.cultivoDialog)
-        line_buscar_action = self.line_buscar.addAction(
-                    QIcon(icons_path['search_icon_path']), self.line_buscar.TrailingPosition)
-        line_buscar_action.triggered.connect(self.buscarLotes)
 
         self.btn_add_layer.setIcon(QIcon(icons_path['add_layer_to_map']))
         self.btn_add_layer.setIconSize(QtCore.QSize(20, 20))
+        self.btn_add_layer.clicked.connect(self.cargarLote)
+
+        self.btn_reload.setIcon(QIcon(icons_path['reload_data']))
+        self.btn_reload.setIconSize(QtCore.QSize(20, 20))
+        self.btn_reload.setToolTip('Buscar todos los lotes')
+        self.btn_reload.clicked.connect(self.reloadLotes)
+
+        self.btn_chart.clicked.connect(self.analiticaDialog)
+        self.btn_chart.setIcon(QIcon(icons_path['chart']))
+        self.btn_chart.setIconSize(QtCore.QSize(20, 20))
+        self.btn_chart.setToolTip('Abrir Panel Analisis')
+
         self.btn_add_segmento.setIcon(QIcon(icons_path['add_layer_to_map']))
         self.btn_add_segmento.setToolTip('Agregar Segmento al Mapa')
         self.btn_add_segmento.setIconSize(QtCore.QSize(20, 20))
@@ -827,13 +843,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_reporte.setToolTip('Generar Reporte')
         self.btn_reporte.clicked.connect(self.crearReporte)
     
-        self.btn_add_layer.clicked.connect(self.cargarLote)
+        
 
 
-        self.btn_reload.setIcon(QIcon(icons_path['reload_data']))
-        self.btn_reload.setIconSize(QtCore.QSize(20, 20))
-        self.btn_reload.setToolTip('Buscar todos los lotes')
-        self.btn_reload.clicked.connect(self.reloadLotes)
+        
 
         self.sinceDate.dateChanged.connect(self.sinceDateChange)
 
@@ -963,7 +976,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 conn.commit()
                 QMessageBox.about(self, f"aGrae GIS:",f"Lote *-- {nombre.upper()} --* Se modifico Correctamente.")
             except Exception as e: 
-                cursor.rollback()
+                # cursor.rollback()
                 QMessageBox.about(self,'aGrae GIS:',f'Ocurrio un Error. \n {e}')
 
         else:
@@ -1355,6 +1368,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                             cursor = self.conn.cursor() 
                             cursor.execute(select)
                             data = [r for r in list(cursor.fetchall())]
+                            # print(data)
                     
                         csv_writer.writerows(data)
                     self.utils.msgBar('Archivo Creado Correctamente <a href="{}">{}</a>'.format(reporte_path,reporte_path),3,10)
@@ -1534,7 +1548,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             try:                
                 for index, row in df1.iterrows():
                     try: 
-                        _SQL = f'''INSERT INTO analisis.analitica (idsegmentoanalisis,ceap,ph,ce,carbon,caliza,ca,mg,k,na,n,p,organi,al,b,fe,mn,cu,zn,s,mo,arcilla,limo,arena,ni,co,ti,"as",pb,cr) VALUES ({row['id']},{row['ceap']},{row['pH']},{row['CE']},{row['CARBON']},{row['CALIZA']},{row['CA']},{row['MG']},{row['K']},{row['NA']},{row['N']},{row['P']},{row['ORGANI']},{row['AL']},{row['B']},{row['FE']},{row['MN']},{row['CU']},{row['ZN']},{row['S']},{row['MO']},{row['ARCILLA']},{row['LIMO']},{row['ARENA']},{row['NI']},{row['CO']},{row['TI']},{row['AS']},{row['PB']},{row['CR']}); '''
+                        _SQL = f'''INSERT INTO analisis.analitica (idsegmentoanalisis,ceap,ph,ce,carbon,caliza,ca,mg,k,na,n,p,organi,al,b,fe,mn,cu,zn,s,mo,arcilla,limo,arena,ni,co,ti,"as",pb,cr,metodo) VALUES ({row['id']},{row['ceap']},{row['pH']},{row['CE']},{row['CARBON']},{row['CALIZA']},{row['CA']},{row['MG']},{row['K']},{row['NA']},{row['N']},{row['P']},{row['ORGANI']},{row['AL']},{row['B']},{row['FE']},{row['MN']},{row['CU']},{row['ZN']},{row['S']},{row['MO']},{row['ARCILLA']},{row['LIMO']},{row['ARENA']},{row['NI']},{row['CO']},{row['TI']},{row['AS']},{row['PB']},{row['CR']},{row['METODO_P']}); '''
 
                         # print(_SQL)   
                         cursor.execute(_SQL)
@@ -1670,6 +1684,80 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         widget.setItem(row,0,i_value)
         widget.setItem(row,column,i_clase)
         pass
+
+    def informe(self): 
+        print('Informe')
+        pass
+    def analiticaDialog(self): 
+        row = self.tableWidget.currentRow()
+        idlotecampania = self.tableWidget.item(row, 0).text()
+        loteName = self.tableWidget.item(row,1).text() 
+        parcelaName = self.tableWidget.item(row,2).text()
+        cultivoName = self.tableWidget.item(row,5).text()
+        prodValue = self.tableWidget.item(row,6).text()
+        dataSuelo = self.getDataSuelo(idlotecampania)
+        dataExtraccion = self.getDataExtracciones(idlotecampania)
+        
+
+        
+        dialog = agraeAnaliticaDialog(
+            dataSuelo=dataSuelo, dataExtraccion=dataExtraccion, lote=loteName, parcela=parcelaName, cultivo=cultivoName, prod=prodValue)
+        dialog.exec_()
+
+    def getDataSuelo(self,id:int): 
+        sql = 'select s.segmento, s.n_tipo, s.p_tipo, s.k_tipo, s.carb_tipo from segmentos s where s.idlotecampania = {} order by  s.segmento'.format(id)
+        with self.conn: 
+            cursor = self.conn.cursor()
+            cursor.execute(sql)
+            data = cursor.fetchall()
+            # print(data)
+            # self.dataSignal.emit(data)
+        return data
+
+    def getDataExtracciones(self,idLote:int): 
+        sql = f'''select distinct u.uf_etiqueta, 
+        u.prod_esperada,
+        (u.extraccioncosechan || ' / ' ||
+        u.extraccioncosechap || ' / ' ||
+        u.extraccioncosechak) cos_npk,
+        (u.extraccionresiduon || ' / ' ||
+        u.extraccionresiduop || ' / ' ||
+        u.extraccioncosechak) res_npk,
+        (u.n_aporte || ' / ' ||
+        u.p_aporte || ' / ' ||
+        u.k_aporte) aportes_npk,
+        round(cast(u.area_has as numeric),2) area
+        from unidades u
+        join lotes ls on ls.idlotecampania = u.idlotecampania
+        join cultivo c on c.nombre = ls.cultivo
+        where u.idlotecampania = {idLote}
+        order by uf_etiqueta'''
+        with self.conn: 
+            cursor = self.conn.cursor()
+            cursor.execute(sql)
+            data = cursor.fetchall()
+            # print(data)
+            # self.dataSignal.emit(data)
+
+        
+        
+        ufs = ['UF1', 'UF2', 'UF3']
+        for e in ufs: 
+            data = self.checkData(data, e)
+        data = sorted(data)
+        return data
+
+    def checkData(self,data,uf):
+        for e in data: 
+            # print(e[0])
+            if uf not in e[0] and len(data) < 9:
+                data.append((uf, 0 ,'N/D', 'N/D', 'N/D', 0))
+                break
+            else:
+                break
+        return data
+
+
 
 class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog): 
 
@@ -1817,6 +1905,251 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
         completerLotes = QCompleter(listaLotes)
         completerLotes.setCaseSensitivity(False)
         self.line_buscar.setCompleter(completerLotes)              
+
+
+class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
+    matplotlib.use('Qt5Agg')
+    closingPlugin = pyqtSignal()
+
+    def __init__(self,dataSuelo, dataExtraccion, lote,parcela, prod, cultivo, parent=None):
+        super(agraeAnaliticaDialog, self).__init__(parent)
+        uic.loadUi(os.path.join(os.path.dirname(__file__),
+                                'ui/dialogs/analitica_dialog.ui'), self)
+        
+        # self.pushButton.clicked.connect(self.loadPlot)
+        self.dataSuelo = dataSuelo
+        self.dataExtraccion = dataExtraccion
+        self.lote = lote 
+        self.parcela = parcela
+        self.prod = prod
+        self.cultivo = cultivo
+        self.setWindowTitle('Analisis {}-{}'.format(self.lote.upper(),self.parcela.upper()))
+        
+
+
+        self.sc = MplCanvas(self)
+        self.sc.setStyleSheet("background-color:transparent;")
+        self.sc.plot(self.dataSuelo)
+        self.verticalLayout.addWidget(self.sc)
+        self.utils = AgraeUtils()
+        self.style = self.utils.styleSheet()
+        self.iconsPath = self.utils.iconsPath()
+        self.UIcomponents()
+        self.populateTable()
+
+        self.tableView.grab().save(r'C:\Users\FRANCISCO\Documents\agrae\image.png')
+        # print('dialog {}'.format(self.data))
+        # self.n,self.p,self.k = self.necesidadesTotales()
+
+    def UIcomponents(self): 
+        leyenda = QPixmap(self.iconsPath['lgnd1'])
+        p1_img = QPixmap(self.iconsPath['p1'])
+        # leyenda.scaledToWidth(281)
+        self.setStyleSheet(self.style)
+        self.lgnd1.setPixmap(leyenda)
+        self.p1.setPixmap(p1_img)
+        self.lbl_lote.setText('{} - {}'.format(self.lote.upper(),self.parcela.upper()))
+        self.lbl_cultivo.setText('{}'.format(self.cultivo.upper()))
+        self.lbl_prod.setText('{} Kg/Ha'.format(self.prod.upper()))
+        # self.tableView.setStyleSheet("QTableView::item {border: 0px; padding: 5px; backgroud-color:inherit}")
+        self.tableView.setShowGrid(False)
+        
+
+        
+    def necesidadesTotales(self): 
+        data = self.dataExtraccion
+        N = []
+        P = []
+        K = []
+        for e in data: 
+            if e[5] not in N: 
+                N.append(e[2])
+            if e[6] not in P: 
+                P.append(e[3])
+            if e[7] not in K: 
+                K.append(e[4])
+        try: 
+            N= sum(N)
+        except: 
+            N = 0
+        try:
+            P = sum(P)
+        except:
+            P = 0
+        try:
+            K = sum(K)
+        except:
+            K = 0
+        # print(N, P, K)
+
+        return N,P,K
+
+    def populateTable(self): 
+        # headers = ['UF','Prod','Cosecha','Residuo','Total','Area']
+        cols = [0,1,2,3,4,5]
+        datagen = ([f[col] for col in cols] for f in self.dataExtraccion)
+        df = pd.DataFrame.from_records(data=datagen, columns=cols)
+        # df[1] = df[1].apply('{:.0i}'.format)
+        # df[5] = df[5].apply('{:.2f} Ha'.format)
+        # df.columns = headers
+        
+        df_sorted = df.sort_values(by=0).round({'area_has':2})
+        model = TableModel(df_sorted)
+        self.tableView.setModel(model)
+        # self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tableView.setColumnWidth(0,35)
+        self.tableView.setColumnWidth(5,35)
+        # print(self.tableView.columnWidth(0))
+        # print(self.tableView.columnWidth(1))
+        # print(self.tableView.columnWidth(2))
+        # print(self.tableView.columnWidth(3))
+        # print(self.tableView.columnWidth(4))
+        # print(self.tableView.columnWidth(5))
+        # self.tableView.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # self.tableView.horizontalHeader().setSectionResizeMode(1,QHeaderView.ResizeToContents)
+        # self.tableView.horizontalHeader().setSectionResizeMode(2,QHeaderView.Stretch)
+        # self.tableView.horizontalHeader().setSectionResizeMode(3,QHeaderView.Stretch)
+        # self.tableView.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)
+        # self.tableView.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+
+    def sumaPonderada(self,x,y):
+        """
+        x = Value y = Area
+
+        """
+        zipedd = zip(x, y)
+        p1 = [x * y for (x, y) in zipedd]
+        p2 = round(sum(p1)/sum(y))
+
+        # print(p2)
+        return p2
+
+    
+
+    
+        
+
+    
+       
+        
+
+        
+
+        
+
+    def closeEvent(self, event):
+        self.closingPlugin.emit()
+        self.sc.close()
+        event.accept()
+
+
+
+
+
+
+class MplCanvas(FigureCanvasQTAgg):
+    def __init__(self, parent=None):
+        # plt.rcParams.update({'font.size': 8})
+        fig, (self.ax1, self.ax2, self.ax3) = plt.subplots(1, 3)
+        fig.patch.set_facecolor('None')
+        fig.patch.set_alpha(0)
+        super(MplCanvas, self).__init__(fig)
+        # self.plot()
+        # self.data = str(data)
+        # print('plot {}'.format(self.data))
+    def close(self): 
+        plt.cla()
+    
+    def plot(self,data):
+        
+
+        def valores(suelo):
+            values = []
+            colors = []
+            for i in suelo:
+                if i == 'Muy Alto':
+                    colors.append('#7702E5')
+                    values.append(5)
+                elif i == 'Alto':
+                    colors.append('#0293E5')
+                    values.append(4)
+                elif i == 'Normal':
+                    colors.append('#06E502')
+                    values.append(3)
+                elif i == 'Bajo':
+                    colors.append('#FF9633')
+                    values.append(2)
+                elif i == 'Muy Bajo':
+                    colors.append('#FF3333')
+                    values.append(1)
+                else:
+                    values.append(0)
+            # print(values)
+            return values, colors
+
+        def borderless(ax):
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
+            ax.spines['left'].set_visible(True)
+        
+        def barGenerator(ax,values,colors,y,y_pos,title,y_visible=True):
+            ax.barh(y_pos, values, align='center', color=colors)
+            ax.set_xticks([])
+            ax.set_title('{}'.format(title))            
+            ax.set_yticks(y_pos)
+            ax.set_yticklabels(y, fontsize=8)
+            ax.invert_yaxis()  # labels read top-to-bottom
+            ax.patch.set_facecolor('None')
+            ax.patch.set_alpha(0)
+            ax.set_xlim(0, 5)
+            borderless(ax)
+            if y_visible == False:                
+                ax.axes.get_yaxis().set_visible(False)
+
+        def getValues(i):
+            if i <= len(n_values):  
+                values = [n_values[i], p_values[i], k_values[i], carb_values[i]]
+            else: 
+                values = [0,0,0,0]
+            
+            return values   
+
+        segmentos = [f[0] for f in data]
+        nitrogeno = [f[1] for f in data]
+        fosforo = [f[2] for f in data]
+        potasio = [f[3] for f in data]
+        carbonato = [f[4] for f in data]
+        n_values = {segmentos[i]: nitrogeno[i] for i in range(len(segmentos))}
+        p_values = {segmentos[i]: fosforo[i] for i in range(len(segmentos))}
+        k_values = {segmentos[i]: potasio[i] for i in range(len(segmentos))}
+        carb_values = {segmentos[i]: carbonato[i] for i in range(len(segmentos))}
+        # print(n_values)
+
+        suelo_1 = getValues(1)
+        suelo_2 = getValues(2)
+        suelo_3 = getValues(3)
+
+        
+
+        categorias = ('N', 'P', 'K', 'Carb')
+        y_pos = np.arange(len(categorias))
+
+        values_1, colors_1 = valores(suelo_1)
+        values_2, colors_2 = valores(suelo_2)
+        values_3, colors_3 = valores(suelo_3)
+
+        barGenerator(self.ax1,values_3,colors_3,categorias,y_pos,'Suelo 3')
+        barGenerator(self.ax2,values_2,colors_2,categorias,y_pos,'Suelo 2',False)
+        barGenerator(self.ax3, values_1, colors_1,categorias, y_pos, 'Suelo 1', False)
+        
+       
+
+
+        
+
+            
+
 
 
 class Worker(QObject):

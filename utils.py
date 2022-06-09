@@ -1,7 +1,7 @@
 import os
-
+from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QThread, QAbstractTableModel
 from PyQt5.QtGui import QGuiApplication
 from qgis.PyQt.QtCore import QSettings
 
@@ -157,7 +157,10 @@ class AgraeUtils():
             'import': os.path.join(os.path.dirname(__file__), r'ui\icons\file-import-solid.svg'),
             'export-csv': os.path.join(os.path.dirname(__file__), r'ui\icons\file-export-solid.svg'),
             'upload-to-db': os.path.join(os.path.dirname(__file__), r'ui\icons\upload-db.svg'),
+            'chart': os.path.join(os.path.dirname(__file__), r'ui\icons\chart-bar-solid.svg'),
             'settings': os.path.join(os.path.dirname(__file__), r'ui\icons\gear-solid.svg'),
+            'lgnd1': os.path.join(os.path.dirname(__file__), r'ui\img\lgnd1.svg'),
+            'p1': os.path.join(os.path.dirname(__file__), r'ui\img\p1.svg'),
         }
 
         return icons_path
@@ -376,20 +379,21 @@ class AgraeToolset():
         with self.conn as conn:
             try:
                 if nombre == '' and status == False:
-                    sqlQuery = f'''select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo 
+                    sqlQuery = f'''select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada
                     from lotecampania lc
                     join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
                     left join lote l on l.idlote = lc.idlote
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
+                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada
                     order by ca.fechasiembra desc'''
                     widget.btn_add_layer.setEnabled(False)
+                    widget.btn_chart.setEnabled(True)
                     
 
                 elif nombre != '' and status == False:
-                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo 
+                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada 
                     from lotecampania lc
                     join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
                     left join lote l on l.idlote = lc.idlote
@@ -397,13 +401,14 @@ class AgraeToolset():
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
                     where l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
+                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada
                     order by ca.fechasiembra desc                        
                     """
                     widget.btn_reload.setEnabled(True)
+                    widget.btn_chart.setEnabled(True)
 
                 elif nombre == '' and status == True:
-                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo 
+                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada 
                     from lotecampania lc
                     join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
                     left join lote l on l.idlote = lc.idlote
@@ -411,11 +416,13 @@ class AgraeToolset():
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
                     where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
+                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada
                     order by ca.fechasiembra desc"""
                     widget.btn_reload.setEnabled(True)
+                    widget.btn_chart.setEnabled(True)
+
                 elif nombre != '' and status == True:
-                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo 
+                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada 
                     from lotecampania lc
                     join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
                     left join lote l on l.idlote = lc.idlote
@@ -424,9 +431,10 @@ class AgraeToolset():
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
                     where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
                     or l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre
+                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada
                     order by ca.fechasiembra desc"""
                     widget.btn_reload.setEnabled(True)
+                    widget.btn_chart.setEnabled(True)
 
 
                 cursor = conn.cursor()
@@ -825,3 +833,67 @@ class AgraeAnalitic():
         if l in colors: 
             return colors[l]
 
+    def sumaPonderada(self, x, y):
+        """
+        x = Value y = Area
+
+        """
+        zipedd = zip(x, y)
+        p1 = [x * y for (x, y) in zipedd]
+        p2 = round(sum(p1)/sum(y))
+
+        # print(p2)
+        return p2
+
+class TableModel(QtCore.QAbstractTableModel):
+    def __init__(self, data):
+        super(TableModel, self).__init__()
+        self._data = data
+        self.colors = {'UF1': '#0be825',
+                       'UF2': '#dd3f20',
+                       'UF3': '#f5f227',
+                       'UF4': '#0e13a9',
+                       'UF5': '#f618d5',
+                       'UF6': '#d5d5d5',
+                       'UF7': '#18d9f6',
+                       'UF8': '#8800e2',
+                       'UF9': '#fab505'}
+
+    def data(self, index, role):
+
+        if role == Qt.DisplayRole:
+            value = self._data.iloc[index.row(), index.column()]
+            if value != NULL:
+                return str(value)
+            else:
+                return str('N/D')
+        if role == Qt.BackgroundRole and index.column() == 0:
+            value = self._data.iloc[index.row()][0]
+            if value in self.colors.keys():
+                return QtGui.QColor(self.colors[value])
+        try:
+            if role == Qt.FontRole:                     
+                return QtGui.QFont("Segoe UI", 9, QtGui.QFont.Bold)
+        except Exception as ex: 
+            print(ex)
+        try:
+            if role == Qt.TextAlignmentRole: 
+                return Qt.AlignCenter
+        except Exception as ex:
+            print(ex)
+            
+
+    def rowCount(self, index):
+        return self._data.shape[0]
+
+    def columnCount(self, index):
+        return self._data.shape[1]
+
+    def headerData(self, section, orientation, role):
+        # section is the index of the column/row.
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return str(self._data.columns[section])
+
+            if orientation == Qt.Vertical:
+                return str(self._data.index[section])

@@ -23,7 +23,7 @@
 """
 from PyQt5.QtWidgets import QMessageBox
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant, QDate
-from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon, QColor, QFont 
 from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
 from qgis.core import *
 import pip
@@ -37,8 +37,9 @@ from .dbconn import DbConnection
 from .utils import AgraeUtils, AgraeToolset
 
 # Import the code for the DockWidget
-from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget, loteFindDialog, loteFilterDialog, parcelaFindDialog
+from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget, loteFindDialog, loteFilterDialog, parcelaFindDialog, agraeAnaliticaDialog
 import os.path
+from PIL import Image
 from qgis.core import QgsDataSourceUri
 
 try:
@@ -125,6 +126,16 @@ class agrae:
         self.loteFindDialog = None
         self.loteFilterDialog = None
         self.parcelaFilterDialog = None
+        self.analiticaDialog = None
+
+        self.dataSuelo = None
+        self.dataExtracciones = None
+
+        self.idlotecampania =  None
+        self.lote =  None
+        self.parcela =  None
+        self.prod = None
+        self.cultivo =  None
 
         
 
@@ -255,12 +266,20 @@ class agrae:
             callback=self.relLote,
             parent=self.iface.mainWindow())
 
+        self.add_action('',
+            text=self.tr(u'Analitica'),
+            status_tip=self.tr(u'Analitica'),
+            callback=self.runAnalitica,
+            parent=self.iface.mainWindow())
+
         self.add_action(
             '',
             text=self.tr(u'Ajustes'),
             add_to_toolbar=False,
             callback=self.runConfig,
             parent=self.iface.mainWindow())
+
+        
 
     #--------------------------------------------------------------------------
     def onClosePluginConfig(self):
@@ -292,6 +311,21 @@ class agrae:
             self.onCloseParcelaFilterDialog)
         self.pluginIsActive = False
 
+    def onCloseAnaliticaDialog(self): 
+        # disconnects 
+        self.analiticaDialog.closingPlugin.disconnect(self.onCloseAnaliticaDialog)
+        self.pluginIsActive = False
+        self.dataSuelo = None
+        self.dataExtracciones = None
+        self.idlotecampania = None
+        self.lote = None
+        self.parcela = None
+        self.prod = None
+        self.cultivo = None
+        pass
+
+    
+    
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
 
@@ -526,23 +560,31 @@ class agrae:
     def runMain(self):
             
         def printMap():
-            
-
-            
+            mainColor = QColor(233, 219, 0)
+            layers = self.iface.mapCanvas().layers()
+            layoutName = None
+            for l in layers:
+                if 'SEGMENTOS' in l.name():
+                    layoutName = QgsProject.instance(
+                    ).mapLayersByName(l.name())[0].name()
+                    # print(lyr)
             barPlot()
             #! LAYOUTMANAGER INSTANCIA
             manager = QgsProject.instance().layoutManager() 
-            layoutName = self.iface.activeLayer().name()
             manager_list = manager.printLayouts() 
 
             for l in manager_list:
-                if l.name() == layoutName :
+                if l.name() == layoutName[10:]:
                     manager.removeLayout(l)
             
             #? print(lyrs) 
             layout = QgsPrintLayout(QgsProject.instance())
             layout.initializeDefaults() 
-            layout.setName(layoutName)
+            layout.setName(layoutName[10:])
+            
+            pc = layout.pageCollection()
+            pc.pages()[0].setPageSize('A4', QgsLayoutItemPage.Portrait)
+            
             manager.addLayout(layout)
             lyrsDict = QgsProject().instance().mapLayers()
             lyrs = [lyrsDict[lyr] for lyr in lyrsDict]       
@@ -556,65 +598,171 @@ class agrae:
             print(scale)
             #? extent.scale(1.0)
             #? ms.setExtent(extent)
+
+
+            #! MAP TITLE 
+            title = QgsLayoutItemLabel(layout)
+            title.setText('06 - Unidades Fertilizantes')
+            title.setFont(QFont('Arial',20,QFont.Bold))
+            # title.setFontColor(QColor(255,255,255))
+            # title.adjustSizeToText()
+            title.setBackgroundEnabled(True)
+            title.setBackgroundColor(mainColor)
+            title.setFrameEnabled(True)
+            title.setFrameStrokeColor(mainColor)
+            title.setFrameStrokeWidth(QgsLayoutMeasurement(2,QgsUnitTypes.LayoutMillimeters))
+            title.attemptMove(QgsLayoutPoint(10, 10,QgsUnitTypes.LayoutMillimeters))
+            title.attemptResize(QgsLayoutSize(140, 10, QgsUnitTypes.LayoutMillimeters))
+
+
+
             #! MAP ITEM
             map = QgsLayoutItemMap(layout)
             # map.setCrs(QgsCoordinateReferenceSystem(25830))
             map.setRect(20,20,20,20)
-            map.setExtent(extent)
+            # map.setExtent(extent)
+            map.zoomToExtent(self.iface.mapCanvas().extent())
             map.setScale(math.floor(scale*10))
-            #? map.setBackgroundColor(QColor(255,255,225,0))
-            map.attemptMove(QgsLayoutPoint(5, 5,QgsUnitTypes.LayoutMillimeters))
-            map.attemptResize(QgsLayoutSize(180, 180,QgsUnitTypes.LayoutMillimeters))
+            map.setFrameEnabled(True)
+            map.setFrameStrokeColor(mainColor)
+            map.setFrameStrokeWidth(QgsLayoutMeasurement(2,QgsUnitTypes.LayoutMillimeters))
+            map.attemptMove(QgsLayoutPoint(10, 20,QgsUnitTypes.LayoutMillimeters))
+            map.attemptResize(QgsLayoutSize(140, 135,QgsUnitTypes.LayoutMillimeters))          
+            
             #! BARPLOT
             barplot = QgsLayoutItemPicture(layout)
             barplot.setMode(QgsLayoutItemPicture.FormatRaster)
-            barplot.setPicturePath(r'C:\Users\FRANCISCO\Desktop\demo.png')
+            barplot.setPicturePath(
+                r"C:\Users\FRANCISCO\Documents\agrae\Paneles\panel-{}.png".format(layoutName[10:]))
             barplot.setResizeMode(QgsLayoutItemPicture.ZoomResizeFrame)
             #? barplot.setRect(20, 20, 20, 20)
             #? dim_barplot = [640, 480]
-            barplot.attemptMove(QgsLayoutPoint(212, 5, QgsUnitTypes.LayoutMillimeters))
-            barplot.attemptResize(QgsLayoutSize(80, 60, QgsUnitTypes.LayoutMillimeters))
+            barplot.attemptMove(QgsLayoutPoint(10, 170, QgsUnitTypes.LayoutMillimeters))
+            barplot.attemptResize(QgsLayoutSize(100, 75, QgsUnitTypes.LayoutMillimeters))
+            
             #! ADD ITEMS TO LAYOUT 
+            layout.addLayoutItem(title)
             layout.addLayoutItem(map)
             layout.addLayoutItem(barplot)
-
 
             pass            
 
         def barPlot():
-            lyrsDict = QgsProject().instance().mapLayers()
-            lyrs = [lyrsDict[lyr] for lyr in lyrsDict if lyrsDict[lyr].type() == QgsVectorLayer.VectorLayer]            
-            print(lyrs)
-            colors = [l.renderer().symbol().color().name() for l in lyrs]
-            # colors = ['#a47158', '#85b66f', '#85006f']
-            print(colors)
+            # lyr = self.iface.activeLayer()
+            layers = self.iface.mapCanvas().layers()
 
-            sns.set_style('darkgrid')
-            conn = psycopg2.connect(
-                'host=localhost dbname=agrae user=postgres password=23826405')
-            cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            sql = '''select l.nombre, sum(st_area(st_transform(p.geometria,25830))/10000) from lotecampania lc
-                    join lote l on l.idlote = lc.idlote 
-                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
-                    join parcela p on p.idparcela = lp.idparcela 
-                    group by l.nombre '''
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            nombre = [e[0] for e in result]
-            data = [e[1] for e in result]
+            for l in layers:
+                if 'SEGMENTOS' in l.name():
+                    lyr = QgsProject.instance().mapLayersByName(l.name())[0]
+                    # print(lyr)
+            lyrName = lyr.name()
+            segmentos = [f['segmento'] for f in lyr.getFeatures()]
+            nitrogeno = [f['n_tipo'] for f in lyr.getFeatures()]
+            fosforo = [f['p_tipo'] for f in lyr.getFeatures()]
+            potasio = [f['k_tipo'] for f in lyr.getFeatures()]
+            carbonato = [f['carb_tipo'] for f in lyr.getFeatures()]
+            n_values = {segmentos[i]: nitrogeno[i] for i in range(len(segmentos))}
+            p_values = {segmentos[i]: fosforo[i] for i in range(len(segmentos))}
+            k_values = {segmentos[i]: potasio[i] for i in range(len(segmentos))}
+            carb_values = {segmentos[i]: carbonato[i] for i in range(len(segmentos))}
 
-            print(nombre, data,)
+            suelo_1 = [n_values[1], p_values[1], k_values[1], carb_values[1]]
+            suelo_2 = [n_values[2], p_values[2], k_values[2], carb_values[2]]
+            suelo_3 = [n_values[3], p_values[3], k_values[3], carb_values[3]]
+
+            fig, (ax1,ax2,ax3) = plt.subplots(1,3)
+            categorias = ('Nitrogeno', 'Fosforo', 'Potasio', 'Carbonatos')
+            y_pos = np.arange(len(categorias))
+            def valores(suelo): 
+                values = []
+                colors = []
+                for i in suelo:
+                    if i == 'Muy Alto':
+                        colors.append('#7702E5')
+                        values.append(5)
+                    elif i == 'Alto':
+                        colors.append('#0293E5')
+                        values.append(4)
+                    elif i == 'Normal':
+                        colors.append('#06E502')
+                        values.append(3)
+                    elif i == 'Bajo':
+                        colors.append('#FF9633')
+                        values.append(2)
+                    elif i == 'Muy Bajo':
+                        colors.append('#FF3333')
+                        values.append(1)
+                    else:
+                        values.append(0)
+                return values,colors
+            
+            values_1,colors_1 = valores(suelo_1)
+            values_2,colors_2 = valores(suelo_2)
+            values_3,colors_3 = valores(suelo_3)
 
 
-            ypos = np.arange(len(nombre))
-            plt.xticks(ypos, nombre)
-            plt.ylabel('Area Parcela (Ha)')
-            # plt.bar(ypos, data)
+            g = ax1.barh(y_pos, values_3, align='center', color=colors_3)
+            ax1.barh(y_pos, values_3, align='center', color=colors_3)
+            
+            ax1.spines['top'].set_visible(False)
+            ax1.spines['right'].set_visible(False)
+            ax1.spines['bottom'].set_visible(False)
+            ax1.spines['left'].set_visible(False)
 
-            plt.bar(ypos, data, color=colors)
+            ax1.set_xticks([])
+            # ax1.set_title('{}'.format('Suelo 3'))
+            ax1.set_yticks(y_pos)
+            ax1.axes.get_yaxis().set_visible(False)
+            ax1.invert_yaxis()  # labels read top-to-bottom
+            # ax1.bar_label(g, label_type="center")
 
+            ax2.barh(y_pos, values_2, align='center', color=colors_2)
+
+            ax2.spines['top'].set_visible(False)
+            ax2.spines['right'].set_visible(False)
+            ax2.spines['bottom'].set_visible(False)
+            ax2.spines['left'].set_visible(False)
+
+            ax2.set_xticks([])
+            ax2.axes.get_yaxis().set_visible(False)
+            # ax2.set_title('{}'.format('Suelo 2'))
+            ax2.set_yticks(y_pos)
+            ax2.set_xticklabels([], color='w')
+            ax2.invert_yaxis()  # labels read top-to-bottom
+
+            ax3.barh(y_pos, values_1, align='center', color=colors_1)
+
+            ax3.spines['top'].set_visible(False)
+            ax3.spines['right'].set_visible(False)
+            ax3.spines['bottom'].set_visible(False)
+            ax3.spines['left'].set_visible(False)
+
+            ax3.set_xticks([])
+            ax3.axes.get_yaxis().set_visible(False)
+            # ax3.set_title('{}'.format('Suelo 1'))
+            ax3.set_yticks(y_pos)
+
+            ax3.invert_yaxis()  # labels read top-to-bottom
+            plt.xlim([0, 5])
+
+            plt.savefig(r'C:\Users\FRANCISCO\Documents\agrae\Paneles\graficos\demo.png', dpi=200, transparent=True)
             # plt.show()
-            plt.savefig(r'C:\Users\FRANCISCO\Desktop\demo.png')
+
+            img = Image.open(r'C:\Users\FRANCISCO\Documents\agrae\Paneles\graficos\demo.png')
+
+
+            #img = img.resize((100,100))
+            base = Image.open(os.path.join(os.path.dirname(__file__), r'ui\img\base.png'))
+            base = base.resize((1280, 960))
+            panel = Image.new('RGB', (1280, 960), color='white')
+            panel.paste(base, (0, 0))
+            panel.paste(img, (100, 20), mask=img)
+            #panel.show()
+            panel.save(r'C:\Users\FRANCISCO\Documents\agrae\Paneles\panel-{}.png'.format(lyrName[10:]))
+
+            width, height = img.size
+
+
 
 
         if not self.pluginIsActive:
@@ -684,6 +832,86 @@ class agrae:
                 self.onCloseParcelaFilterDialog)
             self.parcelaFilterDialog.show()
 
+    def runAnalitica(self): 
+        if not self.pluginIsActive: 
+            self.pluginIsActive = True  
+            lyr = self.iface.activeLayer()
+            for f in lyr.getFeatures():
+                self.idlotecampania = f['idlotecampania']
+                self.lote = f['lote']
+                self.parcela = f['parcela']
+                self.prod = str(f['prod_esperada'])
+                self.cultivo = f['cultivo'] 
+            self.dataSuelo = self.getDataSuelo(self.idlotecampania)
+            self.dataExtracciones = self.getDataExtracciones(
+                self.idlotecampania)
+
+
+            if self.analiticaDialog == None:            
+               
+                self.analiticaDialog = agraeAnaliticaDialog(dataSuelo=self.dataSuelo, dataExtraccion=self.dataExtracciones,lote=self.lote,parcela=self.parcela,cultivo=self.cultivo,prod=self.prod)
+            self.analiticaDialog.closingPlugin.connect(self.onCloseAnaliticaDialog)
+            self.analiticaDialog.show()
+
+    
+    
+    
+    
+    def getDataSuelo(self, id: int):
+        sql = 'select s.segmento, s.n_tipo, s.p_tipo, s.k_tipo, s.carb_tipo from segmentos s where s.idlotecampania = {} order by  s.segmento'.format(
+            id)
+        with self.conn:
+            cursor = self.conn.cursor()
+            cursor.execute(sql)
+            data = cursor.fetchall()
+            print(data)
+            # self.dataSignal.emit(data)
+        return data
+
+    def getDataExtracciones(self, idLote: int):
+        sql = f'''select distinct u.uf_etiqueta, 
+        u.prod_esperada,
+        (u.extraccioncosechan || ' / ' ||
+        u.extraccioncosechap || ' / ' ||
+        u.extraccioncosechak) cos_npk,
+        (u.extraccionresiduon || ' / ' ||
+        u.extraccionresiduop || ' / ' ||
+        u.extraccioncosechak) res_npk,
+        (u.n_aporte || ' / ' ||
+        u.p_aporte || ' / ' ||
+        u.k_aporte) aportes_npk,
+        round(cast(u.area_has as numeric),2) area
+        from unidades u
+        join lotes ls on ls.idlotecampania = u.idlotecampania
+        join cultivo c on c.nombre = ls.cultivo
+        where u.idlotecampania = {idLote}
+        order by uf_etiqueta'''
+        with self.conn:
+            cursor = self.conn.cursor()
+            cursor.execute(sql)
+            data = cursor.fetchall()
+            # print(data)
+            # self.dataSignal.emit(data)
+
+        ufs = ['UF1', 'UF2', 'UF3']
+        for e in ufs:
+            data = self.checkData(data, e)
+        data = sorted(data)
+        print(data)
+        return data
+
+    def checkData(self, data, uf):
+        for e in data:
+            # print(e[0])
+            if uf not in e[0] and len(data) < 9:
+                data.append((uf, 0, 'N/D', 'N/D', 'N/D', 0))
+                break
+            else:
+                break
+        return data
+
+
+        
 
     def testFunction(self): 
         sql = f'select * from lotes'

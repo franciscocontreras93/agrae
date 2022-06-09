@@ -23,5 +23,8 @@
         <file>ui\icons\file-export-solid.svg</file>
         <file>ui\icons\upload-db.svg</file>
         <file>ui\icons\gear-solid.svg</file>
+        <file>ui\icons\chart-bar-solid.svg</file>
+        <file>ui\img\lgnd1.svg</file>
+        <file>ui\img\p1.svg</file>
     </qresource>
 </RCC>

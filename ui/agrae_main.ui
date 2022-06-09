@@ -44,7 +44,7 @@
     <string notr="true"/>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="lotes_tab">
     <attribute name="title">
@@ -158,6 +158,19 @@
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_4" rowstretch="0,0,0" columnstretch="2,0">
+       <item row="0" column="1">
+        <widget class="QPushButton" name="btn_add_layer">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Añadir Lote al Mapa</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
        <item row="0" column="0" rowspan="3">
         <widget class="QTableWidget" name="tableWidget">
          <property name="contextMenuPolicy">
@@ -225,13 +238,13 @@
          </column>
          <column>
           <property name="text">
-           <string>Geometria</string>
+           <string>Prod. Esperada</string>
           </property>
          </column>
         </widget>
        </item>
-       <item row="0" column="1">
-        <widget class="QPushButton" name="btn_add_layer">
+       <item row="1" column="1">
+        <widget class="QPushButton" name="btn_reload">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -243,8 +256,8 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QPushButton" name="btn_reload">
+       <item row="2" column="1">
+        <widget class="QPushButton" name="btn_chart">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -1622,6 +1635,16 @@
        </item>
        <item>
         <widget class="QPushButton" name="btn_reporte">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_informe">
          <property name="enabled">
           <bool>true</bool>
          </property>
