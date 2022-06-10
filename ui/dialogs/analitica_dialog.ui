@@ -37,6 +37,9 @@
    <property name="styleSheet">
     <string notr="true">backgroud-color: transparent;</string>
    </property>
+   <property name="currentIndex">
+    <number>0</number>
+   </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
      <string>Analitica</string>
@@ -45,7 +48,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>300</y>
+       <y>170</y>
        <width>301</width>
        <height>211</height>
       </rect>
@@ -137,7 +140,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>510</y>
+       <y>380</y>
        <width>300</width>
        <height>20</height>
       </rect>
@@ -149,20 +152,26 @@
     <widget class="QTableView" name="tableView">
      <property name="geometry">
       <rect>
-       <x>320</x>
-       <y>180</y>
+       <x>350</x>
+       <y>140</y>
        <width>515</width>
        <height>300</height>
       </rect>
      </property>
      <property name="styleSheet">
       <string notr="true">background-color: transparent;
-border: 0;
 overflow: hidden;
-padding: 5px;</string>
+padding: 5px;
+border:0</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::NoSelection</enum>
      </property>
      <attribute name="horizontalHeaderVisible">
       <bool>false</bool>
@@ -177,46 +186,63 @@ padding: 5px;</string>
     <widget class="QLabel" name="p1">
      <property name="geometry">
       <rect>
-       <x>320</x>
-       <y>90</y>
-       <width>521</width>
+       <x>350</x>
+       <y>50</y>
+       <width>541</width>
        <height>391</height>
       </rect>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Box</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="text">
       <string/>
      </property>
     </widget>
-    <widget class="QLabel" name="label_2">
+    <widget class="QLabel" name="prod_pond">
      <property name="geometry">
       <rect>
        <x>320</x>
-       <y>490</y>
-       <width>141</width>
+       <y>460</y>
+       <width>171</width>
        <height>31</height>
       </rect>
      </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
      <property name="frameShape">
-      <enum>QFrame::Box</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="text">
       <string>PRODUCCION PONDERADA</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_5">
      <property name="geometry">
       <rect>
-       <x>470</x>
-       <y>490</y>
-       <width>251</width>
+       <x>490</x>
+       <y>460</y>
+       <width>231</width>
        <height>31</height>
       </rect>
      </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
      <property name="frameShape">
-      <enum>QFrame::Box</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="text">
       <string>VALORES POR PARCELA</string>
@@ -225,17 +251,24 @@ padding: 5px;</string>
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="label_6">
+    <widget class="QLabel" name="area_total">
      <property name="geometry">
       <rect>
-       <x>730</x>
-       <y>490</y>
-       <width>111</width>
+       <x>720</x>
+       <y>460</y>
+       <width>141</width>
        <height>31</height>
       </rect>
      </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
      <property name="frameShape">
-      <enum>QFrame::Box</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="text">
       <string>AREA</string>
@@ -248,35 +281,97 @@ padding: 5px;</string>
      <property name="geometry">
       <rect>
        <x>320</x>
-       <y>520</y>
+       <y>490</y>
        <width>311</width>
        <height>31</height>
       </rect>
      </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
      <property name="frameShape">
-      <enum>QFrame::Box</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="text">
-      <string>VALORES POR PARCELA</string>
+      <string>NECESIDADES MEDIAS PONDERADAS N/P/K</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="label_8">
+    <widget class="QLabel" name="npk_pond">
      <property name="geometry">
       <rect>
        <x>630</x>
-       <y>520</y>
-       <width>211</width>
+       <y>490</y>
+       <width>231</width>
        <height>31</height>
       </rect>
      </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
      <property name="frameShape">
-      <enum>QFrame::Box</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="text">
-      <string>PRODUCCION PONDERADA</string>
+      <string>N/P/K</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_9">
+     <property name="geometry">
+      <rect>
+       <x>430</x>
+       <y>20</y>
+       <width>401</width>
+       <height>61</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;justify&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;OPCIÓN 1: &lt;/span&gt;REALIZAR &lt;span style=&quot; font-weight:600;&quot;&gt;FERTILIZACIÓN VARIABLE INTRAPARCELARIA &lt;/span&gt;&lt;br/&gt;DISTRIBUYENDO EN CADA &lt;span style=&quot; font-weight:600;&quot;&gt;UF&lt;/span&gt; LAS NECESIDADES DE FERTILIZACIÓN CALCULADAS &lt;br/&gt;QUE CORRESPONDEN A CADA UNA, EN FUNCIÓN DE SU POTENCIAL PRODUCTIVO.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::RichText</enum>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_10">
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>470</y>
+       <width>271</width>
+       <height>61</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;justify&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;OPCIÓN 2: &lt;/span&gt;REALIZAR &lt;span style=&quot; font-weight:600;&quot;&gt;FERTILIZACIÓN VARIABLE &lt;br/&gt;INTRAPARCELARIA &lt;/span&gt;DISTRIBUYENDO PARA TODA LA &lt;br/&gt;PARCELA LAS NECESIDADES MEDIAS PONDERADAS&lt;br/&gt;POR LA SUPERFICIE DE CADA &lt;span style=&quot; font-weight:600;&quot;&gt;UF.&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;justify&quot;&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::RichText</enum>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>110</y>
+       <width>101</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Exportar Panel</string>
      </property>
     </widget>
     <zorder>p1</zorder>
@@ -284,11 +379,14 @@ padding: 5px;</string>
     <zorder>gridLayoutWidget</zorder>
     <zorder>lgnd1</zorder>
     <zorder>tableView</zorder>
-    <zorder>label_2</zorder>
+    <zorder>prod_pond</zorder>
     <zorder>label_5</zorder>
-    <zorder>label_6</zorder>
+    <zorder>area_total</zorder>
     <zorder>label_7</zorder>
-    <zorder>label_8</zorder>
+    <zorder>npk_pond</zorder>
+    <zorder>label_9</zorder>
+    <zorder>label_10</zorder>
+    <zorder>pushButton</zorder>
    </widget>
    <widget class="QWidget" name="tab_2">
     <attribute name="title">

@@ -863,24 +863,28 @@ class TableModel(QtCore.QAbstractTableModel):
 
         if role == Qt.DisplayRole:
             value = self._data.iloc[index.row(), index.column()]
+            if role == Qt.ForegroundRole:            
+                if value == NULL:
+                    return QtGui.QColor('red')
             if value != NULL:
                 return str(value)
             else:
-                return str('N/D')
+                return int(0)
         if role == Qt.BackgroundRole and index.column() == 0:
             value = self._data.iloc[index.row()][0]
             if value in self.colors.keys():
                 return QtGui.QColor(self.colors[value])
-        try:
-            if role == Qt.FontRole:                     
-                return QtGui.QFont("Segoe UI", 9, QtGui.QFont.Bold)
-        except Exception as ex: 
-            print(ex)
-        try:
-            if role == Qt.TextAlignmentRole: 
-                return Qt.AlignCenter
-        except Exception as ex:
-            print(ex)
+        
+        
+
+        
+        if role == Qt.FontRole:                     
+            return QtGui.QFont("Segoe UI", 9, QtGui.QFont.Bold)
+       
+       
+        if role == Qt.TextAlignmentRole: 
+            return Qt.AlignCenter
+        
             
 
     def rowCount(self, index):

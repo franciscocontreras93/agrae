@@ -28,8 +28,9 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import psycopg2
+from datetime import datetime
 # from datetime import date
-
+from PIL import Image, ImageDraw, ImageFont
 from psycopg2 import OperationalError,InterfaceError, errors, extras
 from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QThread, QAbstractTableModel
 from PyQt5.QtGui import QRegExpValidator, QIcon, QPixmap, QFont
@@ -1701,7 +1702,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         
         dialog = agraeAnaliticaDialog(
-            dataSuelo=dataSuelo, dataExtraccion=dataExtraccion, lote=loteName, parcela=parcelaName, cultivo=cultivoName, prod=prodValue)
+            dataSuelo=dataSuelo, dataExtraccion=dataExtraccion, lote=loteName, parcela=parcelaName, cultivo=cultivoName, idlotecampania=idlotecampania, prod=prodValue)
         dialog.exec_()
 
     def getDataSuelo(self,id:int): 
@@ -1716,7 +1717,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     def getDataExtracciones(self,idLote:int): 
         sql = f'''select distinct u.uf_etiqueta, 
-        u.prod_esperada,
+        u.prod_ponderada,
         (u.extraccioncosechan || ' / ' ||
         u.extraccioncosechap || ' / ' ||
         u.extraccioncosechak) cos_npk,
@@ -1751,7 +1752,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         for e in data: 
             # print(e[0])
             if uf not in e[0] and len(data) < 9:
-                data.append((uf, 0 ,'N/D', 'N/D', 'N/D', 0))
+                data.append((uf, 0, '0 / 0 / 0', '0 / 0 / 0', '0 / 0 / 0', 0))
                 break
             else:
                 break
@@ -1911,7 +1912,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
     matplotlib.use('Qt5Agg')
     closingPlugin = pyqtSignal()
 
-    def __init__(self,dataSuelo, dataExtraccion, lote,parcela, prod, cultivo, parent=None):
+    def __init__(self,dataSuelo, dataExtraccion, lote,parcela, prod, cultivo, idlotecampania, parent=None):
         super(agraeAnaliticaDialog, self).__init__(parent)
         uic.loadUi(os.path.join(os.path.dirname(__file__),
                                 'ui/dialogs/analitica_dialog.ui'), self)
@@ -1919,25 +1920,32 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         # self.pushButton.clicked.connect(self.loadPlot)
         self.dataSuelo = dataSuelo
         self.dataExtraccion = dataExtraccion
+        self.idlotecampania = idlotecampania
         self.lote = lote 
         self.parcela = parcela
         self.prod = prod
         self.cultivo = cultivo
         self.setWindowTitle('Analisis {}-{}'.format(self.lote.upper(),self.parcela.upper()))
         
+        self.area = None
+        self.prod_ponderado = None 
+        self.n_ponderado = None
+        self.p_ponderado = None
+        self.k_ponderado = None
 
 
         self.sc = MplCanvas(self)
         self.sc.setStyleSheet("background-color:transparent;")
         self.sc.plot(self.dataSuelo)
+        
         self.verticalLayout.addWidget(self.sc)
         self.utils = AgraeUtils()
         self.style = self.utils.styleSheet()
         self.iconsPath = self.utils.iconsPath()
         self.UIcomponents()
         self.populateTable()
-
-        self.tableView.grab().save(r'C:\Users\FRANCISCO\Documents\agrae\image.png')
+        
+        # self.tabWidget.grab().save(os.path.join(os.path.dirname(__file__), r'ui\img\panel.png'))
         # print('dialog {}'.format(self.data))
         # self.n,self.p,self.k = self.necesidadesTotales()
 
@@ -1951,80 +1959,105 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.lbl_lote.setText('{} - {}'.format(self.lote.upper(),self.parcela.upper()))
         self.lbl_cultivo.setText('{}'.format(self.cultivo.upper()))
         self.lbl_prod.setText('{} Kg/Ha'.format(self.prod.upper()))
-        # self.tableView.setStyleSheet("QTableView::item {border: 0px; padding: 5px; backgroud-color:inherit}")
         self.tableView.setShowGrid(False)
+
+        self.necesidadesTotales()
+
+        self.pushButton.clicked.connect(self.genPanel)
         
 
         
     def necesidadesTotales(self): 
         data = self.dataExtraccion
-        N = []
-        P = []
-        K = []
-        for e in data: 
-            if e[5] not in N: 
-                N.append(e[2])
-            if e[6] not in P: 
-                P.append(e[3])
-            if e[7] not in K: 
-                K.append(e[4])
-        try: 
-            N= sum(N)
-        except: 
-            N = 0
-        try:
-            P = sum(P)
-        except:
-            P = 0
-        try:
-            K = sum(K)
-        except:
-            K = 0
-        # print(N, P, K)
+        ce = [int(e[1]) for e in data]
+        area = [float(e[5]) for e in data]
+        npk = [str(e[4]) for e in data]
+        lista = [e.split(' / ') for e in npk ]
+        # print(npk)
 
-        return N,P,K
+        n = [int(e[0]) for e in lista ]
+        p = [int(e[1]) for e in lista ]
+        k = [int(e[2]) for e in lista ]
+
+        # print(lista)
+        self.prod_ponderado = self.sumaPonderada(ce,area)
+        self.n_ponderado = self.sumaPonderada(n, area)
+        self.p_ponderado = self.sumaPonderada(p, area)
+        self.k_ponderado = self.sumaPonderada(k, area)
+        self.area = round(sum(area),2)
+        # print(prod_ponderado, n_ponderado, p_ponderado, k_ponderado)
+        
+        self.prod_pond.setText('{} Kg Cosecha/Ha'.format(self.prod_ponderado))
+        self.area_total.setText('{} Ha'.format(round(sum(area),2)))
+        self.npk_pond.setText('{} / {} / {}'.format(self.n_ponderado,self.p_ponderado,self.k_ponderado))
+        
+
+
+
 
     def populateTable(self): 
-        # headers = ['UF','Prod','Cosecha','Residuo','Total','Area']
         cols = [0,1,2,3,4,5]
         datagen = ([f[col] for col in cols] for f in self.dataExtraccion)
-        df = pd.DataFrame.from_records(data=datagen, columns=cols)
-        # df[1] = df[1].apply('{:.0i}'.format)
-        # df[5] = df[5].apply('{:.2f} Ha'.format)
-        # df.columns = headers
-        
+        df = pd.DataFrame.from_records(data=datagen, columns=cols)        
         df_sorted = df.sort_values(by=0).round({'area_has':2})
         model = TableModel(df_sorted)
         self.tableView.setModel(model)
-        # self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tableView.setColumnWidth(0,35)
         self.tableView.setColumnWidth(5,35)
-        # print(self.tableView.columnWidth(0))
-        # print(self.tableView.columnWidth(1))
-        # print(self.tableView.columnWidth(2))
-        # print(self.tableView.columnWidth(3))
-        # print(self.tableView.columnWidth(4))
-        # print(self.tableView.columnWidth(5))
-        # self.tableView.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        # self.tableView.horizontalHeader().setSectionResizeMode(1,QHeaderView.ResizeToContents)
-        # self.tableView.horizontalHeader().setSectionResizeMode(2,QHeaderView.Stretch)
-        # self.tableView.horizontalHeader().setSectionResizeMode(3,QHeaderView.Stretch)
-        # self.tableView.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)
-        # self.tableView.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.tableView.grab().save(os.path.join(
+            os.path.dirname(__file__), r'ui\img\tabla.png'))
+        self.sc.saveImage(os.path.join(
+        os.path.dirname(__file__), r'ui\img\chart.png'))
+        # self.genPanel()
 
     def sumaPonderada(self,x,y):
         """
         x = Value y = Area
 
         """
-        zipedd = zip(x, y)
-        p1 = [x * y for (x, y) in zipedd]
-        p2 = round(sum(p1)/sum(y))
+        try:
+            zipedd = zip(x, y)
+            p1 = [x * y for (x, y) in zipedd]
+            p2 = round(sum(p1)/sum(y))
+        except ZeroDivisionError:
+            p2=0 
 
         # print(p2)
         return p2
 
-    
+    def genPanel(self):
+        now = datetime.now()
+        date = now.strftime("%H%M%S%d%m%y")
+        filename = QFileDialog.getExistingDirectory(
+            None, "Seleccionar directorio de Paneles:")
+        base = os.path.join(os.path.dirname(__file__), r'ui\img\base.png')
+        plot = os.path.join(os.path.dirname(__file__), r'ui\img\chart.png')
+        table = os.path.join(os.path.dirname(__file__), r'ui\img\tabla.png')
+        img = Image.open(base)
+        font = ImageFont.truetype("arialbi.ttf",13)
+        font2 = ImageFont.truetype("arialbi.ttf", 10)
+        color = (0, 0, 0)
+        d1 = ImageDraw.Draw(img)
+        d1.text((328, 434), "{} Kg cosecha/Ha".format(self.prod_ponderado),
+                font=font, fill=color)
+        d2 = ImageDraw.Draw(img)
+        d2.text((630, 434), "{} Ha".format(self.area), font=font, fill=color)
+        d3 = ImageDraw.Draw(img)
+        d3.text((576, 456), "{} / {} / {}".format(self.n_ponderado, self.p_ponderado, self.k_ponderado),
+                font=font, fill=color)
+        img2 = Image.open(plot)
+        img2 = img2.resize((281,211))
+        img.paste(img2,(25,184),mask=img2)
+        img3 = Image.open(table)
+        img3 = img3.resize((386, 225))
+        # img3 = img3.resize((350, 189))
+        img.paste(img3, (314, 187), mask=img3)
+        d4 = ImageDraw.Draw(img)
+        d4.text((44, 225), "N", font=font2, fill=color)
+        d4.text((44, 262), "P", font=font2, fill=color)
+        d4.text((44, 303), "K", font=font2, fill=color)
+        d4.text((28, 340), "Carb.", font=font2, fill=color)
+        img.save(f'{filename}\\{self.lote}-{self.parcela}-{self.cultivo}_{date}.png')
 
     
         
@@ -2059,7 +2092,15 @@ class MplCanvas(FigureCanvasQTAgg):
         # print('plot {}'.format(self.data))
     def close(self): 
         plt.cla()
-    
+    def saveImage(self,path):
+        self.ax1.set_title('')  
+        self.ax1.set_yticklabels('') 
+        self.ax2.set_title('')  
+        self.ax2.set_yticklabels('') 
+        self.ax3.set_title('')  
+        self.ax3.set_yticklabels('') 
+        plt.savefig(path)
+
     def plot(self,data):
         
 
@@ -2115,6 +2156,8 @@ class MplCanvas(FigureCanvasQTAgg):
             
             return values   
 
+    
+
         segmentos = [f[0] for f in data]
         nitrogeno = [f[1] for f in data]
         fosforo = [f[2] for f in data]
@@ -2143,7 +2186,7 @@ class MplCanvas(FigureCanvasQTAgg):
         barGenerator(self.ax2,values_2,colors_2,categorias,y_pos,'Suelo 2',False)
         barGenerator(self.ax3, values_1, colors_1,categorias, y_pos, 'Suelo 1', False)
         
-       
+    
 
 
         
