@@ -40,7 +40,7 @@ from qgis.PyQt.QtCore import pyqtSignal, QSettings
 from qgis.core import *
 from qgis.utils import iface
 from .agrae_dialogs import agraeSegmentoDialog, agraeParametrosDialog, cultivoFindDialog
-from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic, TableModel
+from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic, TableModel, PanelRender
 
 from .agraeTools import agraeToolset
 from .resources import *
@@ -296,6 +296,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         """Constructor."""
         super(loteFindDialog, self).__init__(parent)      
         self.utils = AgraeUtils()
+        self.tools = AgraeToolset()
         self.conn = self.utils.Conn()
         
         self.setupUi(self)
@@ -316,6 +317,11 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         line_buscar_action = self.lineEdit.addAction(
             QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
         line_buscar_action.triggered.connect(self.buscar)
+
+        self.line_lote_nombre.setClearButtonEnabled(True)
+        line_crear_action = self.line_lote_nombre.addAction(
+            QIcon(icons_path['save']), self.line_lote_nombre.TrailingPosition)
+        line_crear_action.triggered.connect(self.crearLote)
 
         # self.lineEdit_2.textChanged.connect(self.setButtonEnabled)
         
@@ -573,7 +579,13 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         except Exception as ex:
             print(ex) 
             pass
-
+    
+    def crearLote(self):
+        try:
+            self.tools.crearLote(self)
+        except Exception as ex:
+            print(ex)
+            pass
 
 class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
     closingPlugin = pyqtSignal()
@@ -1752,7 +1764,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         for e in data: 
             # print(e[0])
             if uf not in e[0] and len(data) < 9:
-                data.append((uf, 0, '0 / 0 / 0', '0 / 0 / 0', '0 / 0 / 0', 0))
+                data.append((uf, 0, '0 / 0 / 0', '0 / 0 / 0', '0 / 0 / 0', 0,''))
                 break
             else:
                 break
@@ -1760,7 +1772,410 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
 
 
-class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog): 
+
+class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
+    matplotlib.use('Qt5Agg')
+    closingPlugin = pyqtSignal()
+
+    def __init__(self,dataSuelo, dataExtraccion, lote,parcela, prod, cultivo, idlotecampania, parent=None):
+        super(agraeAnaliticaDialog, self).__init__(parent)
+        uic.loadUi(os.path.join(os.path.dirname(__file__),
+                                'ui/dialogs/analitica_dialog.ui'), self)
+        
+        # self.pushButton.clicked.connect(self.loadPlot)
+        self.dataSuelo = dataSuelo
+        self.dataExtraccion = dataExtraccion
+        self.idlotecampania = idlotecampania
+        self.lote = lote 
+        self.parcela = parcela
+        self.prod = prod
+        self.cultivo = cultivo
+        self.setWindowTitle('Analisis {}-{}'.format(self.lote.upper(),self.parcela.upper()))
+
+        self.enabled = False
+        self.i = 0
+        
+        self.area = None
+        self.prod_ponderado = None 
+        self.n_ponderado = None
+        self.p_ponderado = None
+        self.k_ponderado = None
+        self.formula = None
+        self.dataNecesidades = None
+        self.dataValidator = False
+
+
+        self._pesos = []
+        self._precios = []
+
+        self.sc = MplCanvas(self)
+        self.sc.setStyleSheet("background-color:transparent;")
+        self.sc.plot(self.dataSuelo)
+
+        
+        
+        self.verticalLayout.addWidget(self.sc)
+        self.utils = AgraeUtils()
+        self.style = self.utils.styleSheet()
+        self.iconsPath = self.utils.iconsPath()
+        self.UIcomponents()
+        self.populateTable()
+        
+        # self.tabWidget.grab().save(os.path.join(os.path.dirname(__file__), r'ui\img\panel.png'))
+        # print('dialog {}'.format(self.data))
+        # self.n,self.p,self.k = self.necesidadesTotales()
+
+    def UIcomponents(self): 
+        leyenda = QPixmap(self.iconsPath['lgnd1'])
+        p1_img = QPixmap(self.iconsPath['p1'])
+        # leyenda.scaledToWidth(281)
+        self.setStyleSheet(self.style)
+        self.lgnd1.setPixmap(leyenda)
+        self.p1.setPixmap(p1_img)
+        self.lbl_lote.setText('{} - {}'.format(self.lote.upper(),self.parcela.upper()))
+        self.lbl_cultivo.setText('{}'.format(self.cultivo.upper()))
+        self.lbl_prod.setText('{} Kg/Ha'.format(self.prod.upper()))
+        self.tableView.setShowGrid(False)
+
+        self.necesidadesTotales()
+
+        self.pushButton.clicked.connect(self.panel)
+
+        self.regexFormula = QRegExpValidator(QRegExp(r'(\d{2}\-\d{2}\-\d{2})'))
+        self.line_formula_1.setValidator(self.regexFormula)
+        # self.line_formula_1.setInputMask(("dd-"*3)[:-1]) #! AGREGAR MASCARA AL INGRESAR LA FORMULA TODO: 
+        self.line_formula_1.textChanged.connect(self.fert)
+        self.line_formula_2.setValidator(self.regexFormula)
+        self.line_formula_2.textChanged.connect(self.fert)
+
+        self.line_precio_1.textChanged.connect(lambda t, c=self.combo_ajuste_1: self.enableCombo(t,c))
+        self.line_precio_2.textChanged.connect(lambda t, c=self.combo_ajuste_2: self.enableCombo(t,c))
+        self.line_precio_3.textChanged.connect(lambda t, c=self.combo_ajuste_3: self.enableCombo(t,c))
+        self.line_precio_4.textChanged.connect(lambda t, c=self.combo_ajuste_4: self.enableCombo(t,c))
+
+        self.combo_ajuste_1.currentIndexChanged.connect(lambda i,t=self.table_aporte_1,p=self.line_precio_1,l=self.t_aporte_1, lp=self.t_precio_1: self.fertilizar(i,t,p,l,lp,1))
+        self.combo_ajuste_2.currentIndexChanged.connect(lambda i,t=self.table_aporte_2,p=self.line_precio_2,l=self.t_aporte_2, lp=self.t_precio_2: self.fertilizar(i,t,p,l,lp,2))
+        self.combo_ajuste_3.currentIndexChanged.connect(lambda i,t=self.table_aporte_3,p=self.line_precio_3,l=self.t_aporte_3, lp=self.t_precio_3: self.fertilizar(i,t,p,l,lp,3))
+        self.combo_ajuste_4.currentIndexChanged.connect(lambda i,t=self.table_aporte_4,p=self.line_precio_4,l=self.t_aporte_4, lp=self.t_precio_4: self.fertilizar(i,t,p,l,lp,4))
+
+        
+    def necesidadesTotales(self): 
+        data = self.dataExtraccion
+        ce = [int(e[1]) for e in data]
+        area = [float(e[5]) for e in data]
+        npk = [str(e[4]) for e in data]
+        lista = [e.split(' / ') for e in npk ]
+
+        n = [int(e[0]) for e in lista ]
+        p = [int(e[1]) for e in lista ]
+        k = [int(e[2]) for e in lista ]
+
+
+
+        self.prod_ponderado = self.sumaPonderada(ce,area)
+        self.n_ponderado = self.sumaPonderada(n, area)
+        self.p_ponderado = self.sumaPonderada(p, area)
+        self.k_ponderado = self.sumaPonderada(k, area)
+        self.area = round(sum(area),2)
+
+        
+        self.prod_pond.setText('{} Kg Cosecha/Ha'.format(self.prod_ponderado))
+        self.area_total.setText('{} Ha'.format(round(sum(area),2)))
+        self.npk_pond.setText('{} / {} / {}'.format(self.n_ponderado,self.p_ponderado,self.k_ponderado))
+        
+        # self.ajustesFertilizantes(n=n,x=0.06,p=p,y=0.16,k=k,z=0.24)
+
+    def populateTable(self): 
+        cols = [0,1,2,3,4,5]
+        datagen = ([f[col] for col in cols] for f in self.dataExtraccion)
+        
+        df = pd.DataFrame.from_records(data=datagen, columns=cols)        
+        df_sorted = df.sort_values(by=0).round({'area_has':2})
+        model = TableModel(df_sorted)
+        self.tableView.setModel(model)
+        self.tableView.setColumnWidth(0,35)
+        self.tableView.setColumnWidth(5,35)
+        self.tableView.grab().save(os.path.join(
+            os.path.dirname(__file__), r'ui\img\tabla.png'))
+        self.sc.saveImage(os.path.join(
+        os.path.dirname(__file__), r'ui\img\chart.png'))
+
+        uf = [e[0] for e in self.dataExtraccion]
+        area = [float(e[5]) for e in self.dataExtraccion]
+        npk = [str(e[4]) for e in self.dataExtraccion]
+        lista = [e.split(' / ') for e in npk ]
+        n = [int(e[0]) for e in lista ]
+        p = [int(e[1]) for e in lista ]
+        k = [int(e[2]) for e in lista ]
+        dataNecesidades = zip(uf,n,p,k)
+        cols = [0,1,2,3]
+        datagen = ([f[col] for col in cols] for f in dataNecesidades)
+        df = pd.DataFrame.from_records(data=datagen, columns=cols)
+        model = TableModel(df)
+        self.table_necesidades.setModel(model)
+        self.table_necesidades.setColumnWidth(0, 35)
+        self.table_necesidades.setColumnWidth(1, 79)
+        self.table_necesidades.setColumnWidth(2, 79)
+        self.table_necesidades.setColumnWidth(3, 79)
+
+        
+
+   
+    
+    
+    def sumaPonderada(self,x,y):
+        """
+        x = Value y = Area
+
+        """
+        try:
+            zipedd = zip(x, y)
+            p1 = [x * y for (x, y) in zipedd]
+            p2 = round(sum(p1)/sum(y))
+        except ZeroDivisionError:
+            p2=0 
+
+        # print(p2)
+        return p2
+
+ 
+    
+    
+    def ajustesFertilizantes(self,n:list,x:float,p:list,y:float,k:list,z:float):
+        
+        """
+        n: List of uf values for N
+        x: value for N dosification
+        p: List of uf values for P
+        y: Value dosification for P, 
+        k: List of K values
+        z: Value dosification for K 
+
+        return data: Structured analized values, Totals
+
+
+        """
+        uf = ['UF1','UF2','UF3','UF4','UF5','UF6','UF7','UF8','UF9']
+
+        n1 = [round(e/x) if x != 0 else 0 for e in n]
+        zn = zip(uf, n1)
+        tn = sum(n1)
+        dataN = {k:v for k,v in zn}
+        # print('N: ', dataN)
+
+        p1 = [round(e/y) if y != 0 else 0 for e in p]
+        zp = zip(uf,p1)
+        dataP = {k:v for k,v in zp}
+        tp = sum(p1)
+        # print('P: ',dataP)  
+
+        k1 = [round(e/z) if z != 0 else 0 for e in k]
+        zk = zip(uf,k1)
+        tk = sum(k1)
+        dataK = {k:v for k,v in zk}
+        # print('K :',dataK)
+
+        pk1 = [round((e+i)/2) for e,i in zip(p1,k1)]
+        zpk = zip(uf,pk1)
+        tpk = sum(pk1)
+        dataPK = {k:v for k,v in zpk}
+
+        totales = [tn,tp,tk,tpk]
+
+        # print('PK :',dataPK)
+
+        data = zip(uf,n1,p1,k1,pk1)
+        return data
+
+    def fertilizar(self,index,table,precio,l_peso,l_precio,i):
+        if index != 0:
+            precio = precio.text()
+            data = self.dataExtraccion
+            # print(precio)
+
+            # print(self.dataExtraccion)
+            area = [float(e[5]) for e in data]
+            npk = [str(e[4]) for e in data]
+            lista = [e.split(' / ') for e in npk ]
+            n = [int(e[0]) for e in lista ]
+            p = [int(e[1]) for e in lista ]
+            k = [int(e[2]) for e in lista ]
+            f_n = int(self.formula[0])/100
+            f_p = int(self.formula[1])/100
+            f_k = int(self.formula[2])/100
+
+
+            cols = [0,(index)]
+            # cols = [i for i in range(5)]
+            # cols = cols.append((self.combo_ajuste_1.currentIndex()+1))
+            d = self.ajustesFertilizantes(n=n,x=f_n,p=p,y=f_p,k=k,z=f_k)
+            # print(d)        
+            datagen = ([f[col] for col in cols] for f in d)
+            df = pd.DataFrame.from_records(data=datagen, columns=cols)
+            # df.style.format({index: '{:.1f} Kg/Ha'})
+            model = TableModel(df)
+            table.setModel(model)
+            table.setColumnWidth(0, 35)
+            table.setColumnWidth(1, 35)
+            table.grab().save(os.path.join(os.path.dirname(__file__), r'ui\img\tf{}.png'.format(i)))
+
+
+            d = self.ajustesFertilizantes(n=n, x=f_n, p=p, y=f_p, k=k, z=f_k)
+            datagen = ([f[col] for col in cols] for f in d)
+            l = list(datagen)
+            # print(d)
+            # print(l)
+            a1 = [int(e[1]) for e in l]
+            p_aporte = self.sumaPonderada(a1, area)
+            p_aporte = p_aporte * sum(area)
+            self._pesos.append(round(p_aporte))
+
+            pr_aporte = int(precio)*(int(p_aporte)/1000)
+            self._precios.append(round(pr_aporte))
+            l_peso.setText('{} Kg/Ha'.format(str(round(p_aporte))))
+            l_precio.setText('{} €/Ha'.format(str(round(pr_aporte))))
+
+
+            d = self.ajustesFertilizantes(n=n, x=f_n, p=p, y=f_p, k=k, z=f_k)
+            genValue = (f[index]  for f in d)
+            values = list(genValue)
+            print(values)
+
+            self.i = self.i + 1
+            self.balanceNutrientes(values,f_n,f_p,f_k)
+
+
+            
+            
+        else: 
+            pass
+           
+    
+
+    def balanceNutrientes(self,valores:list,dosis_n:float,dosis_p:float,dosis_k:float):
+        
+        if self.dataValidator == False:
+            data = self.dataExtraccion
+            uf = [e[0] for e in data]
+            area = [float(e[5]) for e in data]
+            npk = [str(e[4]) for e in data]
+            lista = [e.split(' / ') for e in npk ]
+            n = [int(e[0]) for e in lista ]
+            p = [int(e[1]) for e in lista ]
+            k = [int(e[2]) for e in lista ]        
+
+
+            aporte_n = [round(v*dosis_n) for v in valores]
+            aporte_p = [round(v*dosis_p) for v in valores]
+            aporte_k = [round(v*dosis_k) for v in valores]
+            # print(aporte_n)
+            total_n = [int(i-a) for i,a in zip(n,aporte_n)]
+            total_p = [int(i-a) for i,a in zip(p,aporte_p)]
+            total_k = [int(i-a) for i,a in zip(k,aporte_k)]
+            self.dataNecesidades = zip(uf, total_n, total_p, total_k)
+            cols = [0, 1, 2, 3]
+            datagen = ([f[col] for col in cols] for f in self.dataNecesidades)
+            df = pd.DataFrame.from_records(data=datagen, columns=cols)
+            model = TableModel(df)
+            self.table_necesidades.setModel(model)
+            self.table_necesidades.setColumnWidth(0, 35)
+            self.table_necesidades.setColumnWidth(1, 79)
+            self.table_necesidades.setColumnWidth(2, 79)
+            self.table_necesidades.setColumnWidth(3, 79)
+            # print('dep')
+            self.dataNecesidades = df
+            self.dataValidator = True
+            # print(self.dataNecesidades)
+
+
+
+
+
+        # for u,n,p,k in self.dataNecesidades:
+        #     print(u,n,p,k)
+        # self.dataNecesidades = zip(uf, total_n, total_p, total_k)
+
+        else: 
+            data = self.dataNecesidades
+            data = list(zip(*[data[col] for col in data]))
+            # print(data)
+            
+            uf = [e[0] for e in data]
+            n = [int(e[1]) for e in data ]
+            p = [int(e[2]) for e in data ]
+            k = [int(e[3]) for e in data ]
+            aporte_n = [round(v*dosis_n) for v in valores]
+            aporte_p = [round(v*dosis_p) for v in valores]
+            aporte_k = [round(v*dosis_k) for v in valores]
+            
+            total_n = [int(i-a) for i, a in zip(n, aporte_n)]
+            total_p = [int(i-a) for i, a in zip(p, aporte_p)]
+            total_k = [int(i-a) for i, a in zip(k, aporte_k)]
+            self.dataNecesidades = zip(uf, total_n, total_p, total_k)
+
+            # print(total_n,total_p,total_k)
+
+
+        
+            cols = [0, 1, 2, 3]
+            datagen = ([f[col] for col in cols] for f in self.dataNecesidades)
+            df = pd.DataFrame.from_records(data=datagen, columns=cols)
+            model = TableModel(df)
+            self.table_necesidades.setModel(model)
+            self.table_necesidades.setColumnWidth(0, 35)
+            self.table_necesidades.setColumnWidth(1, 79)
+            self.table_necesidades.setColumnWidth(2, 79)
+            self.table_necesidades.setColumnWidth(3, 79)
+            print('dep')
+            self.dataNecesidades = df
+            self.dataValidator = True
+
+
+        
+        
+    
+
+       
+        pass
+       
+
+    def enableCombo(self,text,combo):
+        if len(text) > 3:        
+            combo.setEnabled(True)
+        else:
+            combo.setEnabled(False)
+        
+        
+
+    
+    def fert(self,text):
+        if len(text) ==8:
+            self.formula = text.split('-')
+            # self.pushButton_2.setEnabled(True)
+
+    def panel(self): 
+
+        npk = [self.n_ponderado,self.p_ponderado, self.k_ponderado]
+        render = PanelRender(self.lote, self.parcela, self.cultivo, self.prod_ponderado, self.area, npk,self.i,self._pesos,self._precios)
+
+        render.savePanel()
+        
+
+    
+       
+        
+
+        
+
+        
+
+    def closeEvent(self, event):
+        self.closingPlugin.emit()
+        self.sc.close()
+        event.accept()
+
+
+class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
 
     closingPlugin = pyqtSignal()
 
@@ -1791,11 +2206,11 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
         self.tableWidget.setColumnHidden(6, True)
         self.tableWidget.setColumnHidden(0, True)
 
-
         icons_path = self.utils.iconsPath()
         self.sinceDate.dateChanged.connect(self.sinceDateChange)
         self.line_buscar.setClearButtonEnabled(True)
-        line_buscar_action = self.line_buscar.addAction(QIcon(icons_path['search_icon_path']), self.line_buscar.TrailingPosition)
+        line_buscar_action = self.line_buscar.addAction(
+            QIcon(icons_path['search_icon_path']), self.line_buscar.TrailingPosition)
         line_buscar_action.triggered.connect(self.buscarLotes)
         self.btn_add_layer.setIcon(QIcon(icons_path['add_layer_to_map']))
         self.btn_add_layer.setIconSize(QtCore.QSize(20, 20))
@@ -1805,7 +2220,7 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
         self.btn_add_layer_2.setIcon(QIcon(icons_path['add_group_layers']))
         self.btn_add_layer_2.setToolTip('Añadir grupo de parcelas')
         self.btn_add_layer_2.clicked.connect(self.cargarLoteData)
-        
+
         self.btn_reload.setIcon(QIcon(icons_path['reload_data']))
         self.btn_reload.setIconSize(QtCore.QSize(20, 20))
         self.btn_reload.setToolTip('Buscar todos los lotes')
@@ -1816,26 +2231,26 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
         # self.tableWidget.setColumnHidden(4, True)
         # self.tableWidget.setColumnHidden(6, True)
 
-
-
         pass
+
     def sinceDateChange(self):
         self.sinceDateStatus = True
         d1 = self.sinceDate.date()
         self.untilDate.setMinimumDate(d1)
         self.untilDate.setEnabled(True)
 
-    def buscarLotes(self): 
-        self.tools.buscarLotes(self,self.sinceDateStatus)
+    def buscarLotes(self):
+        self.tools.buscarLotes(self, self.sinceDateStatus)
         self.line_buscar.setText('')
-        
-    def reloadLotes(self): 
-        self.tools.buscarLotes(self,False)
+
+    def reloadLotes(self):
+        self.tools.buscarLotes(self, False)
         self.btn_reload.setEnabled(False)
-        
-    def cargarLote(self): 
+
+    def cargarLote(self):
         self.tools.cargarLote(self)
-    def cargarLoteData(self): 
+
+    def cargarLoteData(self):
         dns = self.dns
         row = self.tableWidget.currentRow()
         idlotecampania = self.tableWidget.item(row, 0).text()
@@ -1905,175 +2320,7 @@ class loteFilterDialog(QtWidgets.QDialog,agraeLoteParcelaDialog):
         # print(listaLotes)
         completerLotes = QCompleter(listaLotes)
         completerLotes.setCaseSensitivity(False)
-        self.line_buscar.setCompleter(completerLotes)              
-
-
-class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
-    matplotlib.use('Qt5Agg')
-    closingPlugin = pyqtSignal()
-
-    def __init__(self,dataSuelo, dataExtraccion, lote,parcela, prod, cultivo, idlotecampania, parent=None):
-        super(agraeAnaliticaDialog, self).__init__(parent)
-        uic.loadUi(os.path.join(os.path.dirname(__file__),
-                                'ui/dialogs/analitica_dialog.ui'), self)
-        
-        # self.pushButton.clicked.connect(self.loadPlot)
-        self.dataSuelo = dataSuelo
-        self.dataExtraccion = dataExtraccion
-        self.idlotecampania = idlotecampania
-        self.lote = lote 
-        self.parcela = parcela
-        self.prod = prod
-        self.cultivo = cultivo
-        self.setWindowTitle('Analisis {}-{}'.format(self.lote.upper(),self.parcela.upper()))
-        
-        self.area = None
-        self.prod_ponderado = None 
-        self.n_ponderado = None
-        self.p_ponderado = None
-        self.k_ponderado = None
-
-
-        self.sc = MplCanvas(self)
-        self.sc.setStyleSheet("background-color:transparent;")
-        self.sc.plot(self.dataSuelo)
-        
-        self.verticalLayout.addWidget(self.sc)
-        self.utils = AgraeUtils()
-        self.style = self.utils.styleSheet()
-        self.iconsPath = self.utils.iconsPath()
-        self.UIcomponents()
-        self.populateTable()
-        
-        # self.tabWidget.grab().save(os.path.join(os.path.dirname(__file__), r'ui\img\panel.png'))
-        # print('dialog {}'.format(self.data))
-        # self.n,self.p,self.k = self.necesidadesTotales()
-
-    def UIcomponents(self): 
-        leyenda = QPixmap(self.iconsPath['lgnd1'])
-        p1_img = QPixmap(self.iconsPath['p1'])
-        # leyenda.scaledToWidth(281)
-        self.setStyleSheet(self.style)
-        self.lgnd1.setPixmap(leyenda)
-        self.p1.setPixmap(p1_img)
-        self.lbl_lote.setText('{} - {}'.format(self.lote.upper(),self.parcela.upper()))
-        self.lbl_cultivo.setText('{}'.format(self.cultivo.upper()))
-        self.lbl_prod.setText('{} Kg/Ha'.format(self.prod.upper()))
-        self.tableView.setShowGrid(False)
-
-        self.necesidadesTotales()
-
-        self.pushButton.clicked.connect(self.genPanel)
-        
-
-        
-    def necesidadesTotales(self): 
-        data = self.dataExtraccion
-        ce = [int(e[1]) for e in data]
-        area = [float(e[5]) for e in data]
-        npk = [str(e[4]) for e in data]
-        lista = [e.split(' / ') for e in npk ]
-        # print(npk)
-
-        n = [int(e[0]) for e in lista ]
-        p = [int(e[1]) for e in lista ]
-        k = [int(e[2]) for e in lista ]
-
-        # print(lista)
-        self.prod_ponderado = self.sumaPonderada(ce,area)
-        self.n_ponderado = self.sumaPonderada(n, area)
-        self.p_ponderado = self.sumaPonderada(p, area)
-        self.k_ponderado = self.sumaPonderada(k, area)
-        self.area = round(sum(area),2)
-        # print(prod_ponderado, n_ponderado, p_ponderado, k_ponderado)
-        
-        self.prod_pond.setText('{} Kg Cosecha/Ha'.format(self.prod_ponderado))
-        self.area_total.setText('{} Ha'.format(round(sum(area),2)))
-        self.npk_pond.setText('{} / {} / {}'.format(self.n_ponderado,self.p_ponderado,self.k_ponderado))
-        
-
-
-
-
-    def populateTable(self): 
-        cols = [0,1,2,3,4,5]
-        datagen = ([f[col] for col in cols] for f in self.dataExtraccion)
-        df = pd.DataFrame.from_records(data=datagen, columns=cols)        
-        df_sorted = df.sort_values(by=0).round({'area_has':2})
-        model = TableModel(df_sorted)
-        self.tableView.setModel(model)
-        self.tableView.setColumnWidth(0,35)
-        self.tableView.setColumnWidth(5,35)
-        self.tableView.grab().save(os.path.join(
-            os.path.dirname(__file__), r'ui\img\tabla.png'))
-        self.sc.saveImage(os.path.join(
-        os.path.dirname(__file__), r'ui\img\chart.png'))
-        # self.genPanel()
-
-    def sumaPonderada(self,x,y):
-        """
-        x = Value y = Area
-
-        """
-        try:
-            zipedd = zip(x, y)
-            p1 = [x * y for (x, y) in zipedd]
-            p2 = round(sum(p1)/sum(y))
-        except ZeroDivisionError:
-            p2=0 
-
-        # print(p2)
-        return p2
-
-    def genPanel(self):
-        now = datetime.now()
-        date = now.strftime("%H%M%S%d%m%y")
-        filename = QFileDialog.getExistingDirectory(
-            None, "Seleccionar directorio de Paneles:")
-        base = os.path.join(os.path.dirname(__file__), r'ui\img\base.png')
-        plot = os.path.join(os.path.dirname(__file__), r'ui\img\chart.png')
-        table = os.path.join(os.path.dirname(__file__), r'ui\img\tabla.png')
-        img = Image.open(base)
-        font = ImageFont.truetype("arialbi.ttf",13)
-        font2 = ImageFont.truetype("arialbi.ttf", 10)
-        color = (0, 0, 0)
-        d1 = ImageDraw.Draw(img)
-        d1.text((328, 434), "{} Kg cosecha/Ha".format(self.prod_ponderado),
-                font=font, fill=color)
-        d2 = ImageDraw.Draw(img)
-        d2.text((630, 434), "{} Ha".format(self.area), font=font, fill=color)
-        d3 = ImageDraw.Draw(img)
-        d3.text((576, 456), "{} / {} / {}".format(self.n_ponderado, self.p_ponderado, self.k_ponderado),
-                font=font, fill=color)
-        img2 = Image.open(plot)
-        img2 = img2.resize((281,211))
-        img.paste(img2,(25,184),mask=img2)
-        img3 = Image.open(table)
-        img3 = img3.resize((386, 225))
-        # img3 = img3.resize((350, 189))
-        img.paste(img3, (314, 187), mask=img3)
-        d4 = ImageDraw.Draw(img)
-        d4.text((44, 225), "N", font=font2, fill=color)
-        d4.text((44, 262), "P", font=font2, fill=color)
-        d4.text((44, 303), "K", font=font2, fill=color)
-        d4.text((28, 340), "Carb.", font=font2, fill=color)
-        img.save(f'{filename}\\{self.lote}-{self.parcela}-{self.cultivo}_{date}.png')
-
-    
-        
-
-    
-       
-        
-
-        
-
-        
-
-    def closeEvent(self, event):
-        self.closingPlugin.emit()
-        self.sc.close()
-        event.accept()
+        self.line_buscar.setCompleter(completerLotes)
 
 
 
@@ -2114,9 +2361,13 @@ class MplCanvas(FigureCanvasQTAgg):
                 elif i == 'Alto':
                     colors.append('#0293E5')
                     values.append(4)
+                elif i == 'Medio':
+                    colors.append('#06E502')
+                    values.append(3)
                 elif i == 'Normal':
                     colors.append('#06E502')
                     values.append(3)
+                
                 elif i == 'Bajo':
                     colors.append('#FF9633')
                     values.append(2)
@@ -2189,7 +2440,6 @@ class MplCanvas(FigureCanvasQTAgg):
     
 
 
-        
 
             
 

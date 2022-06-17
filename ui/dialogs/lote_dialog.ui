@@ -47,8 +47,12 @@
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout" rowstretch="0">
-     <item row="0" column="1">
-      <widget class="QLineEdit" name="lineEdit"/>
+     <item row="0" column="2">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Crear Lote</string>
+       </property>
+      </widget>
      </item>
      <item row="0" column="0">
       <widget class="QLabel" name="label">
@@ -56,6 +60,12 @@
         <string>Buscar Lote: </string>
        </property>
       </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="lineEdit"/>
+     </item>
+     <item row="0" column="3">
+      <widget class="QLineEdit" name="line_lote_nombre"/>
      </item>
     </layout>
    </widget>
