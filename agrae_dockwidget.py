@@ -28,15 +28,16 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import psycopg2
+import time
 from datetime import datetime
 # from datetime import date
 from PIL import Image, ImageDraw, ImageFont
 from psycopg2 import OperationalError,InterfaceError, errors, extras
-from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QThread, QAbstractTableModel
+from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QAbstractTableModel
 from PyQt5.QtGui import QRegExpValidator, QIcon, QPixmap, QFont
 from PyQt5.QtWidgets import *
 from qgis.PyQt import QtGui, QtWidgets, uic
-from qgis.PyQt.QtCore import pyqtSignal, QSettings
+from qgis.PyQt.QtCore import pyqtSignal, pyqtSlot, QSettings
 from qgis.core import *
 from qgis.utils import iface
 from .agrae_dialogs import agraeSegmentoDialog, agraeParametrosDialog, cultivoFindDialog
@@ -50,6 +51,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from PyQt5 import QtCore, QtWidgets
 import sys
 import matplotlib
+import threading
 
 
 
@@ -1736,9 +1738,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         (u.extraccionresiduon || ' / ' ||
         u.extraccionresiduop || ' / ' ||
         u.extraccioncosechak) res_npk,
-        (u.n_aporte || ' / ' ||
-        u.p_aporte || ' / ' ||
-        u.k_aporte) aportes_npk,
+        (u.necesidad_n || ' / ' ||
+        u.necesidad_p || ' / ' ||
+        u.necesidad_k) aportes_npk,
         round(cast(u.area_has as numeric),2) area
         from unidades u
         join lotes ls on ls.idlotecampania = u.idlotecampania
@@ -1773,6 +1775,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
 
 
+
+
 class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
     matplotlib.use('Qt5Agg')
     closingPlugin = pyqtSignal()
@@ -1783,6 +1787,10 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
                                 'ui/dialogs/analitica_dialog.ui'), self)
         
         # self.pushButton.clicked.connect(self.loadPlot)
+        self.utils = AgraeUtils()
+        self.conn = self.utils.Conn()
+
+
         self.dataSuelo = dataSuelo
         self.dataExtraccion = dataExtraccion
         self.idlotecampania = idlotecampania
@@ -1803,6 +1811,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.formula = None
         self.dataNecesidades = None
         self.dataValidator = False
+        self.dataAuto = None
 
 
         self._pesos = []
@@ -1820,6 +1829,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.iconsPath = self.utils.iconsPath()
         self.UIcomponents()
         self.populateTable()
+        
         
         # self.tabWidget.grab().save(os.path.join(os.path.dirname(__file__), r'ui\img\panel.png'))
         # print('dialog {}'.format(self.data))
@@ -1840,6 +1850,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.necesidadesTotales()
 
         self.pushButton.clicked.connect(self.panel)
+        self.btn_ajuste_auto.clicked.connect(self.execAutoFert)
 
         self.regexFormula = QRegExpValidator(QRegExp(r'(\d{2}\-\d{2}\-\d{2})'))
         self.line_formula_1.setValidator(self.regexFormula)
@@ -1858,7 +1869,9 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.combo_ajuste_3.currentIndexChanged.connect(lambda i,t=self.table_aporte_3,p=self.line_precio_3,l=self.t_aporte_3, lp=self.t_precio_3: self.fertilizar(i,t,p,l,lp,3))
         self.combo_ajuste_4.currentIndexChanged.connect(lambda i,t=self.table_aporte_4,p=self.line_precio_4,l=self.t_aporte_4, lp=self.t_precio_4: self.fertilizar(i,t,p,l,lp,4))
 
-        
+        self.getDataFertilizacion()
+
+
     def necesidadesTotales(self): 
         data = self.dataExtraccion
         ce = [int(e[1]) for e in data]
@@ -1917,11 +1930,6 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.table_necesidades.setColumnWidth(1, 79)
         self.table_necesidades.setColumnWidth(2, 79)
         self.table_necesidades.setColumnWidth(3, 79)
-
-        
-
-   
-    
     
     def sumaPonderada(self,x,y):
         """
@@ -1937,10 +1945,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
 
         # print(p2)
         return p2
-
  
-    
-    
     def ajustesFertilizantes(self,n:list,x:float,p:list,y:float,k:list,z:float):
         
         """
@@ -1988,11 +1993,10 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         return data
 
     def fertilizar(self,index,table,precio,l_peso,l_precio,i):
-        if index != 0:
+        if index != 0 and self.dataValidator == False:
             precio = precio.text()
             data = self.dataExtraccion
             # print(precio)
-
             # print(self.dataExtraccion)
             area = [float(e[5]) for e in data]
             npk = [str(e[4]) for e in data]
@@ -2000,57 +2004,61 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             n = [int(e[0]) for e in lista ]
             p = [int(e[1]) for e in lista ]
             k = [int(e[2]) for e in lista ]
-            f_n = int(self.formula[0])/100
-            f_p = int(self.formula[1])/100
-            f_k = int(self.formula[2])/100
+        elif self.dataValidator == True:
+            precio = precio.text()
+            data = self.dataNecesidades
+            data = list(zip(*[data[col] for col in data]))
+            # print(data)
+            area = [float(e[5]) for e in self.dataExtraccion]
+            uf = [e[0] for e in data]
+            n = [int(e[1]) for e in data]
+            p = [int(e[2]) for e in data]
+            k = [int(e[3]) for e in data]
 
 
-            cols = [0,(index)]
-            # cols = [i for i in range(5)]
-            # cols = cols.append((self.combo_ajuste_1.currentIndex()+1))
-            d = self.ajustesFertilizantes(n=n,x=f_n,p=p,y=f_p,k=k,z=f_k)
-            # print(d)        
-            datagen = ([f[col] for col in cols] for f in d)
-            df = pd.DataFrame.from_records(data=datagen, columns=cols)
-            # df.style.format({index: '{:.1f} Kg/Ha'})
-            model = TableModel(df)
-            table.setModel(model)
-            table.setColumnWidth(0, 35)
-            table.setColumnWidth(1, 35)
-            table.grab().save(os.path.join(os.path.dirname(__file__), r'ui\img\tf{}.png'.format(i)))
+
+        f_n = int(self.formula[0])/100
+        f_p = int(self.formula[1])/100
+        f_k = int(self.formula[2])/100
 
 
-            d = self.ajustesFertilizantes(n=n, x=f_n, p=p, y=f_p, k=k, z=f_k)
-            datagen = ([f[col] for col in cols] for f in d)
-            l = list(datagen)
-            # print(d)
-            # print(l)
-            a1 = [int(e[1]) for e in l]
-            p_aporte = self.sumaPonderada(a1, area)
-            p_aporte = p_aporte * sum(area)
-            self._pesos.append(round(p_aporte))
-
-            pr_aporte = int(precio)*(int(p_aporte)/1000)
-            self._precios.append(round(pr_aporte))
-            l_peso.setText('{} Kg/Ha'.format(str(round(p_aporte))))
-            l_precio.setText('{} €/Ha'.format(str(round(pr_aporte))))
-
-
-            d = self.ajustesFertilizantes(n=n, x=f_n, p=p, y=f_p, k=k, z=f_k)
-            genValue = (f[index]  for f in d)
-            values = list(genValue)
-            print(values)
-
-            self.i = self.i + 1
-            self.balanceNutrientes(values,f_n,f_p,f_k)
+        cols = [0,(index)]
+        # cols = [i for i in range(5)]
+        # cols = cols.append((self.combo_ajuste_1.currentIndex()+1))
+        d = self.ajustesFertilizantes(n=n,x=f_n,p=p,y=f_p,k=k,z=f_k)
+        # print(d)        
+        datagen = ([f[col] for col in cols] for f in d)
+        df = pd.DataFrame.from_records(data=datagen, columns=cols)
+        # df.style.format({index: '{:.1f} Kg/Ha'})
+        model = TableModel(df)
+        table.setModel(model)
+        table.setColumnWidth(0, 35)
+        table.setColumnWidth(1, 35)
+        table.grab().save(os.path.join(os.path.dirname(__file__), r'ui\img\tf{}.png'.format(i)))
 
 
-            
-            
-        else: 
-            pass
-           
-    
+        d = self.ajustesFertilizantes(n=n, x=f_n, p=p, y=f_p, k=k, z=f_k)
+        datagen = ([f[col] for col in cols] for f in d)
+        l = list(datagen)
+        # print(d)
+        # print(l)
+        a1 = [int(e[1]) for e in l]
+        p_aporte = self.sumaPonderada(a1, area)
+        p_aporte = p_aporte * sum(area)
+        self._pesos.append(round(p_aporte))
+
+        pr_aporte = int(precio)*(int(p_aporte)/1000)
+        self._precios.append(round(pr_aporte))
+        l_peso.setText('{} Kg/Ha'.format(str(round(p_aporte))))
+        l_precio.setText('{} €/Ha'.format(str(round(pr_aporte))))
+
+        
+        d = self.ajustesFertilizantes(n=n, x=f_n, p=p, y=f_p, k=k, z=f_k)
+        genValue = (f[index]  for f in d)
+        values = list(genValue)
+        print(values)
+        self.i = self.i + 1
+        self.balanceNutrientes(values,f_n,f_p,f_k)
 
     def balanceNutrientes(self,valores:list,dosis_n:float,dosis_p:float,dosis_k:float):
         
@@ -2064,7 +2072,6 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             p = [int(e[1]) for e in lista ]
             k = [int(e[2]) for e in lista ]        
 
-
             aporte_n = [round(v*dosis_n) for v in valores]
             aporte_p = [round(v*dosis_p) for v in valores]
             aporte_k = [round(v*dosis_k) for v in valores]
@@ -2072,28 +2079,26 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             total_n = [int(i-a) for i,a in zip(n,aporte_n)]
             total_p = [int(i-a) for i,a in zip(p,aporte_p)]
             total_k = [int(i-a) for i,a in zip(k,aporte_k)]
+
             self.dataNecesidades = zip(uf, total_n, total_p, total_k)
+
             cols = [0, 1, 2, 3]
             datagen = ([f[col] for col in cols] for f in self.dataNecesidades)
             df = pd.DataFrame.from_records(data=datagen, columns=cols)
             model = TableModel(df)
+
             self.table_necesidades.setModel(model)
             self.table_necesidades.setColumnWidth(0, 35)
             self.table_necesidades.setColumnWidth(1, 79)
             self.table_necesidades.setColumnWidth(2, 79)
             self.table_necesidades.setColumnWidth(3, 79)
-            # print('dep')
+            # print('-----------dep 1 ------------')
             self.dataNecesidades = df
             self.dataValidator = True
             # print(self.dataNecesidades)
+            # print('-----------dep 1 end ------------')
 
 
-
-
-
-        # for u,n,p,k in self.dataNecesidades:
-        #     print(u,n,p,k)
-        # self.dataNecesidades = zip(uf, total_n, total_p, total_k)
 
         else: 
             data = self.dataNecesidades
@@ -2126,9 +2131,12 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             self.table_necesidades.setColumnWidth(1, 79)
             self.table_necesidades.setColumnWidth(2, 79)
             self.table_necesidades.setColumnWidth(3, 79)
-            print('dep')
+            # print('----------- dep 2------------------')
             self.dataNecesidades = df
+            # print(self.dataNecesidades)
+            # print('-----------dep 2 end ------------')
             self.dataValidator = True
+
 
 
         
@@ -2138,31 +2146,96 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
        
         pass
        
-
     def enableCombo(self,text,combo):
-        if len(text) > 3:        
+        if len(text) >= 3:        
             combo.setEnabled(True)
         else:
             combo.setEnabled(False)
-        
-        
-
-    
+  
     def fert(self,text):
         if len(text) ==8:
             self.formula = text.split('-')
             # self.pushButton_2.setEnabled(True)
 
-    def panel(self): 
+   
+    def getDataFertilizacion(self): 
+        sql = ''' 
+        select ls.fertilizantefondoformula,
+        ls.fertilizantefondoprecio,
+        ls.fertilizantefondoajustado,
+        ls.fertilizantecob1formula,
+        ls.fertilizantecob1precio,
+        ls.fertilizantecob1ajustado,
+        ls.fertilizantecob2formula,
+        ls.fertilizantecob2precio,
+        ls.fertilizantecob2ajustado,
+        ls.fertilizantecob3formula,
+        ls.fertilizantecob3precio,
+        ls.fertilizantecob3ajustado from lotes ls
+        where ls.idlotecampania = {}
+        '''.format(self.idlotecampania)
+        with self.conn:
+            cursor = self.conn.cursor()
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        data = list(data[0])        
+        data = [e if e != 0 and e !=
+                '' and e is not None else None for e in data]
+        _validate = [data[e] for e in range(3) if data[e] != None]
+        print(_validate)
+        print(len(_validate))
+
+        if len(_validate) >= 3:
+            # print(data)
+            self.btn_ajuste_auto.setEnabled(True)
+            self.dataAuto = data
+        
+    def autoFert(self):
+        txt = '''<html><head/><body><p align="center">Se han calculado 1 combinaciones de <br/>fertilizantes para ajustar las<br/>necesidades del cultivo. De ellas se ha<br/>seleccionado la combinacion mas<br/>economica.<br/>Los fertilizantes que<br/>se han Analizado son:</p>'''
+        data = self.dataAuto
+        print(data)
+        if data[0] != None or data[1] != None or data[2] != None :
+            f1 = str(data[0])
+            txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 1 {} </span>  </p>'''.format(f1)   
+            self.line_formula_1.setText(data[0])
+            self.line_precio_1.setText(str(int(round(data[1]))))
+            self.combo_ajuste_1.setCurrentText(data[2])
+            time.sleep(1)
+            # print(data[0])
+        if data[3] != None and data[4] != None and data[5] != None :
+            f2 = str(data[3])
+            txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 2 {} </span></p>'''.format(f2)   
+            self.line_formula_2.setText(data[3])
+            self.line_precio_2.setText(str(int(round(data[4]))))
+            self.combo_ajuste_2.setCurrentText(data[5])
+            time.sleep(1)
+            # print(data[2])
+        if data[6] != None and data[7] != None and data[8] != None:
+            f3 = str(data[6])
+            txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 3 {} </span></p>'''.format(f3)
+            self.line_formula_3.setText(data[6])
+            self.line_precio_3.setText(str(int(round(data[7]))))
+            self.combo_ajuste_3.setCurrentText(data[8])
+            time.sleep(1)
+        if data[9] != None and data[10] != None and data[11] != None :
+            f4 = str(data[9])
+            txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 4 {} </span></p>'''.format(f4)
+            self.line_formula_2.setText(data[9])
+            self.line_precio_2.setText(str(int(round(data[10]))))
+            self.combo_ajuste_2.setCurrentText(data[11])
+            time.sleep(1)
+        txt = txt + '''</body></html>'''
+        self.label_16.setText(txt)
+    def execAutoFert(self):
+        x = threading.Thread(target=self.autoFert)
+        x.start() 
+        
+     def panel(self): 
 
         npk = [self.n_ponderado,self.p_ponderado, self.k_ponderado]
         render = PanelRender(self.lote, self.parcela, self.cultivo, self.prod_ponderado, self.area, npk,self.i,self._pesos,self._precios)
 
         render.savePanel()
-        
-
-    
-       
         
 
         
@@ -2445,41 +2518,6 @@ class MplCanvas(FigureCanvasQTAgg):
 
 
 
-class Worker(QObject):
-    finished = pyqtSignal()
-    progress = pyqtSignal(int)
 
-    tools = AgraeToolset()
-
-    def run(self):
-        for i in range(10+1):
-            sleep(1)
-            self.progress.emit(i + 1)
-        self.finished.emit()
-
-    def addLotesMap(self):
-        sql = f'select * from lotes'
-        nombre = 'aGrae Lotes'  
-        try:
-            uri = QgsDataSourceUri()
-            uri.setConnection('localhost', '5432',
-                          'agrae', 'postgres', '23826405')
-            uri.setDataSource('public','lotes','geometria','')
-            lyr = QgsVectorLayer(uri.uri(False),nombre,'postgres')
-            
-            # print(lyr)
-            self.finished.emit()    
-            # self.tools.addMapLayer(sql, nombre, 'idlotecampania')
-        except Exception as ex: 
-            print(ex)
-            self.finished.emit()
-
-        QgsProject.instance().addMapLayer(lyr)             
-        
-
-    def addParcelasMap(self):
-        sql = f'select * from parcela'
-        nombre = 'aGrae Parcelas'
-        
-        tools.addMapLayer(sql, nombre, 'idparcela')
+    
 

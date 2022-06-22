@@ -361,19 +361,6 @@ border:0</string>
       <enum>Qt::RichText</enum>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>110</y>
-       <width>101</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Exportar Panel</string>
-     </property>
-    </widget>
     <zorder>p1</zorder>
     <zorder>verticalLayoutWidget</zorder>
     <zorder>gridLayoutWidget</zorder>
@@ -386,7 +373,6 @@ border:0</string>
     <zorder>npk_pond</zorder>
     <zorder>label_9</zorder>
     <zorder>label_10</zorder>
-    <zorder>pushButton</zorder>
    </widget>
    <widget class="QWidget" name="tab_2">
     <attribute name="title">
@@ -1490,30 +1476,62 @@ border:0</string>
     <widget class="QLabel" name="label_16">
      <property name="geometry">
       <rect>
-       <x>530</x>
-       <y>30</y>
+       <x>660</x>
+       <y>10</y>
        <width>201</width>
-       <height>91</height>
+       <height>151</height>
       </rect>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Se han calculado 1 combinaciones de &lt;br/&gt;fertilizantes para ajustar las&lt;br/&gt;necesidades del cultivo. De ellas se ha&lt;br/&gt;seleccionado la combinacion mas&lt;br/&gt;economica.&lt;br/&gt;Los fertilizantes con los que&lt;br/&gt;se ha Analizado han sido: &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="textFormat">
       <enum>Qt::RichText</enum>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_2">
+    <widget class="QPushButton" name="btn_ajuste_auto">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
-       <x>760</x>
-       <y>40</y>
-       <width>75</width>
+       <x>530</x>
+       <y>120</y>
+       <width>101</width>
        <height>23</height>
       </rect>
      </property>
      <property name="text">
-      <string>PushButton</string>
+      <string>Ajuste Automatico</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton">
+     <property name="geometry">
+      <rect>
+       <x>530</x>
+       <y>20</y>
+       <width>101</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Exportar Panel</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_2">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>530</x>
+       <y>50</y>
+       <width>101</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Guardar Datos</string>
      </property>
     </widget>
    </widget>
