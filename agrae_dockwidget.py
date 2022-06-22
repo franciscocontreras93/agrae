@@ -1851,6 +1851,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
 
         self.pushButton.clicked.connect(self.panel)
         self.btn_ajuste_auto.clicked.connect(self.execAutoFert)
+        self.btn_save_data.clicked.connect(self.saveFertData)
 
         self.regexFormula = QRegExpValidator(QRegExp(r'(\d{2}\-\d{2}\-\d{2})'))
         self.line_formula_1.setValidator(self.regexFormula)
@@ -2056,7 +2057,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         d = self.ajustesFertilizantes(n=n, x=f_n, p=p, y=f_p, k=k, z=f_k)
         genValue = (f[index]  for f in d)
         values = list(genValue)
-        print(values)
+        # print(values)
         self.i = self.i + 1
         self.balanceNutrientes(values,f_n,f_p,f_k)
 
@@ -2182,13 +2183,16 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         data = [e if e != 0 and e !=
                 '' and e is not None else None for e in data]
         _validate = [data[e] for e in range(3) if data[e] != None]
-        print(_validate)
-        print(len(_validate))
+        # print(_validate)
+        # print(len(_validate))
 
         if len(_validate) >= 3:
             # print(data)
             self.btn_ajuste_auto.setEnabled(True)
+            self.btn_save_data.setEnabled(False)
             self.dataAuto = data
+        else: 
+            self.btn_save_data.setEnabled(True)
         
     def autoFert(self):
         txt = '''<html><head/><body><p align="center">Se han calculado 1 combinaciones de <br/>fertilizantes para ajustar las<br/>necesidades del cultivo. De ellas se ha<br/>seleccionado la combinacion mas<br/>economica.<br/>Los fertilizantes que<br/>se han Analizado son:</p>'''
@@ -2226,17 +2230,97 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             time.sleep(1)
         txt = txt + '''</body></html>'''
         self.label_16.setText(txt)
+        self.btn_save_data.setEnabled(True)
     def execAutoFert(self):
         x = threading.Thread(target=self.autoFert)
         x.start() 
         
-     def panel(self): 
+    def panel(self): 
 
         npk = [self.n_ponderado,self.p_ponderado, self.k_ponderado]
         render = PanelRender(self.lote, self.parcela, self.cultivo, self.prod_ponderado, self.area, npk,self.i,self._pesos,self._precios)
 
         render.savePanel()
+    
+    def saveFertData(self):
+        sql = []
+
+        if len(self.line_precio_1.text()) >= 3:
+            f1 = str(self.line_formula_1.text())
+            p1 = int(round(float(self.line_precio_1.text())))
+            a1 = str(self.combo_ajuste_1.currentText())
+            sql1= ''' update campania 
+            set fertilizantefondoformula = sq.a1_formula,
+            fertilizantefondoprecio = sq.a1_precio,
+            fertilizantefondoajustado = sq.a1_ajuste
+            from (select idcampania id, '{}' a1_formula, {} a1_precio, '{}' a1_ajuste  from lotecampania lc
+            where lc.idlotecampania = {} ) sq
+            where idcampania = sq.id '''.format(f1, p1, a1,  self.idlotecampania)
+            sql.append(sql1)
         
+
+        
+
+        if len(self.line_precio_2.text()) >= 3:
+            f2 = str(self.line_formula_2.text())
+            p2 = int(round(float(self.line_precio_2.text())))
+            a2 = str(self.combo_ajuste_2.currentText())
+            sql2= ''' update campania 
+            set fertilizantecob1formula = sq.a2_formula,
+            fertilizantecob1precio = sq.a2_precio,
+            fertilizantecob1ajustado = sq.a2_ajuste
+            from (select idcampania id, '{}' a2_formula, {} a2_precio, '{}' a2_ajuste  from lotecampania lc
+            where lc.idlotecampania = {} ) sq
+            where idcampania = sq.id '''.format(f2, p2, a2,  self.idlotecampania)
+            sql.append(sql2)
+
+
+        if len(self.line_precio_3.text()) >= 3:
+            f3 = str(self.line_formula_3.text())
+            p3 = int(round(float(self.line_precio_3.text())))
+            a3 = str(self.combo_ajuste_3.currentText())
+            sql3= ''' update campania 
+            set fertilizantecob2formula = sq.a3_formula,
+            fertilizantecob2precio = sq.a3_precio,
+            fertilizantecob2ajustado = sq.a3_ajuste
+            from (select idcampania id, '{}' a3_formula, {} a3_precio, '{}' a3_ajuste  from lotecampania lc
+            where lc.idlotecampania = {} ) sq
+            where idcampania = sq.id '''.format(f3, p3, a3,  self.idlotecampania)
+            sql.append(sql3)
+
+        if len(self.line_precio_4.text()) >= 3:
+            f4 = str(self.line_formula_4.text())
+            p4 = int(round(float(self.line_precio_4.text())))
+            a4 = str(self.combo_ajuste_4.currentText())
+            sql4 = ''' update campania 
+            set fertilizantecob3formula = sq.a4_formula,
+            fertilizantecob3precio = sq.a4_precio,
+            fertilizantecob3ajustado = sq.a4_ajuste
+            from (select idcampania id, '{}' a4_formula, {} a4_precio, '{}' a4_ajuste  from lotecampania lc
+            where lc.idlotecampania = {} ) sq
+            where idcampania = sq.id '''.format(f4, p4, a4,  self.idlotecampania)
+            sql.append(sql4)
+
+        if self.combo_status.currentIndex() != 0:
+            status = self.combo_status.currentText()
+            # print(status)
+            sql_status = ''' update campania 
+            set fert_status = sq.a_status
+            from (select idcampania id, '{}' a_status  from lotecampania lc
+            where lc.idlotecampania = {} ) sq
+            where idcampania = sq.id '''.format(status, self.idlotecampania)
+            sql.append(sql_status)
+        with self.conn: 
+            cursor = self.conn.cursor()
+            for q in sql:                
+                try:
+                    cursor.execute(q)
+                    self.conn.commit()
+                    self.utils.msgBar('Datos de Fertilizacion guardados correctamente',3,10)
+                except Exception as ex:
+                    print(ex)
+
+
 
         
 
