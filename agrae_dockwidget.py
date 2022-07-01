@@ -522,16 +522,28 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
                         # print(f'Se creo la Relacion {idParcela,idLote}')
                         self.conn.commit()
                         # self.pushButton_2.setEnabled(False)
-                   
-
-
-
                 except errors.lookup('23505'):
                     error.append(idParcela)
                     # print(f'La parcela {f[1]} ya existe pertenece a un lote.')
                     QMessageBox.about(self, 'aGrae GIS',
                                       f'La parcela {f[1]} ya existe pertenece a un lote.')
                     self.conn.rollback()
+            print('EJECUTANDO SENTENCIA NECESIDADES')
+            cursor = self.conn.cursor() 
+            sql = ''' insert into necesidades(idlotecampania,uf,necesidad_n,necesidad_p,necesidad_k)
+            select ls.idlotecampania,
+            s.segmento + amb.ambiente AS uf,
+            round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
+            round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
+            round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k
+            FROM lotes ls
+            left JOIN segmentos s ON st_intersects(s.geometria, ls.geometria) 
+            JOIN ambientes amb ON st_intersects(ls.geometria, amb.geometria)
+            where ls.idlotecampania = (select lp.idlotecampania from loteparcela lp order by lp.idloteparcela desc limit 1); '''
+            cursor.execute(sql)
+            self.conn.commit()
+            print('FINALIZADO SENTENCIA NECESIDADES')
+
             
             if len(error) == 0:
                 QMessageBox.about(self, 'aGrae GIS', f'Se creo la Relacion sin errores ') 
@@ -570,7 +582,14 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
                         _confirm = QMessageBox.question(
                             self, 'aGrae GIS', f"Datos Correctos. Desea Continuar?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                         if _confirm == QMessageBox.Yes: 
-                            sql = f'delete from loteparcela where idparcela = {idParcela} and idlotecampania = {idLote}'
+                            sql = f'''
+                            begin;
+
+                            delete from loteparcela where idparcela = {idParcela} and idlotecampania = {idLote};
+
+                            delete from necesidades where idlotecampania = {idLote};
+
+                            commit;'''
                             cursor.execute(sql)
                             self.conn.commit()
                         else: 
@@ -827,7 +846,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_lote_update.setIcon(QIcon(icons_path['pen-to-square']))
         self.btn_lote_update.setIconSize(QtCore.QSize(20, 20))
         self.btn_lote_update.clicked.connect(self.actualizarLote)
-        self.prov_combo.currentTextChanged.connect(self.indexProvUpdate)
+        # self.prov_combo.currentTextChanged.connect(self.indexProvUpdate)
         self.setStyleSheet(self.style)
         self.line_buscar.setCompleter(completerParcela)
         self.line_find_segmento.setCompleter(completerSegmento)
@@ -837,10 +856,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_crear_campania.setIcon(QIcon(icons_path['save']))
         self.btn_crear_campania.setIconSize(QtCore.QSize(20, 20))
         self.btn_crear_campania.clicked.connect(self.crearCampania)
-        self.ln_par_nombre.textChanged.connect(self.validarNombre)
+        # self.ln_par_nombre.textChanged.connect(self.validarNombre)
         self.line_lote_nombre.textChanged.connect(self.validarNombre)
-        self.line_lote_idexp.textChanged.connect(self.validarNombre)
-        self.line_lote_idcultivo.textChanged.connect(self.validarNombre)
+        # self.line_lote_idexp.textChanged.connect(self.validarNombre)
+        # self.line_lote_idcultivo.textChanged.connect(self.validarNombre)
         self.pushButton_3.clicked.connect(self.crearAmbientes)
         self.pushButton_4.clicked.connect(self.segmentoDialog)
         self.pushButton.clicked.connect(self.cargarParcela)
@@ -888,7 +907,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget_4.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
         self.seg_combo.currentIndexChanged.connect(self.onChangeComboSemento)
-        # for i in range(0,9): 
+
+        self.cmb_regimen.currentIndexChanged.connect(self.validarNombre)
+        # for i in range(0,9):
         #     self.tableWidget_3.setColumnWidth(i, 86)
             
 
@@ -1206,14 +1227,14 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         self.untilDate.setDate(QDate.currentDate())
 
-    def validarNombre(self):
+    def validarNombre(self,i):
                 
         if self.line_lote_nombre.text() != '' : 
             self.btn_crear_lote.setEnabled(True)
         else: 
             self.btn_crear_lote.setEnabled(False)
 
-        if self.line_lote_idexp.text() != '' and self.line_lote_idcultivo.text() != '' and self.line_lote_nombre.text() != '':
+        if self.line_lote_idexp.text() != '' and self.line_lote_idcultivo.text() != '' and self.line_lote_nombre.text() != '' and  i > 0:
             self.btn_crear_campania.setEnabled(True)
         else: 
             self.btn_crear_campania.setEnabled(False)
@@ -2203,7 +2224,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 1 {} </span>  </p>'''.format(f1)   
             self.line_formula_1.setText(data[0])
             self.line_precio_1.setText(str(int(round(data[1]))))
-            self.combo_ajuste_1.setCurrentText(data[2])
+            self.combo_ajuste_1.setCurrentText(str(data[2]).upper())
             time.sleep(1)
             # print(data[0])
         if data[3] != None and data[4] != None and data[5] != None :
@@ -2211,7 +2232,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 2 {} </span></p>'''.format(f2)   
             self.line_formula_2.setText(data[3])
             self.line_precio_2.setText(str(int(round(data[4]))))
-            self.combo_ajuste_2.setCurrentText(data[5])
+            self.combo_ajuste_2.setCurrentText(str(data[5]).upper())
             time.sleep(1)
             # print(data[2])
         if data[6] != None and data[7] != None and data[8] != None:
@@ -2219,14 +2240,14 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 3 {} </span></p>'''.format(f3)
             self.line_formula_3.setText(data[6])
             self.line_precio_3.setText(str(int(round(data[7]))))
-            self.combo_ajuste_3.setCurrentText(data[8])
+            self.combo_ajuste_3.setCurrentText(str(data[8]).upper())
             time.sleep(1)
         if data[9] != None and data[10] != None and data[11] != None :
             f4 = str(data[9])
             txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 4 {} </span></p>'''.format(f4)
             self.line_formula_2.setText(data[9])
             self.line_precio_2.setText(str(int(round(data[10]))))
-            self.combo_ajuste_2.setCurrentText(data[11])
+            self.combo_ajuste_2.setCurrentText(str(data[11]).upper())
             time.sleep(1)
         txt = txt + '''</body></html>'''
         self.label_16.setText(txt)

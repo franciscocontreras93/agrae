@@ -671,12 +671,16 @@ class AgraeToolset():
         cob3Calculado = float(widget.line_cob_calculado_3.text())
         cob3Ajustado = float(widget.line_cob_ajustado_3.text())
         cob3Aplicado = float(widget.line_cob_aplicado_3.text())
-        unidadDesprecio = widget.ln_und_deprecio.text()
+        if widget.ln_und_precio.currentIndex() > 0:
+            unidadDesprecio = widget.ln_und_precio.currentText()
+        else:
+            unidadDesprecio = 'NULL'
         regimen = int(widget.cmb_regimen.currentIndex())
+        produccion = float(widget.ln_produccion.text())
       
         sql = f'''
         insert into campania 
-        values(nextval('campania_idcampania_seq') ,{idexp}, {idcult},'{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, {fondoAjustado},  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, {cob1Ajustado},  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  {cob2Ajustado}, {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, {cob3Ajustado},  {cob3Aplicado} , '{unidadDesprecio}',{regimen});
+        values(nextval('campania_idcampania_seq') ,{idexp}, {idcult},'{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, {fondoAjustado},  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, {cob1Ajustado},  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  {cob2Ajustado}, {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, {cob3Ajustado},  {cob3Aplicado} , '{unidadDesprecio}',{regimen}, {produccion});
         '''
 
         sql2 = f'''insert into lotecampania(idlote,idcampania) 
