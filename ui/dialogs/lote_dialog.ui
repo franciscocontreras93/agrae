@@ -133,7 +133,7 @@
       <x>580</x>
       <y>70</y>
       <width>34</width>
-      <height>161</height>
+      <height>201</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -162,6 +162,22 @@
      </item>
      <item>
       <widget class="QPushButton" name="btn_cargar_lote">
+       <property name="toolTip">
+        <string>Seleccionar Lote</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="flat">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_cargar_camp">
+       <property name="toolTip">
+        <string>Seleccionar Campaña</string>
+       </property>
        <property name="text">
         <string/>
        </property>

@@ -18,7 +18,8 @@ class DbConnection:
                 dbname=dbname, user=dbuser, host=dbhost, password=dbpass, port=dbport)
             return conn
         except Exception as ex:
-             print(ex)
+            #  print(ex)
+             pass
 
     # connection('agrae', 'doadmin', 'hMElJYf5Lq5BjG4r', '137.184.106.142', 25060)
 

@@ -780,7 +780,7 @@ class agrae:
                 
 
                 
-                self.mainWindowDialog.btn_lote_update.setEnabled(False)
+                # self.mainWindowDialog.btn_lote_update.setEnabled(False)
                 self.mainWindowDialog.pushButton_2.clicked.connect(printMap)
                 
             self.mainWindowDialog.closingPlugin.connect(self.onClosePluginMain)

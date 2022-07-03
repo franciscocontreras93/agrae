@@ -1,4 +1,4 @@
-import os
+import os, sys
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QThread, QAbstractTableModel
@@ -391,7 +391,10 @@ class AgraeToolset():
                     group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada
                     order by ca.fechasiembra desc'''
                     widget.btn_add_layer.setEnabled(False)
-                    widget.btn_chart.setEnabled(True)
+                    try:
+                        widget.btn_chart.setEnabled(True)
+                    except:
+                        pass
                     
 
                 elif nombre != '' and status == False:
@@ -407,7 +410,10 @@ class AgraeToolset():
                     order by ca.fechasiembra desc                        
                     """
                     widget.btn_reload.setEnabled(True)
-                    widget.btn_chart.setEnabled(True)
+                    try:
+                        widget.btn_chart.setEnabled(True)
+                    except:
+                        pass
 
                 elif nombre == '' and status == True:
                     sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada 
@@ -421,7 +427,10 @@ class AgraeToolset():
                     group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada
                     order by ca.fechasiembra desc"""
                     widget.btn_reload.setEnabled(True)
-                    widget.btn_chart.setEnabled(True)
+                    try:
+                        widget.btn_chart.setEnabled(True)
+                    except:
+                        pass
 
                 elif nombre != '' and status == True:
                     sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada 
@@ -436,7 +445,10 @@ class AgraeToolset():
                     group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada
                     order by ca.fechasiembra desc"""
                     widget.btn_reload.setEnabled(True)
-                    widget.btn_chart.setEnabled(True)
+                    try:
+                        widget.btn_chart.setEnabled(True)
+                    except:
+                        pass
 
 
                 cursor = conn.cursor()
@@ -651,30 +663,30 @@ class AgraeToolset():
         fondoFormula = widget.line_fondo_formula.text()
         fondoPrecio = float(widget.line_fondo_precio.text())
         fondoCalculado = float(widget.line_fondo_calculado.text())
-        fondoAjustado = float(widget.line_fondo_ajustado.text())
+        fondoAjustado = widget.line_fondo_ajustado.text()
         fondoAplicado = float(widget.line_fondo_aplicado.text())
         dateCob1 = widget.date_cob.date().toString('yyyy.MM.dd')
         cob1Formula = widget.line_cob_formula.text()
         cob1Precio = float(widget.line_cob_precio.text())
         cob1Calculado = float(widget.line_cob_calculado.text())
-        cob1Ajustado = float(widget.line_cob_ajustado.text())
+        cob1Ajustado = widget.line_cob_ajustado.text()
         cob1Aplicado = float(widget.line_cob_aplicado.text())
         dateCob2 = widget.date_cob_2.date().toString('yyyy.MM.dd')
         cob2Formula = widget.line_cob_formula_2.text()
         cob2Precio = float(widget.line_cob_precio_2.text())
         cob2Calculado = float(widget.line_cob_calculado_2.text())
-        cob2Ajustado = float(widget.line_cob_ajustado_2.text())
+        cob2Ajustado = widget.line_cob_ajustado_2.text()
         cob2Aplicado = float(widget.line_cob_aplicado_2.text())
         dateCob3 = widget.date_cob_3.date().toString('yyyy.MM.dd')
         cob3Formula = widget.line_cob_formula_3.text()
         cob3Precio = float(widget.line_cob_precio_3.text())
         cob3Calculado = float(widget.line_cob_calculado_3.text())
-        cob3Ajustado = float(widget.line_cob_ajustado_3.text())
+        cob3Ajustado = widget.line_cob_ajustado_3.text()
         cob3Aplicado = float(widget.line_cob_aplicado_3.text())
         if widget.ln_und_precio.currentIndex() > 0:
             unidadDesprecio = widget.ln_und_precio.currentText()
         else:
-            unidadDesprecio = 'NULL'
+            unidadDesprecio = NULL
         regimen = int(widget.cmb_regimen.currentIndex())
         produccion = float(widget.ln_produccion.text())
       
@@ -708,10 +720,11 @@ class AgraeToolset():
 
             except Exception as e: 
                 # print(e)
-                QMessageBox.about(widget, f"Error: ",f"{e}")      
+                QMessageBox.about(widget, f"Error: ",f"{e}")
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                print(exc_type, fname, exc_tb.tb_lineno)
 
-            finally: 
-                conn.close()
                
 
     def crearLote(self,widget):

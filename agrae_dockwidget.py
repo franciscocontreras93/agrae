@@ -292,6 +292,7 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
 class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
     closingPlugin = pyqtSignal()
     actualizar = pyqtSignal(list)
+    getNombreLote = pyqtSignal(str)
     
     def __init__(self, parent=None):
 
@@ -331,8 +332,12 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         # self.tableWidget.setColumnHidden(0,True)
         
         self.btn_cargar_lote.setIconSize(QtCore.QSize(20, 20))
-        self.btn_cargar_lote.setIcon(QIcon(icons_path['load_data']))        
+        self.btn_cargar_lote.setIcon(QIcon(icons_path['share']))        
         self.btn_cargar_lote.clicked.connect(self.cargarLote)
+        
+        self.btn_cargar_camp.setIconSize(QtCore.QSize(20, 20))
+        self.btn_cargar_camp.setIcon(QIcon(icons_path['load_data']))        
+        self.btn_cargar_camp.clicked.connect(self.cargarCampania)
         
         self.pushButton_2.setIconSize(QtCore.QSize(20, 20))
         self.pushButton_2.setIcon(QIcon(icons_path['link']))
@@ -444,8 +449,17 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         self.loadData(filtro)
         
         pass
-
+    
     def cargarLote(self):
+        row = self.tableWidget.currentRow()
+        try: 
+            param = self.tableWidget.item(row, 1).text()
+            self.getNombreLote.emit(param)
+        except Exception as e:
+            pass
+
+
+    def cargarCampania(self):
 
         try:
             try: 
@@ -767,10 +781,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
               
         self.setupUi(self)
         self.UIcomponents()
-        self.populateComboProv()
-        self.populateComboMcpo(self.prov_combo.currentData())
-        self.setLineFormatValidator()
-        self.setStyleLines()
+        # self.populateComboProv()
+        # self.populateComboMcpo(self.prov_combo.currentData())
+        # self.setLineFormatValidator()
+        # self.setStyleLines()
 
     def UIcomponents(self):
         icons_path = self.utils.iconsPath()
@@ -791,6 +805,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         # self.tableWidget.setColumnHidden(6, True) # columna geometria loteparcela
         self.tableWidget.setColumnHidden(0, True)  # columna id lote parcela
 
+        self.tableWidget.doubleClicked.connect(self.doubleClick)
+
         self.tableWidget_2.horizontalHeader().setStretchLastSection(True)
         self.tableWidget_2.setColumnHidden(0, True)
         self.tableWidget_2.setColumnHidden(1, True)
@@ -810,18 +826,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         line_buscar_action = self.line_buscar.addAction(
                     QIcon(icons_path['search_icon_path']), self.line_buscar.TrailingPosition)
         line_buscar_action.triggered.connect(self.buscarLotes)
-        line_par_action = self.ln_par_nombre.addAction(
-            QIcon(icons_path['search_icon_path']), self.ln_par_nombre.TrailingPosition)
-        line_par_action.triggered.connect(self.parcelaDialog)
-        line_lote_action = self.line_lote_nombre.addAction(
-            QIcon(icons_path['search_icon_path']), self.line_lote_nombre.TrailingPosition)
-        line_lote_action.triggered.connect(self.loteDialog)
-        line_loteidexp_action = self.line_lote_idexp.addAction(
-            QIcon(icons_path['search_icon_path']), self.line_lote_idexp.TrailingPosition)
-        line_loteidexp_action.triggered.connect(self.expDialog)
-        line_loteidcultivo_action = self.line_lote_idcultivo.addAction(
-            QIcon(icons_path['search_icon_path']), self.line_lote_idcultivo.TrailingPosition)
-        line_loteidcultivo_action.triggered.connect(self.cultivoDialog)
+        
 
         self.btn_add_layer.setIcon(QIcon(icons_path['add_layer_to_map']))
         self.btn_add_layer.setIconSize(QtCore.QSize(20, 20))
@@ -842,27 +847,13 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_add_segmento.setIconSize(QtCore.QSize(20, 20))
         self.btn_add_segmento.clicked.connect(self.cargarSegmentosLote)
 
-        self.btn_par_update.clicked.connect(self.actualizarParcela)
-        self.btn_lote_update.setIcon(QIcon(icons_path['pen-to-square']))
-        self.btn_lote_update.setIconSize(QtCore.QSize(20, 20))
-        self.btn_lote_update.clicked.connect(self.actualizarLote)
         # self.prov_combo.currentTextChanged.connect(self.indexProvUpdate)
         self.setStyleSheet(self.style)
         self.line_buscar.setCompleter(completerParcela)
         self.line_find_segmento.setCompleter(completerSegmento)
-        self.btn_crear_lote.setIcon(QIcon(icons_path['save']))
-        self.btn_crear_lote.setIconSize(QtCore.QSize(20, 20))
-        self.btn_crear_lote.clicked.connect(self.crearLote)
-        self.btn_crear_campania.setIcon(QIcon(icons_path['save']))
-        self.btn_crear_campania.setIconSize(QtCore.QSize(20, 20))
-        self.btn_crear_campania.clicked.connect(self.crearCampania)
-        # self.ln_par_nombre.textChanged.connect(self.validarNombre)
-        self.line_lote_nombre.textChanged.connect(self.validarNombre)
-        # self.line_lote_idexp.textChanged.connect(self.validarNombre)
-        # self.line_lote_idcultivo.textChanged.connect(self.validarNombre)
+        
         self.pushButton_3.clicked.connect(self.crearAmbientes)
         self.pushButton_4.clicked.connect(self.segmentoDialog)
-        self.pushButton.clicked.connect(self.cargarParcela)
         self.btn_find_segmento.clicked.connect(self.buscarSegmento)
 
         self.btn_add_lotes.clicked.connect(self.addLotesMap)
@@ -881,8 +872,17 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
 
         
-
+        self.sinceDate.setDate(QDate.currentDate())
+        self.untilDate.setDate(QDate.currentDate())
         self.sinceDate.dateChanged.connect(self.sinceDateChange)
+
+        # self.lote_dateSiembra.setDate(QDate.currentDate())
+        # self.lote_dateCosecha.setDate(QDate.currentDate())
+        # self.lote_dateSiembra.dateChanged.connect(self.siembraDateChange)
+
+
+
+
 
         self.an_load_btn.setIcon(QIcon(icons_path['import']))
         self.an_load_btn.setIconSize(QtCore.QSize(20, 20))
@@ -906,16 +906,19 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget_3.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         self.tableWidget_4.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
-        self.seg_combo.currentIndexChanged.connect(self.onChangeComboSemento)
+        # self.seg_combo.currentIndexChanged.connect(self.onChangeComboSemento)
 
-        self.cmb_regimen.currentIndexChanged.connect(self.validarNombre)
+        # self.cmb_regimen.currentIndexChanged.connect(self.validarNombre)
         # for i in range(0,9):
         #     self.tableWidget_3.setColumnWidth(i, 86)
+
+
             
 
+    def doubleClick(self,e):
+        print(e)
 
-
-
+        
 
 
     def closeEvent(self, event):
@@ -1020,16 +1023,19 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def crearParcela(self):
         self.tools.crearParcela(self)
     def crearCampania(self):
-        try: 
-            self.tools.crearCampania(self)
-            self.btn_crear_campania.setEnabled(False)
-            self.btn_crear_lote.setEnabled(True)
-            self.line_lote_nombre.setReadOnly(False)
-            self.line_lote_nombre.setText('')
+        # try: 
+        self.tools.crearCampania(self)
+        self.btn_crear_campania.setEnabled(False)
+        self.btn_crear_lote.setEnabled(True)
+        self.line_lote_nombre.setReadOnly(False)
+        self.line_lote_nombre.setText('')
 
-        except Exception as ex: 
-            print(ex)
-            pass           
+        # except Exception as ex: 
+        #     print(ex)
+        #     exc_type, exc_obj, exc_tb = sys.exc_info()
+        #     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        #     print(exc_type, fname, exc_tb.tb_lineno)
+        #     pass           
     
     def crearLote(self):
         try: 
@@ -1078,7 +1084,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         else: 
             try:
                 self.idlote = data[0]
-                self.lbl_id_lote.setText(data2[0])
+                # self.lbl_id_lote.setText(data2[0])
                 self.line_lote_idexp.setText(data2[1])
                 self.line_lote_idcultivo.setText(data2[2])
                 self.line_lote_nombre.setText(data2[3])
@@ -1224,8 +1230,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.line_lote_idcultivo.setValidator(self.integerFormat)
 
         ##############################################################
+       
 
-        self.untilDate.setDate(QDate.currentDate())
 
     def validarNombre(self,i):
                 
@@ -1234,7 +1240,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         else: 
             self.btn_crear_lote.setEnabled(False)
 
-        if self.line_lote_idexp.text() != '' and self.line_lote_idcultivo.text() != '' and self.line_lote_nombre.text() != '' and  i > 0:
+        if self.line_lote_idexp.text() != '' and self.line_lote_idcultivo.text() != '' and self.line_lote_nombre.text() != '':
             self.btn_crear_campania.setEnabled(True)
         else: 
             self.btn_crear_campania.setEnabled(False)
@@ -1439,7 +1445,14 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.sinceDateStatus = True
         d1 = self.sinceDate.date()
         self.untilDate.setMinimumDate(d1)
+        self.untilDate.setDate(d1)
         self.untilDate.setEnabled(True)
+    
+    def siembraDateChange(self):
+
+        d1 = self.lote_dateSiembra.date()
+        self.lote_dateCosecha.setMinimumDate(d1)
+        self.lote_dateCosecha.setDate(d1)
 
     def buscarLotes(self):
         self.tools.buscarLotes(self, self.sinceDateStatus)
@@ -1900,23 +1913,24 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         area = [float(e[5]) for e in data]
         npk = [str(e[4]) for e in data]
         lista = [e.split(' / ') for e in npk ]
+        try: 
+            n = [int(e[0]) for e in lista ]
+            p = [int(e[1]) for e in lista ]
+            k = [int(e[2]) for e in lista ]
 
-        n = [int(e[0]) for e in lista ]
-        p = [int(e[1]) for e in lista ]
-        k = [int(e[2]) for e in lista ]
 
 
+            self.prod_ponderado = self.sumaPonderada(ce,area)
+            self.n_ponderado = self.sumaPonderada(n, area)
+            self.p_ponderado = self.sumaPonderada(p, area)
+            self.k_ponderado = self.sumaPonderada(k, area)
+            self.area = round(sum(area),2)
 
-        self.prod_ponderado = self.sumaPonderada(ce,area)
-        self.n_ponderado = self.sumaPonderada(n, area)
-        self.p_ponderado = self.sumaPonderada(p, area)
-        self.k_ponderado = self.sumaPonderada(k, area)
-        self.area = round(sum(area),2)
-
-        
-        self.prod_pond.setText('{} Kg Cosecha/Ha'.format(self.prod_ponderado))
-        self.area_total.setText('{} Ha'.format(round(sum(area),2)))
-        self.npk_pond.setText('{} / {} / {}'.format(self.n_ponderado,self.p_ponderado,self.k_ponderado))
+            
+            self.prod_pond.setText('{} Kg Cosecha/Ha'.format(self.prod_ponderado))
+            self.area_total.setText('{} Ha'.format(round(sum(area),2)))
+            self.npk_pond.setText('{} / {} / {}'.format(self.n_ponderado,self.p_ponderado,self.k_ponderado))
+        except: pass
         
         # self.ajustesFertilizantes(n=n,x=0.06,p=p,y=0.16,k=k,z=0.24)
 
@@ -1939,19 +1953,21 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         area = [float(e[5]) for e in self.dataExtraccion]
         npk = [str(e[4]) for e in self.dataExtraccion]
         lista = [e.split(' / ') for e in npk ]
-        n = [int(e[0]) for e in lista ]
-        p = [int(e[1]) for e in lista ]
-        k = [int(e[2]) for e in lista ]
-        dataNecesidades = zip(uf,n,p,k)
-        cols = [0,1,2,3]
-        datagen = ([f[col] for col in cols] for f in dataNecesidades)
-        df = pd.DataFrame.from_records(data=datagen, columns=cols)
-        model = TableModel(df)
-        self.table_necesidades.setModel(model)
-        self.table_necesidades.setColumnWidth(0, 35)
-        self.table_necesidades.setColumnWidth(1, 79)
-        self.table_necesidades.setColumnWidth(2, 79)
-        self.table_necesidades.setColumnWidth(3, 79)
+        try: 
+            n = [int(e[0]) for e in lista ]
+            p = [int(e[1]) for e in lista ]
+            k = [int(e[2]) for e in lista ]
+            dataNecesidades = zip(uf,n,p,k)
+            cols = [0,1,2,3]
+            datagen = ([f[col] for col in cols] for f in dataNecesidades)
+            df = pd.DataFrame.from_records(data=datagen, columns=cols)
+            model = TableModel(df)
+            self.table_necesidades.setModel(model)
+            self.table_necesidades.setColumnWidth(0, 35)
+            self.table_necesidades.setColumnWidth(1, 79)
+            self.table_necesidades.setColumnWidth(2, 79)
+            self.table_necesidades.setColumnWidth(3, 79)
+        except: pass
     
     def sumaPonderada(self,x,y):
         """
@@ -2374,12 +2390,16 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         self.UIcomponents()
         self.sinceDateStatus = False
 
+        
+        # self.connected = False
+
     def closeEvent(self, event):
         self.closingPlugin.emit()
         event.accept()
 
     def UIcomponents(self):
         self.lotesCompleter()
+        
         # columna geometria loteparcela
         self.tableWidget.setColumnHidden(6, True)
         self.tableWidget.setColumnHidden(0, True)
@@ -2405,11 +2425,75 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         self.btn_reload.clicked.connect(self.reloadLotes)
 
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
+        
+
+        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget_3.setCurrentIndex(0)
+        
+        # self.buscarLotes()
         # self.tableWidget.setColumnHidden(0, True)
         # self.tableWidget.setColumnHidden(4, True)
         # self.tableWidget.setColumnHidden(6, True)
 
+        # btn = QPushButton('▾',flat=True)
+        # btn.setToolTip('Expandir')
+        # btn.setCheckable(True)
+        # btn.toggled.connect(self.hideAction)
+        # self.tabWidget_3.setCornerWidget(btn)
+
+        line_lote_search = self.line_lote_nombre.addAction(
+            QIcon(icons_path['search_icon_path']), self.line_lote_nombre.LeadingPosition)
+        line_lote_search.triggered.connect(self.loteDialog)
+
+        self.line_lote_save = self.line_lote_nombre.addAction(
+            QIcon(icons_path['save']), self.line_lote_nombre.TrailingPosition)
+        self.line_lote_save.triggered.connect(self.crearLote)
+
+        line_loteidexp_action = self.line_lote_idexp.addAction(
+            QIcon(icons_path['search_icon_path']), self.line_lote_idexp.TrailingPosition)
+        line_loteidexp_action.triggered.connect(self.expDialog)
+
+        line_loteidcultivo_action = self.line_lote_idcultivo.addAction(
+            QIcon(icons_path['search_icon_path']), self.line_lote_idcultivo.TrailingPosition)
+        line_loteidcultivo_action.triggered.connect(self.cultivoDialog)
+
+        self.btn_crear_campania.setIcon(QIcon(icons_path['save']))
+        self.btn_crear_campania.setIconSize(QtCore.QSize(20, 20))
+        self.btn_crear_campania.setToolTip('Crear Campania')
+        self.btn_crear_campania.clicked.connect(self.crearCampania)
+
+        self.lote_dateSiembra.setDate(QDate.currentDate())
+        self.lote_dateCosecha.setDate(QDate.currentDate())
+        self.lote_dateCosecha.setMinimumDate(QDate.currentDate())
+
+        #* signals 
+        self.line_lote_nombre.returnPressed.connect(self.campaniaValidator)
+        self.line_lote_nombre.textChanged.connect(self.campaniaValidator)
+        self.cmb_moneda.currentIndexChanged.connect(self.campaniaValidator)
+        self.cmb_regimen.currentIndexChanged.connect(self.campaniaValidator)
+        
+        self.lote_dateSiembra.dateChanged.connect(self.siembraDateChange)
+
+        
+        self.tabWidget_3.currentChanged.connect(self.test)
+
+
         pass
+    
+    
+    def test(self, i ): 
+        # self.sql = self.sql + i + ' '
+        print(i)
+
+    def hideAction(self,checked): 
+        if checked == True:
+            print(checked)
+            self.tabWidget_3.setMaximumHeight(self.tabWidget_3.tabBar().height())
+            self.tabWidget_3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        else: 
+            print(checked)
+            self.tabWidget_3.setMaximumHeight(self.tabWidget_3.tabBar().height())
+            self.tabWidget_3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
 
     def sinceDateChange(self):
         self.sinceDateStatus = True
@@ -2417,6 +2501,137 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         self.untilDate.setMinimumDate(d1)
         self.untilDate.setEnabled(True)
 
+    #* CRUD FUNCTIONS
+    def crearLote(self):
+        try:
+            self.tools.crearLote(self)
+            print('ok')
+        except Exception as ex:
+            print(ex)
+            pass
+
+    def cargarLote(self):
+        self.tools.cargarLote(self)
+
+    def borrarLote(self):
+        pass
+
+    def actualizarLote(self):
+        pass
+    
+    def crearCampania(self):
+        # self.tools.crearCampania(self)
+        lote = str(self.line_lote_nombre.text()).upper()
+        idexp = self.line_lote_idexp.text()
+        idcult = self.line_lote_idcultivo.text()
+        regimen = int(self.cmb_regimen.currentIndex())
+        produccion = float(self.ln_produccion.text())
+        dateSiembra = self.lote_dateSiembra.date().toString('yyyy.MM.dd')
+        dateCosecha = self.lote_dateCosecha.date().toString('yyyy.MM.dd')
+        sqlBasico = None
+
+        
+        if self.cmb_moneda.currentIndex() > 0:
+            moneda = self.cmb_moneda.currentText()
+        else:
+            moneda = ''
+
+
+       
+        if self.groupBox.isChecked() == True:
+            # print('Checked')
+            dateFondo = self.date_fert_1.date().toString('yyyy.MM.dd')
+            fondoFormula = self.line_formula_fert_1.text()
+            fondoPrecio = float(self.line_precio_fert_1.text())
+            fondoCalculado = float(self.line_calculado_fert_1.text())
+            fondoAplicado = float(self.line_aplicado_fert_1.text())
+            if self.cmb_ajustar_fert_1.currentIndex() > 0:
+                fondoAjustado = self.cmb_ajustar_fert_1.currentText()
+            else:
+                fondoAjustado = ''    
+            
+
+
+            dateCob1 = self.date_fert_2.date().toString('yyyy.MM.dd')
+            cob1Formula = self.line_formula_fert_2.text()
+            cob1Precio = float(self.line_precio_fert_2.text())
+            cob1Calculado = float(self.line_calculado_fert_2.text())
+            cob1Aplicado = float(self.line_aplicado_fert_2.text())
+            if self.cmb_ajustar_fert_2.currentIndex() > 0:
+                cob1Ajustado = self.cmb_ajustar_fert_2.currentText()
+            else: 
+                cob1Ajustado = ''
+
+            dateCob2 = self.date_fert_3.date().toString('yyyy.MM.dd')
+            cob2Formula = self.line_formula_fert_3.text()
+            cob2Precio = float(self.line_precio_fert_3.text())
+            cob2Calculado = float(self.line_calculado_fert_3.text())
+            cob2Aplicado = float(self.line_aplicado_fert_3.text())
+            if self.cmb_ajustar_fert_3.currentIndex() > 0:
+                cob2Ajustado = self.cmb_ajustar_fert_3.currentText()
+            else: 
+                cob2Ajustado = ''
+
+            dateCob3 = self.date_fert_4.date().toString('yyyy.MM.dd')
+            cob3Formula = self.line_formula_fert_4.text()
+            cob3Precio = float(self.line_precio_fert_4.text())
+            cob3Calculado = float(self.line_calculado_fert_4.text())
+            cob3Aplicado = float(self.line_aplicado_fert_4.text()) 
+            if self.cmb_ajustar_fert_4.currentIndex() > 0:                 
+                cob3Ajustado = self.cmb_ajustar_fert_4.currentText()
+            else: 
+                cob3Ajustado = ''
+
+            sql = f'''
+            insert into campania 
+            values(nextval('campania_idcampania_seq') ,{idexp}, {idcult},'{dateSiembra}','{dateCosecha}', '{dateFondo}','{fondoFormula}',{fondoPrecio}, {fondoCalculado}, '{fondoAjustado}',  {fondoAplicado}, '{dateCob1}', '{cob1Formula}', {cob1Precio},  {cob1Calculado}, '{cob1Ajustado}',  {cob1Aplicado}, '{dateCob2}',  '{cob2Formula}',  {cob2Precio},   {cob2Calculado},  '{cob2Ajustado}', {cob2Aplicado}, '{dateCob3}',  '{cob3Formula}', {cob3Precio},  {cob3Calculado}, '{cob3Ajustado}',  {cob3Aplicado} , '{moneda}',{regimen}, {produccion});
+            '''
+            # print(sql)
+        else: 
+            sql = f'''
+            insert into campania(idexplotacion,idcultivo,fechasiembra,fechacosecha,regimen,prod_esperada,unidadesprecio)
+            values({idexp}, {idcult},'{dateSiembra}',{regimen}, {produccion},'{moneda}');'''
+            # print(sql)
+
+        sql2 = f'''insert into lotecampania(idlote,idcampania) 
+        select ql.idlote, qc.idcampania from (select idlote from lote where nombre = '{lote}') as ql, (select idcampania from campania order by idcampania desc limit 1) as qc; '''
+       
+       
+        conn = self.conn
+        
+        
+        with conn:
+            try: 
+                if regimen != 0:
+                    cursor = conn.cursor()
+                    cursor.execute(sql)
+                    conn.commit()
+                    cursor.execute(sql2)
+                    conn.commit()
+                    QMessageBox.about(self, f"aGrae GIS:",f"Campaña creada y asociada correctamente")
+                else: 
+                    QMessageBox.about(self, f"aGrae GIS:",f"Debe seleccionar un Regimen de Cultivo")
+            except InterfaceError as ie: 
+                conn = self.conn
+                cursor = conn.cursor()
+                cursor.execute(sql)
+                QMessageBox.about(self, f"aGrae GIS:", f"Campaña creada correctamente")
+
+
+            except Exception as e: 
+                # print(e)
+                QMessageBox.about(self, f"Error: ",f"{e}")
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                print(exc_type, fname, exc_tb.tb_lineno)
+
+        self.line_lote_nombre.setText('')
+        pass
+
+    def actualizarCampania(self): 
+        pass
+
+    #* MAIN FUNCTIONS
     def buscarLotes(self):
         self.tools.buscarLotes(self, self.sinceDateStatus)
         self.line_buscar.setText('')
@@ -2424,9 +2639,6 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
     def reloadLotes(self):
         self.tools.buscarLotes(self, False)
         self.btn_reload.setEnabled(False)
-
-    def cargarLote(self):
-        self.tools.cargarLote(self)
 
     def cargarLoteData(self):
         dns = self.dns
@@ -2500,8 +2712,62 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         completerLotes.setCaseSensitivity(False)
         self.line_buscar.setCompleter(completerLotes)
 
+    #* VALIDATORS AND SLOTS
+    def campaniaValidator(self,e):
+        dateSiembra = self.lote_dateSiembra.date().toString('yyyy.MM.dd')
+        dateCosecha = self.lote_dateCosecha.date().toString('yyyy.MM.dd')
+        
+        if self.cmb_regimen.currentIndex() != 0 and self.cmb_moneda.currentIndex() != 0 and len(self.line_lote_nombre.text()) != 0: 
+            if dateCosecha != dateSiembra and len(self.ln_produccion.text()) > 0 and len(self.line_lote_idexp.text()) > 0 and len(self.line_lote_idcultivo.text()) > 0:
+                # print('valido',e)
+                self.btn_crear_campania.setEnabled(True)
+                # print(self.groupBox.isChecked())
+            else: 
+                self.btn_crear_campania.setEnabled(False)
+        elif self.cmb_regimen.currentIndex() == 0 or self.cmb_moneda.currentIndex() == 0: 
+            # print('no valido',e)
+            self.btn_crear_campania.setEnabled(False)
+
+    def siembraDateChange(self):
+        d1 = self.lote_dateSiembra.date()
+        self.lote_dateCosecha.setMinimumDate(d1)
+        self.lote_dateCosecha.setDate(d1)
+
+    #* DIALOGS 
+    def loteDialog(self):
+        dialog = loteFindDialog()
+        dialog.loadData()
+        dialog.pushButton_2.setEnabled(False)
+        dialog.pushButton_3.setEnabled(False)
+        dialog.getNombreLote.connect(self.populateLote)
+        dialog.exec_()
+
+    def populateLote(self, nombre):
+        print(nombre)
+        self.line_lote_nombre.setText(nombre)
+        self.line_lote_nombre.setReadOnly(True)
+        # self.line_lote_save.triggered.disconnect(self.crearLote)        
 
 
+    def expDialog(self):
+        dialog = expFindDialog()
+        dialog.loadData()
+        dialog.getIdExp.connect(self.popIdExp)
+        dialog.exec_()
+
+    def popIdExp(self, value):
+
+        self.line_lote_idexp.setText(f'{value}')
+
+    def cultivoDialog(self):
+        dialog = cultivoFindDialog()
+        dialog.loadData()
+        dialog.getIdCultivo.connect(self.popIdCultivo)
+        dialog.exec_()
+
+    def popIdCultivo(self, value):
+
+        self.line_lote_idcultivo.setText(f'{value}')
 
 
 
