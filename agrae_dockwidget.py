@@ -1807,10 +1807,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         return data
 
 
-
-
-
-
 class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
     matplotlib.use('Qt5Agg')
     closingPlugin = pyqtSignal()
@@ -2099,7 +2095,17 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.balanceNutrientes(values,f_n,f_p,f_k)
 
     def balanceNutrientes(self,valores:list,dosis_n:float,dosis_p:float,dosis_k:float):
-        
+        # conn = self.utils.Conn() 
+        # with conn: 
+        #     cursor = conn.cursor() 
+        #     sql = '''select (necesidad_nf || ' / ' ||  
+        #             necesidad_pf || ' / ' ||   
+        #             necesidad_kf) necesidad
+        #             from necesidades n where idlotecampania = {}'''.format(self.idlotecampania)
+        #     cursor.execute(sql)
+        #     data = cursor.fetchall() 
+            # print(data)
+
         if self.dataValidator == False:
             data = self.dataExtraccion
             uf = [e[0] for e in data]
@@ -2270,7 +2276,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.btn_save_data.setEnabled(True)
     def execAutoFert(self):
         x = threading.Thread(target=self.autoFert)
-        x.start() 
+        x.start()
         
     def panel(self): 
 
@@ -2284,16 +2290,18 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
 
         if len(self.line_precio_1.text()) >= 3:
             f1 = str(self.line_formula_1.text())
+            print(f1)
             p1 = int(round(float(self.line_precio_1.text())))
             a1 = str(self.combo_ajuste_1.currentText())
             sql1= ''' update campania 
-            set fertilizantefondoformula = sq.a1_formula,
-            fertilizantefondoprecio = sq.a1_precio,
-            fertilizantefondoajustado = sq.a1_ajuste
-            from (select idcampania id, '{}' a1_formula, {} a1_precio, '{}' a1_ajuste  from lotecampania lc
+            set fertilizantefondoformula = '{}',
+            fertilizantefondoprecio = {},
+            fertilizantefondoajustado = '{}'
+            from (select idcampania id  from lotecampania lc
             where lc.idlotecampania = {} ) sq
             where idcampania = sq.id '''.format(f1, p1, a1,  self.idlotecampania)
             sql.append(sql1)
+            # print(sql1)
         
 
         
@@ -2389,6 +2397,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         self.dns = self.utils.dns
         self.UIcomponents()
         self.sinceDateStatus = False
+        self.buscarLotes()
 
         
         # self.connected = False
@@ -2475,15 +2484,12 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         self.lote_dateSiembra.dateChanged.connect(self.siembraDateChange)
 
         
-        self.tabWidget_3.currentChanged.connect(self.test)
 
 
         pass
     
     
-    def test(self, i ): 
-        # self.sql = self.sql + i + ' '
-        print(i)
+
 
     def hideAction(self,checked): 
         if checked == True:
@@ -2748,7 +2754,6 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         self.line_lote_nombre.setReadOnly(True)
         # self.line_lote_save.triggered.disconnect(self.crearLote)        
 
-
     def expDialog(self):
         dialog = expFindDialog()
         dialog.loadData()
@@ -2877,7 +2882,7 @@ class MplCanvas(FigureCanvasQTAgg):
         values_2, colors_2 = valores(suelo_2)
         values_3, colors_3 = valores(suelo_3)
 
-        barGenerator(self.ax1,values_3,colors_3,categorias,y_pos,'Suelo 3')
+        barGenerator(self.ax1,values_3,colors_3,categorias,y_pos,'Suelo 3',True)
         barGenerator(self.ax2,values_2,colors_2,categorias,y_pos,'Suelo 2',False)
         barGenerator(self.ax3, values_1, colors_1,categorias, y_pos, 'Suelo 1', False)
         

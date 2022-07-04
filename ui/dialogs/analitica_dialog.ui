@@ -38,13 +38,13 @@
     <string notr="true">backgroud-color: transparent;</string>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
      <string>Analitica</string>
     </attribute>
-    <widget class="QWidget" name="verticalLayoutWidget">
+    <widget class="QWidget" name="verticalWidget" native="true">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -361,8 +361,47 @@ border:0</string>
       <enum>Qt::RichText</enum>
      </property>
     </widget>
+    <widget class="QLabel" name="label_2">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>150</y>
+       <width>47</width>
+       <height>13</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Suelo 3</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_6">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>150</y>
+       <width>47</width>
+       <height>13</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Suelo 2</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_8">
+     <property name="geometry">
+      <rect>
+       <x>230</x>
+       <y>150</y>
+       <width>47</width>
+       <height>13</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Suelo 1</string>
+     </property>
+    </widget>
     <zorder>p1</zorder>
-    <zorder>verticalLayoutWidget</zorder>
+    <zorder>verticalWidget</zorder>
     <zorder>gridLayoutWidget</zorder>
     <zorder>lgnd1</zorder>
     <zorder>tableView</zorder>
@@ -373,6 +412,9 @@ border:0</string>
     <zorder>npk_pond</zorder>
     <zorder>label_9</zorder>
     <zorder>label_10</zorder>
+    <zorder>label_2</zorder>
+    <zorder>label_6</zorder>
+    <zorder>label_8</zorder>
    </widget>
    <widget class="QWidget" name="tab_2">
     <attribute name="title">

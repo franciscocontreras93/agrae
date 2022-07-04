@@ -15,14 +15,15 @@ class PanelRender():
 
     """
 
-    path = {'base': os.path.join(os.path.dirname(__file__), r'ui\img\base00.png'),
-            'base2': os.path.join(os.path.dirname(__file__), r'ui\img\base02.png'),
-            'plot': os.path.join(os.path.dirname(__file__), r'ui\img\chart.png'),
-            'table': os.path.join(os.path.dirname(__file__), r'ui\img\tabla.png'),
-            'tf1': os.path.join(os.path.dirname(__file__), r'ui\img\tf1.png'),
-            'tf2': os.path.join(os.path.dirname(__file__), r'ui\img\tf2.png'),
-            'tf3': os.path.join(os.path.dirname(__file__), r'ui\img\tf3.png'),
-            'tf4': os.path.join(os.path.dirname(__file__), r'ui\img\tf4.png'),
+    path = {
+        'base': os.path.join(os.path.dirname(__file__), r'ui\img\base00.png'),
+        'base2': os.path.join(os.path.dirname(__file__), r'ui\img\base02.png'),
+        'plot': os.path.join(os.path.dirname(__file__), r'ui\img\chart.png'),
+        'table': os.path.join(os.path.dirname(__file__), r'ui\img\tabla.png'),
+        'tf1': os.path.join(os.path.dirname(__file__), r'ui\img\tf1.png'),
+        'tf2': os.path.join(os.path.dirname(__file__), r'ui\img\tf2.png'),
+        'tf3': os.path.join(os.path.dirname(__file__), r'ui\img\tf3.png'),
+        'tf4': os.path.join(os.path.dirname(__file__), r'ui\img\tf4.png'),
             }
     _cultivos_path = {'TRIGO B': os.path.join(
         os.path.dirname(__file__), r'ui\img\assets\cereal_esquema.png'),
@@ -158,4 +159,3 @@ class PanelRender():
 render = PanelRender('Prueba', 'Prueba', 'TRIGO B', 7895, 0.85,[200,200,200])
 # panel = render.panelUno()
 graf = render.panelDos(4)
-
