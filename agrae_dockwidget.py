@@ -804,6 +804,12 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         # columna geometria lote parcela
         # self.tableWidget.setColumnHidden(6, True) # columna geometria loteparcela
         self.tableWidget.setColumnHidden(0, True)  # columna id lote parcela
+        self.tableWidget.setColumnHidden(7, True)  # columna id lote parcela
+        self.tableWidget.setColumnHidden(8, True)  # columna id lote parcela
+        self.tableWidget.setColumnHidden(9, True)  # columna id lote parcela
+        self.tableWidget.setColumnHidden(10, True)  # columna id lote parcela
+        self.tableWidget.setColumnHidden(11, True)  # columna id lote parcela
+        # self.tableWidget.setColumnHidden(10, True)  # columna id lote parcela
 
         self.tableWidget.doubleClicked.connect(self.doubleClick)
 
@@ -1744,13 +1750,19 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         parcelaName = self.tableWidget.item(row,2).text()
         cultivoName = self.tableWidget.item(row,5).text()
         prodValue = self.tableWidget.item(row,6).text()
+        ic = self.tableWidget.item(row,9).text()
+        biomasa = self.tableWidget.item(row,7).text() 
+        residuo = self.tableWidget.item(row,8).text()
+        ccosecha = self.tableWidget.item(row,10).text() 
+        cresiduo = self.tableWidget.item(row,11).text() 
+
         dataSuelo = self.getDataSuelo(idlotecampania)
         dataExtraccion = self.getDataExtracciones(idlotecampania)
         
 
         
         dialog = agraeAnaliticaDialog(
-            dataSuelo=dataSuelo, dataExtraccion=dataExtraccion, lote=loteName, parcela=parcelaName, cultivo=cultivoName, idlotecampania=idlotecampania, prod=prodValue)
+            dataSuelo=dataSuelo, dataExtraccion=dataExtraccion, lote=loteName, parcela=parcelaName, cultivo=cultivoName, idlotecampania=idlotecampania, prod=prodValue, ic=ic,biomasa=biomasa,residuo=residuo, ccosecha = ccosecha, cresiduo = cresiduo)
         dialog.exec_()
 
     def getDataSuelo(self,id:int): 
@@ -1811,7 +1823,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
     matplotlib.use('Qt5Agg')
     closingPlugin = pyqtSignal()
 
-    def __init__(self,dataSuelo, dataExtraccion, lote,parcela, prod, cultivo, idlotecampania, parent=None):
+    def __init__(self,dataSuelo, dataExtraccion, lote,parcela, prod, cultivo, idlotecampania, ic,biomasa,residuo, ccosecha,cresiduo, parent=None):
         super(agraeAnaliticaDialog, self).__init__(parent)
         uic.loadUi(os.path.join(os.path.dirname(__file__),
                                 'ui/dialogs/analitica_dialog.ui'), self)
@@ -1828,6 +1840,13 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.parcela = parcela
         self.prod = prod
         self.cultivo = cultivo
+        self.ic = float(ic)
+        self.biomasa = float(biomasa)
+        self.residuo = float(residuo)
+        self.ccosecha = float(ccosecha)
+        self.cresiduo = float(cresiduo)
+
+
         self.setWindowTitle('Analisis {}-{}'.format(self.lote.upper(),self.parcela.upper()))
 
         self.enabled = False
@@ -1838,6 +1857,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.n_ponderado = None
         self.p_ponderado = None
         self.k_ponderado = None
+        self.formulas = []
         self.formula = None
         self.dataNecesidades = None
         self.dataValidator = False
@@ -1845,6 +1865,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
 
 
         self._pesos = []
+        self._pesos_aplicados = []
         self._precios = []
 
         self.sc = MplCanvas(self)
@@ -1879,7 +1900,8 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
 
         self.necesidadesTotales()
 
-        self.pushButton.clicked.connect(self.panel)
+        self.btn_panel.clicked.connect(self.panel)
+        # self.btn_panel.clicked.connect(self.huellaCarbono)
         self.btn_ajuste_auto.clicked.connect(self.execAutoFert)
         self.btn_save_data.clicked.connect(self.saveFertData)
 
@@ -1889,16 +1911,18 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.line_formula_1.textChanged.connect(self.fert)
         self.line_formula_2.setValidator(self.regexFormula)
         self.line_formula_2.textChanged.connect(self.fert)
+        self.line_formula_3.textChanged.connect(self.fert)
+        self.line_formula_4.textChanged.connect(self.fert)
 
         self.line_precio_1.textChanged.connect(lambda t, c=self.combo_ajuste_1: self.enableCombo(t,c))
         self.line_precio_2.textChanged.connect(lambda t, c=self.combo_ajuste_2: self.enableCombo(t,c))
         self.line_precio_3.textChanged.connect(lambda t, c=self.combo_ajuste_3: self.enableCombo(t,c))
         self.line_precio_4.textChanged.connect(lambda t, c=self.combo_ajuste_4: self.enableCombo(t,c))
 
-        self.combo_ajuste_1.currentIndexChanged.connect(lambda i,t=self.table_aporte_1,p=self.line_precio_1,l=self.t_aporte_1, lp=self.t_precio_1: self.fertilizar(i,t,p,l,lp,1))
-        self.combo_ajuste_2.currentIndexChanged.connect(lambda i,t=self.table_aporte_2,p=self.line_precio_2,l=self.t_aporte_2, lp=self.t_precio_2: self.fertilizar(i,t,p,l,lp,2))
-        self.combo_ajuste_3.currentIndexChanged.connect(lambda i,t=self.table_aporte_3,p=self.line_precio_3,l=self.t_aporte_3, lp=self.t_precio_3: self.fertilizar(i,t,p,l,lp,3))
-        self.combo_ajuste_4.currentIndexChanged.connect(lambda i,t=self.table_aporte_4,p=self.line_precio_4,l=self.t_aporte_4, lp=self.t_precio_4: self.fertilizar(i,t,p,l,lp,4))
+        self.combo_ajuste_1.currentIndexChanged.connect(lambda i,t=self.table_aporte_1,p=self.line_precio_1,l=self.t_aporte_1, lp=self.t_precio_1, a=self.line_cantidad_1: self.fertilizar(i,t,p,l,lp,a,1))
+        self.combo_ajuste_2.currentIndexChanged.connect(lambda i,t=self.table_aporte_2,p=self.line_precio_2,l=self.t_aporte_2, lp=self.t_precio_2, a=self.line_cantidad_2: self.fertilizar(i,t,p,l,lp,a,2))
+        self.combo_ajuste_3.currentIndexChanged.connect(lambda i,t=self.table_aporte_3,p=self.line_precio_3,l=self.t_aporte_3, lp=self.t_precio_3, a=self.line_cantidad_3: self.fertilizar(i,t,p,l,lp,a,3))
+        self.combo_ajuste_4.currentIndexChanged.connect(lambda i,t=self.table_aporte_4,p=self.line_precio_4,l=self.t_aporte_4, lp=self.t_precio_4, a=self.line_cantidad_4: self.fertilizar(i,t,p,l,lp,a,4))
 
         self.getDataFertilizacion()
 
@@ -2026,7 +2050,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         data = zip(uf,n1,p1,k1,pk1)
         return data
 
-    def fertilizar(self,index,table,precio,l_peso,l_precio,i):
+    def fertilizar(self,index,table,precio,l_peso,l_precio,l_aplicados,i):
         if index != 0 and self.dataValidator == False:
             precio = precio.text()
             data = self.dataExtraccion
@@ -2057,8 +2081,6 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
 
 
         cols = [0,(index)]
-        # cols = [i for i in range(5)]
-        # cols = cols.append((self.combo_ajuste_1.currentIndex()+1))
         d = self.ajustesFertilizantes(n=n,x=f_n,p=p,y=f_p,k=k,z=f_k)
         # print(d)        
         datagen = ([f[col] for col in cols] for f in d)
@@ -2078,8 +2100,9 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         # print(l)
         a1 = [int(e[1]) for e in l]
         p_aporte = self.sumaPonderada(a1, area)
-        p_aporte = p_aporte * sum(area)
+        p_aporte = p_aporte  #* sum(area)
         self._pesos.append(round(p_aporte))
+        self._pesos_aplicados.append(float(l_aplicados.text()))
 
         pr_aporte = int(precio)*(int(p_aporte)/1000)
         self._precios.append(round(pr_aporte))
@@ -2093,18 +2116,11 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         # print(values)
         self.i = self.i + 1
         self.balanceNutrientes(values,f_n,f_p,f_k)
+        self.formulas.append(self.formula)
+        print(self.formulas)
 
     def balanceNutrientes(self,valores:list,dosis_n:float,dosis_p:float,dosis_k:float):
-        # conn = self.utils.Conn() 
-        # with conn: 
-        #     cursor = conn.cursor() 
-        #     sql = '''select (necesidad_nf || ' / ' ||  
-        #             necesidad_pf || ' / ' ||   
-        #             necesidad_kf) necesidad
-        #             from necesidades n where idlotecampania = {}'''.format(self.idlotecampania)
-        #     cursor.execute(sql)
-        #     data = cursor.fetchall() 
-            # print(data)
+
 
         if self.dataValidator == False:
             data = self.dataExtraccion
@@ -2207,15 +2223,19 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         select ls.fertilizantefondoformula,
         ls.fertilizantefondoprecio,
         ls.fertilizantefondoajustado,
+        ls.fertilizantefondoaplicado,
         ls.fertilizantecob1formula,
         ls.fertilizantecob1precio,
         ls.fertilizantecob1ajustado,
+        ls.fertilizantecob1aplicado,
         ls.fertilizantecob2formula,
         ls.fertilizantecob2precio,
         ls.fertilizantecob2ajustado,
+        ls.fertilizantecob2aplicado,
         ls.fertilizantecob3formula,
         ls.fertilizantecob3precio,
-        ls.fertilizantecob3ajustado from lotes ls
+        ls.fertilizantecob3ajustado, 
+        ls.fertilizantecob3aplicado from lotes ls
         where ls.idlotecampania = {}
         '''.format(self.idlotecampania)
         with self.conn:
@@ -2247,29 +2267,33 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             self.line_formula_1.setText(data[0])
             self.line_precio_1.setText(str(int(round(data[1]))))
             self.combo_ajuste_1.setCurrentText(str(data[2]).upper())
+            self.line_cantidad_1.setText(str(float(data[3])))
             time.sleep(1)
             # print(data[0])
-        if data[3] != None and data[4] != None and data[5] != None :
-            f2 = str(data[3])
+        if data[4] != None and data[5] != None and data[6] != None :
+            f2 = str(data[4])
             txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 2 {} </span></p>'''.format(f2)   
-            self.line_formula_2.setText(data[3])
-            self.line_precio_2.setText(str(int(round(data[4]))))
-            self.combo_ajuste_2.setCurrentText(str(data[5]).upper())
+            self.line_formula_2.setText(data[4])
+            self.line_precio_2.setText(str(int(round(data[5]))))
+            self.combo_ajuste_2.setCurrentText(str(data[6]).upper())
+            self.line_cantidad_2.setText(str(float(data[7])))
             time.sleep(1)
             # print(data[2])
-        if data[6] != None and data[7] != None and data[8] != None:
-            f3 = str(data[6])
+        if data[8] != None and data[9] != None and data[10] != None:
+            f3 = str(data[8])
             txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 3 {} </span></p>'''.format(f3)
-            self.line_formula_3.setText(data[6])
-            self.line_precio_3.setText(str(int(round(data[7]))))
-            self.combo_ajuste_3.setCurrentText(str(data[8]).upper())
+            self.line_formula_3.setText(data[8])
+            self.line_precio_3.setText(str(int(round(data[9]))))
+            self.combo_ajuste_3.setCurrentText(str(data[10]).upper())
+            self.line_cantidad_2.setText(str(float(data[11])))
             time.sleep(1)
-        if data[9] != None and data[10] != None and data[11] != None :
-            f4 = str(data[9])
+        if data[12] != None and data[13] != None and data[14] != None :
+            f4 = str(data[12])
             txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 4 {} </span></p>'''.format(f4)
-            self.line_formula_2.setText(data[9])
-            self.line_precio_2.setText(str(int(round(data[10]))))
-            self.combo_ajuste_2.setCurrentText(str(data[11]).upper())
+            self.line_formula_4.setText(data[13])
+            self.line_precio_4.setText(str(int(round(data[13]))))
+            self.combo_ajuste_4.setCurrentText(str(data[14]).upper())
+            self.line_cantidad_4.setText(str(float(data[15])))
             time.sleep(1)
         txt = txt + '''</body></html>'''
         self.label_16.setText(txt)
@@ -2281,25 +2305,27 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
     def panel(self): 
 
         npk = [self.n_ponderado,self.p_ponderado, self.k_ponderado]
-        render = PanelRender(self.lote, self.parcela, self.cultivo, self.prod_ponderado, self.area, npk,self.i,self._pesos,self._precios)
+        render = PanelRender(self.lote, self.parcela, self.cultivo, self.prod_ponderado, self.area, npk,self.i,self._pesos,self._precios,self._pesos_aplicados,formulas=self.formulas)
 
         render.savePanel()
     
     def saveFertData(self):
         sql = []
-
+        
         if len(self.line_precio_1.text()) >= 3:
             f1 = str(self.line_formula_1.text())
             print(f1)
             p1 = int(round(float(self.line_precio_1.text())))
             a1 = str(self.combo_ajuste_1.currentText())
+            q_1 = float(self.line_cantidad_1.text())
             sql1= ''' update campania 
             set fertilizantefondoformula = '{}',
             fertilizantefondoprecio = {},
-            fertilizantefondoajustado = '{}'
+            fertilizantefondoajustado = '{}',
+            fertilizantefondoaplicado = {}
             from (select idcampania id  from lotecampania lc
             where lc.idlotecampania = {} ) sq
-            where idcampania = sq.id '''.format(f1, p1, a1,  self.idlotecampania)
+            where idcampania = sq.id '''.format(f1, p1, a1, q_1, self.idlotecampania)
             sql.append(sql1)
             # print(sql1)
         
@@ -2310,13 +2336,15 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             f2 = str(self.line_formula_2.text())
             p2 = int(round(float(self.line_precio_2.text())))
             a2 = str(self.combo_ajuste_2.currentText())
+            q_2 = float(self.line_cantidad_2.text())
             sql2= ''' update campania 
-            set fertilizantecob1formula = sq.a2_formula,
-            fertilizantecob1precio = sq.a2_precio,
-            fertilizantecob1ajustado = sq.a2_ajuste
-            from (select idcampania id, '{}' a2_formula, {} a2_precio, '{}' a2_ajuste  from lotecampania lc
+            set fertilizantecob1formula ='{}',
+            fertilizantecob1precio = {},
+            fertilizantecob1ajustado = '{}',
+            fertilizantecob1aplicado = {}
+            from (select idcampania id  from lotecampania lc
             where lc.idlotecampania = {} ) sq
-            where idcampania = sq.id '''.format(f2, p2, a2,  self.idlotecampania)
+            where idcampania = sq.id '''.format(f2, p2, a2, q_2,  self.idlotecampania)
             sql.append(sql2)
 
 
@@ -2324,26 +2352,30 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             f3 = str(self.line_formula_3.text())
             p3 = int(round(float(self.line_precio_3.text())))
             a3 = str(self.combo_ajuste_3.currentText())
+            q_3 = float(self.line_cantidad_3.text())
             sql3= ''' update campania 
-            set fertilizantecob2formula = sq.a3_formula,
-            fertilizantecob2precio = sq.a3_precio,
-            fertilizantecob2ajustado = sq.a3_ajuste
-            from (select idcampania id, '{}' a3_formula, {} a3_precio, '{}' a3_ajuste  from lotecampania lc
+            set fertilizantecob2formula ='{}',
+            fertilizantecob2precio = {},
+            fertilizantecob2ajustado = '{}',
+            fertilizantecob2aplicado = {}
+            from (select idcampania id  from lotecampania lc
             where lc.idlotecampania = {} ) sq
-            where idcampania = sq.id '''.format(f3, p3, a3,  self.idlotecampania)
+            where idcampania = sq.id '''.format(f3, p3, a3, q_3, self.idlotecampania)
             sql.append(sql3)
 
         if len(self.line_precio_4.text()) >= 3:
             f4 = str(self.line_formula_4.text())
             p4 = int(round(float(self.line_precio_4.text())))
             a4 = str(self.combo_ajuste_4.currentText())
+            q_4 = float(self.line_cantidad_4.text())
             sql4 = ''' update campania 
-            set fertilizantecob3formula = sq.a4_formula,
-            fertilizantecob3precio = sq.a4_precio,
-            fertilizantecob3ajustado = sq.a4_ajuste
-            from (select idcampania id, '{}' a4_formula, {} a4_precio, '{}' a4_ajuste  from lotecampania lc
+            set fertilizantecob4formula ='{}',
+            fertilizantecob4precio = {},
+            fertilizantecob4ajustado = '{}',
+            fertilizantecob4aplicado = {}
+            from (select idcampania id  from lotecampania lc
             where lc.idlotecampania = {} ) sq
-            where idcampania = sq.id '''.format(f4, p4, a4,  self.idlotecampania)
+            where idcampania = sq.id '''.format(f4, p4, a4, q_4, self.idlotecampania)
             sql.append(sql4)
 
         if self.combo_status.currentIndex() != 0:
@@ -2365,6 +2397,120 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
                 except Exception as ex:
                     print(ex)
 
+
+    def huellaCarbono(self):
+        conn = self.utils.Conn() 
+        data = self.dataExtraccion
+        
+        try:
+            q_1 = float(self.line_cantidad_1.text())
+            f1 = str(self.line_formula_1.text())
+            f1 = f1.split('-')
+            f1 = [int(e)/100 for e in f1]
+        except:
+            pass
+        try:
+            q_2 = float(self.line_cantidad_2.text())
+            f2 = str(self.line_formula_2.text())
+            f2 = f2.split('-')
+            f2 = [int(e)/100 for e in f2]
+        except : pass
+        try:
+            q_3 = float(self.line_cantidad_3.text())
+            f3 = str(self.line_formula_3.text())
+            f3 = f3.split('-')
+            f3 = [int(e)/100 for e in f3]
+        except : pass
+        try:
+            q_4 = float(self.line_cantidad_4.text())
+            f4 = str(self.line_formula_4.text())
+            f4 = f4.split('-')
+            f4 = [int(e)/100 for e in f4]
+        except : pass
+
+
+        f1 = str(self.line_formula_1.text())
+        f1 = f1.split('-')
+        f1 = [int(e)/100 for e in f1]
+
+   
+        with conn: 
+            cursor = conn.cursor() 
+            sql = '''select uf_etiqueta uf, area_has area , 
+            (-1*(-necesidad_n+necesidad_nf)) || ' / '  ||
+            (-1*(-necesidad_p+necesidad_pf)) || ' / '  ||
+            (-1*(-necesidad_k+necesidad_kf)) npk
+            from unidades 
+            where idlotecampania = {}'''.format(self.idlotecampania)
+            cursor.execute(sql)
+            data = cursor.fetchall() 
+            # print(data)
+            area = [float(e[1]) for e in data]
+            npk = [str(e[2]) for e in data]
+            lista = [e.split(' / ') for e in npk]
+            n = [int(e[0]) for e in lista]
+            p = [int(e[1]) for e in lista]
+            k = [int(e[2]) for e in lista]
+            #! CALCULO HUELLA CARBONO FERTILIZACION PARCELARIA
+            n_ponderado = self.n_ponderado 
+            p_ponderado = self.p_ponderado 
+            k_ponderado = self.k_ponderado 
+
+            if q_1: 
+                n_ponderado = n_ponderado - (q_1 * f1[0])
+                p_ponderado = p_ponderado - (q_1 * f1[1])
+                k_ponderado = k_ponderado - (q_1 * f1[2])
+
+                print(n_ponderado)
+            try:
+                if q_2: 
+                    n_ponderado = n_ponderado - (q_2 * f2[0])
+                    p_ponderado = p_ponderado - (q_2 * f2[1])
+                    k_ponderado = k_ponderado - (q_2 * f2[2])
+            except: pass
+            try: 
+                if q_3: 
+                    n_ponderado = n_ponderado - (q_3 * f3[0])
+                    p_ponderado = p_ponderado - (q_3 * f3[1])
+                    k_ponderado = k_ponderado - (q_3 * f3[2])
+            except: pass
+            try: 
+                if q_4: 
+                    n_ponderado = n_ponderado - (q_4 * f4[0])
+                    p_ponderado = p_ponderado - (q_4 * f4[1])
+                    k_ponderado = k_ponderado - (q_4 * f4[2])
+            except:
+                pass
+            
+            n_ponderado = -1*(-self.n_ponderado + n_ponderado)
+            p_ponderado = -1*(-self.p_ponderado + p_ponderado)
+            k_ponderado = -1*(-self.k_ponderado + k_ponderado)
+
+            huella_carbono_fp = round((n_ponderado * 4.9500) + (p_ponderado * 0.7333) + (k_ponderado * 0.5500))
+            print(huella_carbono_fp)
+
+
+
+            
+            
+            #! CALCULO HUELLA CARBONO FERTILIZACION INTRAPARCELARIA
+
+            n_ponderado_ip = self.sumaPonderada(n, area)
+            p_ponderado_ip = self.sumaPonderada(p, area)
+            k_ponderado_ip  = self.sumaPonderada(k, area)
+
+            huella_carbono_fv = round((n_ponderado_ip * 4.9500) + (p_ponderado_ip * 0.7333) + (k_ponderado_ip * 0.5500))
+
+            print(huella_carbono_fv)
+        # print(self.table_necesidades.model().rowCount()) 
+
+            #! CAPTURA DE CARBONO EN CULTIVO
+
+            x1 = int(round((-float(self.prod) * self.ccosecha )*(44/12)))
+            x2 = int(round((-float(self.residuo) * self.cresiduo )*(44/12)))
+            ccc =  x1+x2
+            # print(self.prod, self.ccosecha )
+            # print(ccc)
 
 
         

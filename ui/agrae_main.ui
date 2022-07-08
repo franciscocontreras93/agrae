@@ -276,6 +276,31 @@
         <string>Prod. Esperada</string>
        </property>
       </column>
+      <column>
+       <property name="text">
+        <string>Biomasa</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Residuo</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>IC</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>CCosecha</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>CResiduo</string>
+       </property>
+      </column>
      </widget>
     </widget>
    </widget>

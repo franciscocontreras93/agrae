@@ -38,7 +38,7 @@
     <string notr="true">backgroud-color: transparent;</string>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -418,7 +418,7 @@ border:0</string>
    </widget>
    <widget class="QWidget" name="tab_2">
     <attribute name="title">
-     <string>Fertilizacion</string>
+     <string>Fertilizacion Variable</string>
     </attribute>
     <widget class="QWidget" name="gridLayoutWidget_2">
      <property name="geometry">
@@ -1547,7 +1547,7 @@ border:0</string>
       <string>Ajuste Automatico</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton">
+    <widget class="QPushButton" name="btn_panel">
      <property name="geometry">
       <rect>
        <x>490</x>

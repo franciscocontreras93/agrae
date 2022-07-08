@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, re
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QThread, QAbstractTableModel
@@ -381,14 +381,15 @@ class AgraeToolset():
         with self.conn as conn:
             try:
                 if nombre == '' and status == False:
-                    sqlQuery = f'''select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada
+                    sqlQuery = f'''select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     from lotecampania lc
-                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
+                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania
+                    join lotes ls on lc.idlotecampania = ls.idlotecampania
                     left join lote l on l.idlote = lc.idlote
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada
+                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
                     order by ca.fechasiembra desc'''
                     widget.btn_add_layer.setEnabled(False)
                     try:
@@ -398,15 +399,16 @@ class AgraeToolset():
                     
 
                 elif nombre != '' and status == False:
-                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada 
+                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     from lotecampania lc
-                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
+                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania
+                    join lotes ls on lc.idlotecampania = ls.idlotecampania
                     left join lote l on l.idlote = lc.idlote
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
                     where l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada
+                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     order by ca.fechasiembra desc                        
                     """
                     widget.btn_reload.setEnabled(True)
@@ -416,15 +418,16 @@ class AgraeToolset():
                         pass
 
                 elif nombre == '' and status == True:
-                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada 
+                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     from lotecampania lc
-                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
+                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania
+                    join lotes ls on lc.idlotecampania = ls.idlotecampania
                     left join lote l on l.idlote = lc.idlote
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
                     where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada
+                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     order by ca.fechasiembra desc"""
                     widget.btn_reload.setEnabled(True)
                     try:
@@ -433,16 +436,17 @@ class AgraeToolset():
                         pass
 
                 elif nombre != '' and status == True:
-                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada 
+                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     from lotecampania lc
-                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania 
+                    join loteparcela lp on lp.idlotecampania = lc.idlotecampania
+                    join lotes ls on lc.idlotecampania = ls.idlotecampania
                     left join lote l on l.idlote = lc.idlote
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
                     where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
                     or l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada
+                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     order by ca.fechasiembra desc"""
                     widget.btn_reload.setEnabled(True)
                     try:
@@ -930,6 +934,7 @@ class PanelRender():
 
     path = {'base': os.path.join(os.path.dirname(__file__), r'ui\img\base00.png'),
             'base2': os.path.join(os.path.dirname(__file__), r'ui\img\base02.png'),
+            'base3': os.path.join(os.path.dirname(__file__), r'ui\img\base03.png'),
             'plot': os.path.join(os.path.dirname(__file__), r'ui\img\chart.png'),
             'table': os.path.join(os.path.dirname(__file__), r'ui\img\tabla.png'),
             'tf1': os.path.join(os.path.dirname(__file__), r'ui\img\tf1.png'),
@@ -943,7 +948,7 @@ class PanelRender():
         'MAIZ G': os.path.join(os.path.dirname(__file__), r'ui\img\assets\maiz_esquema.png'),
                 }
 
-    def __init__(self, lote, parcela, cultivo, produccion, area, npk: list, i: int, pesos:list, precios:list):
+    def __init__(self, lote, parcela, cultivo, produccion, area, npk: list, i: int, pesos:list, precios:list,aplicados:list,formulas:list):
         
         
         
@@ -961,7 +966,9 @@ class PanelRender():
 
         self.i = i
         self._pesos = pesos
+        self._pesos_aplicados = aplicados
         self._precios = precios
+        self.formulas = formulas
        
 
         
@@ -972,6 +979,7 @@ class PanelRender():
 
         self.font = ImageFont.truetype("arialbi.ttf", 13)
         self.font2 = ImageFont.truetype("arialbi.ttf", 10)
+        self.font3 = ImageFont.truetype("arialbi.ttf", 12)
         self.color = (0, 0, 0)
 
         pass
@@ -1079,7 +1087,95 @@ class PanelRender():
         
         self.p2 = img
     
-    
+    def panelTres(self, pesos: list, precios: list):
+        def modify(formula):
+            print(formula)
+            pa = re.compile('^[0]')
+            f = ''
+            
+            # formula = list(formula.split('-'))
+            for e in formula:
+
+                if re.match(pa, e):
+                    e = e[1:]
+
+                f = f + ' {}% -'.format(e)
+
+            return f[:-1]
+
+        x = 150
+        y = 105
+        font = self.font3
+        font2 = ImageFont.truetype("arialbi.ttf", 14)
+        color = self.color
+        img = Image.open(self.path['base3'])
+        draw = ImageDraw.Draw(img)
+        total_unitario = 0
+        formulas = ''
+
+        if len(pesos) >= 1:
+            f1 = self.formulas[0]
+            f1 = modify(f1)
+            formulas = formulas + f1 + ' --- '
+            t1 = round(precios[0]/self.area)
+            draw.text((140, y), '{}\n\n{} Kg/ha\n{} $/ha\n\n{} Kg'.format(f1, pesos[0], t1, round(
+                pesos[0]*self.area)), font=font2, fill=color, align='center', spacing=8)
+            total_unitario = total_unitario + t1
+
+        if len(pesos) >= 2:
+            f2 = self.formulas[1]
+            f2 = modify(f2)
+            formulas = formulas + f2 + ' --- '
+            t2 = round(precios[1]/self.area)
+            draw.text(((148*2)+10, y), '{}\n\n{} Kg/ha\n{} $/ha\n\n{} Kg'.format(f2,
+                                                                                 pesos[1], t2, round(pesos[1]*self.area)), font=font2, fill=color, align='center', spacing=8)
+            total_unitario = total_unitario + t2
+
+        if len(pesos) >= 3:
+            f3 = self.formulas[2]
+            f3 = modify(f3)
+            formulas = formulas + f3 + ' --- '
+            t3 = round(precios[2]/self.area)
+            draw.text(((148*3)+20, y), '{}\n\n{} Kg/ha\n{} $/ha\n\n{} Kg'.format(f3, pesos[2], t3, round(
+                pesos[2]*self.area)), font=font2, fill=color, align='center', spacing=8)
+            total_unitario = total_unitario + t3
+
+        if len(pesos) > 3:
+            f4 = self.formulas[3]
+            f4 = modify(f4)
+            formulas = formulas + f4 + ' --- '
+            t4 = round(precios[3]/self.area)
+            draw.text(((148*4)+30, y), '{}\n\n{} Kg/ha\n{} $/ha\n\n{} Kg'.format(f3, pesos[3], t4, round(
+                pesos[3]*self.area)), font=font2, fill=color, align='center', spacing=8)
+            total_unitario = total_unitario + t4
+
+        draw.text((340, 295),
+                  '{} $/ha'.format(total_unitario),
+                  font=ImageFont.truetype("arialbi.ttf", 16),
+                  fill=color,
+                  align='center')
+        draw.text((340, 345),
+                  '{} Ha'.format(self.area),
+                  font=ImageFont.truetype("arialbi.ttf", 16),
+                  fill=color,
+                  align='center')
+
+        draw.text((600, 345),
+                  '{} $'.format(round(total_unitario*self.area)),
+                  font=ImageFont.truetype("arialbi.ttf", 24),
+                  fill=color)
+
+
+        nota = 'Se han calculado {} combinaciones de Fertilizantes para ajustar las necesidades del Cultivo.\nDe ellas se ha seleccionado la combinacion mas economica. Los fertilizantes con los que\nse ha analizado han sido: {}\n***Precios Fertilizantes a dia {}. Pueden sufrir Variacion***'.format(
+            len(precios), formulas[:-4], datetime.today().strftime("%d/%m/%Y"))
+
+        draw.text((130, 430),
+                  nota, font=ImageFont.truetype("arial.ttf", 12), fill=color)
+
+        self.p3 = img
+        pass
+
+
     
     def showPanel(self):
         self.panelUno()
@@ -1091,8 +1187,10 @@ class PanelRender():
         self.panelDos(self.i,self._pesos,self._precios)
         filename = QFileDialog.getExistingDirectory(
             None, "Seleccionar directorio de Paneles:")
+        self.panelTres(self._pesos_aplicados, self._precios)
         self.p1.save(f'{filename}\\Panel00{self.lote}.png')
         self.p2.save(f'{filename}\\Panel02{self.lote}.png')
+        self.p3.save(f'{filename}\\Panel03{self.lote}.png')
         # self.p2.show()
 
         self.iface.messageBar().pushMessage(f'Paneles Exportado Correctamente <a href="{filename}">{filename}</a>', 3, 10)
