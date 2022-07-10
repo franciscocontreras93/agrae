@@ -1829,6 +1829,18 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         # self.pushButton.clicked.connect(self.loadPlot)
         self.utils = AgraeUtils()
         self.conn = self.utils.Conn()
+        with self.conn:
+            try:
+                sql = '''select c.unidadesprecio from lotes l
+                join lotecampania lc on l.idlotecampania = lc.idlotecampania 
+                join campania c on lc.idcampania = c.idcampania 
+                where l.idlotecampania = {}'''.format(idlotecampania)
+                cursor = self.conn.cursor()
+                cursor.execute(sql)
+                self.moneda = cursor.fetchone()[0]
+                print(self.moneda)
+            except Exception as ex:
+                print(ex)
 
 
         self.dataSuelo = dataSuelo
@@ -1866,6 +1878,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self._pesos = []
         self._pesos_aplicados = []
         self._precios = []
+        self._precio_ton = []
 
         self.sc = MplCanvas(self)
         self.sc.setStyleSheet("background-color:transparent;")
@@ -2156,6 +2169,8 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.i = self.i + 1
         self.balanceNutrientes(values,f_n,f_p,f_k)
         self.formulas.append(self.formula)
+        self._precio_ton.append(int(precio))
+        # print(self._precio_ton)
         # print(self.formulas)
 
     def balanceNutrientes(self,valores:list,dosis_n:float,dosis_p:float,dosis_k:float):
@@ -2345,7 +2360,8 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
     def panel(self): 
         # self.huellaCarbono()
         npk = [self.n_ponderado,self.p_ponderado, self.k_ponderado]
-        render = PanelRender(self.lote, self.parcela, self.cultivo, self.prod_ponderado, self.area, npk,self.i,self._pesos,self._precios,self._pesos_aplicados,formulas=self.formulas,dataHuellaCarbono=self.dataHuellaCarbono)
+        render = PanelRender(self.lote, self.parcela, self.cultivo, self.prod_ponderado, self.area, npk,self.i,self._pesos,self._precios,self._pesos_aplicados,formulas=self.formulas,dataHuellaCarbono=self.dataHuellaCarbono,preciosTon=self._precio_ton,moneda=self.moneda)
+        # print(self._pesos_aplicados, self._precios)
 
         render.savePanel()
     
@@ -2498,7 +2514,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             p_ponderado = self.p_ponderado 
             k_ponderado = self.k_ponderado 
 
-            print(n_ponderado,p_ponderado,k_ponderado)
+            # print(n_ponderado,p_ponderado,k_ponderado)
             if q_1: 
                 n_ponderado = n_ponderado - (q_1 * f1[0])
                 p_ponderado = p_ponderado - (q_1 * f1[1])
@@ -2527,10 +2543,10 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             n_ponderado = -1*(-self.n_ponderado + n_ponderado)
             p_ponderado = -1*(-self.p_ponderado + p_ponderado)
             k_ponderado = -1*(-self.k_ponderado + k_ponderado)
-            print(n_ponderado, p_ponderado, k_ponderado)
+            # print(n_ponderado, p_ponderado, k_ponderado)
 
             huella_carbono_fp = round((n_ponderado * 4.9500) + (p_ponderado * 0.7333) + (k_ponderado * 0.5500))
-            print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
+            # print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
 
 
 
@@ -2541,16 +2557,16 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             n_ponderado_ip = self.sumaPonderada(n, area)
             p_ponderado_ip = self.sumaPonderada(p, area)
             k_ponderado_ip  = self.sumaPonderada(k, area)
-            print(n_ponderado_ip, p_ponderado_ip, k_ponderado_ip)
+            # print(n_ponderado_ip, p_ponderado_ip, k_ponderado_ip)
 
             huella_carbono_fv = round((n_ponderado_ip * 4.9500) + (p_ponderado_ip * 0.7333) + (k_ponderado_ip * 0.5500))
 
-            print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
+            # print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
 
             #! REDUCCION HUELLA DE CARBONO: 
             _reduccion = -huella_carbono_fp+huella_carbono_fv
             _percent = round((+_reduccion/huella_carbono_fp)*100)
-            print('**** REDUCCION HUELLA DE CARBONO: {} KgCO2eq/ha o un {} % ****'.format(_reduccion,_percent))
+            # print('**** REDUCCION HUELLA DE CARBONO: {} KgCO2eq/ha o un {} % ****'.format(_reduccion,_percent))
 
         # print(self.table_necesidades.model().rowCount()) 
 
@@ -2561,7 +2577,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             ccc =  x1+x2
             chc = -1*(-ccc+_reduccion)
             # print(self.prod, self.ccosecha )
-            print('**** HUELLA DE CARBONO: {} KgCO2eq/ha ****'.format(ccc))
+            # print('**** HUELLA DE CARBONO: {} KgCO2eq/ha ****'.format(ccc))
             self.lbl_hc_cantidad.setText('{} KgCO2/ha'.format(ccc))
             self.lbl_hc_percent.setText('{}%'.format(_percent))
 
@@ -2573,7 +2589,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             'residuo': x2,
             'fertilizacion': _reduccion } 
 
-            print(self.dataHuellaCarbono)
+            # print(self.dataHuellaCarbono)
             
 
 

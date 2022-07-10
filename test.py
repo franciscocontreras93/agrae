@@ -205,40 +205,61 @@ class PanelRender():
         draw = ImageDraw.Draw(img)
         total_unitario = 0
 
+        datos = {
+            'percent': -47,
+            'biomasa': -10715,
+            'chc': -10300,
+            'cosecha': -4217,
+            'residuo': -6498,
+            'fertilizacion': -415
+        }
+
 
 
         if len(pesos) >= 1:
             f1 = self.formulas[0]
             f1 = modify(f1)
-            t1 = round(precios[0]/self.area)
-            draw.text((140, y), '{}\n\n{} Kg/ha\n{} $/ha\n\n{} Kg'.format(f1, pesos[0],t1, round(pesos[0]*self.area)), font=font2, fill=color, align='center', spacing=8)
-            total_unitario = total_unitario + t1
+            t1 = round(pesos[0]*self.area)/1000*precios[0]
+            print(t1)
+            draw.text((140, y), '{}\n\n{:,}Kg/ha\n{:,}$/ha\n\n{:,} Kg'.format(f1, pesos[0], round(
+                t1/self.area), round(pesos[0]*self.area)), font=font2, fill=color, align='center', spacing=8)
+            total_unitario = total_unitario + round(
+                t1/self.area)
 
         if len(pesos) >= 2:        
             f2 = self.formulas[1]
             f2 = modify(f2)
-            t2= round(precios[1]/self.area)
-            draw.text(((148*2)+10, y), '{}\n\n{} Kg/ha\n{} $/ha\n\n{} Kg'.format(f2, pesos[1], t2, round(pesos[1]*self.area)), font=font2, fill=color, align='center', spacing=8)
-            total_unitario = total_unitario + t2
+            t2 = round(pesos[1]*self.area)/1000*precios[1]
+            print(t2)
+            draw.text(((148*2)+10, y), '{}\n\n{:,}Kg/ha\n{:,}$/ha\n\n{:,} Kg'.format(f2, pesos[1], round(
+                t2/self.area), round(pesos[1]*self.area)), font=font2, fill=color, align='center', spacing=8)
+            total_unitario = total_unitario + round(
+                t2/self.area)
         
         if len(pesos) >= 3: 
             f3 = self.formulas[2]
             f3 = modify(f3)
-            t3 = round(precios[2]/self.area)
-            draw.text(((148*3)+20, y), '{}\n\n{} Kg/ha\n{} $/ha\n\n{} Kg'.format(f3, pesos[2], t3, round(
+            t3  = round(pesos[2]*self.area)/1000*precios[2]
+            print(t3)
+            draw.text(((148*3)+20, y), '{}\n\n{:,}Kg/ha\n{:,}$/ha\n\n{:,}Kg'.format(f3, pesos[2], round(
+                t3/self.area), round(
                 pesos[2]*self.area)), font=font2, fill=color, align='center', spacing=8)
-            total_unitario = total_unitario + t3
+            total_unitario = total_unitario + round(
+                t3/self.area)
         
         if len(pesos) > 3 :
             f4 = self.formulas[3]
             f4 = modify(f4)
-            t4 = round(precios[3]/self.area)
-            draw.text(((148*4)+30, y), '{}\n\n{} Kg/ha\n{} $/ha\n\n{} Kg'.format(f3, pesos[3], t4, round(
+            t4 = round(pesos[3]*self.area)/1000*precios[3]
+            print(t4)
+            draw.text(((148*4)+30, y), '{}\n\n{:,}Kg/ha\n{:,}$/ha\n\n{:,}Kg'.format(f3, pesos[3], round(
+                t4/self.area), round(
                 pesos[3]*self.area)), font=font2, fill=color, align='center', spacing=8)
-            total_unitario = total_unitario + t4
+            total_unitario = total_unitario + round(
+                t4/self.area)
 
         draw.text((340,295), 
-            '{} $/ha'.format(total_unitario),
+            '{:,} $/ha'.format(total_unitario),
             font=ImageFont.truetype("arialbi.ttf", 16),
             fill=color,
             align='center')
@@ -248,8 +269,8 @@ class PanelRender():
             fill=color,
             align='center')
 
-        draw.text((600,345),
-        '{} $'.format(round(total_unitario*self.area)),
+        draw.text((600,335),
+        '{:,} $'.format(round(total_unitario*self.area)),
                   font=ImageFont.truetype("arialbi.ttf", 24),
         fill=color)
         formulas = ''
@@ -259,13 +280,31 @@ class PanelRender():
         nota = 'Se han calculado {} combinaciones de Fertilizantes para ajustar las necesidades del Cultivo.\nDe ellas se ha seleccionado la combinacion mas economica. Los fertilizantes con los que\nse ha analizado han sido: {}\n***Precios Fertilizantes a dia {}. Pueden sufrir Variacion***'.format(
             len(precios), formulas[:-4], datetime.today().strftime("%d/%m/%Y"))
 
-        draw.text((130, 430),
+        draw.text((50, 630),
                   nota, font=ImageFont.truetype("arial.ttf", 12), fill=color)
+
+        txt = 'Si hacemos las coseas BIEN, además\nde ahorrar Fertilizante, conseguimos un\n{}% de HUELLA DE CARBONO\nrepecto a seguir haciendolas como\nsiempre'.format(
+            datos['percent'])
+        draw = ImageDraw.Draw(img)
+        draw.text((230, 525), txt,
+                  font=ImageFont.truetype("arialbi.ttf", 16),
+                  fill=self.color,
+                  anchor='mm',
+                  align='center',
+                  spacing=10)  # ! TEXTO PANEL
+        draw.text((560, 445), '{:,} KgCO2eq/ha'.format(datos['chc']), font=ImageFont.truetype("arialbi.ttf", 22), fill=(110, 178, 83),
+                  anchor='mm', align='center', spacing=12)  # ! CAPTURA HUELLA DE CARBONO
+        draw.text((650, 482), '{:,} KgCO2eq/ha'.format(datos['biomasa']), font=ImageFont.truetype("arialbi.ttf", 15), fill=(110, 178, 83),
+                  anchor='mm', align='center', spacing=12)  # ! CAPTURA BIOMASA
+        draw.text((670, 518), '{:,} KgCO2eq/ha'.format(datos['cosecha']), font=ImageFont.truetype("arialbi.ttf", 15), fill=(110, 178, 83),
+                  anchor='mm', align='center', spacing=12)  # ! CAPTURA COSECHA
+        draw.text((670, 555), '{:,} KgCO2eq/ha'.format(datos['residuo']), font=ImageFont.truetype("arialbi.ttf", 15), fill=(110, 178, 83),
+                  anchor='mm', align='center', spacing=12)  # ! CAPTURA RESIDUO
+        draw.text((650, 595), '{:,} KgCO2eq/ha'.format(datos['fertilizacion']*(-1)), font=ImageFont.truetype("arialbi.ttf", 15), fill=(226, 59, 59),
+                  anchor='mm', align='center', spacing=12)  # ! CAPTURA FERTILZIACION VARIABLE
         
 
-
             
-
         img.show()
 
 
@@ -312,10 +351,10 @@ class PanelRender():
         self.img.save(f'{filename}\\{self.lote}-{self.parcela}-{self.cultivo}_{self.date}.png')
     
 
-render = PanelRender('Prueba', 'Prueba', 'TRIGO B', 7895, 2.41 ,[200,200,200],['06-16-24','30-00-00','25-16-00','15-05-05'])
+render = PanelRender('Prueba', 'Prueba', 'TRIGO B', 7895, 2.41 ,[200,200,200],['06-16-24','30-00-00'])
 # panel = render.panelUno()
-render.panelDos(4)
-# graf = render.panelTres([250, 500,200,100],[1500,1000,2500,250])
+# render.panelDos(4)
+graf = render.panelTres(pesos=[250, 500],precios=[1500,2000])
 
 # render.panelHuellaCarbono(datos)
 
