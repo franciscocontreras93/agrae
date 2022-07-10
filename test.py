@@ -19,8 +19,10 @@ class PanelRender():
         'base': os.path.join(os.path.dirname(__file__), r'ui\img\base00.png'),
         'base2': os.path.join(os.path.dirname(__file__), r'ui\img\base02.png'),
         'base3': os.path.join(os.path.dirname(__file__), r'ui\img\base03.png'),
+        'base4': os.path.join(os.path.dirname(__file__), r'ui\img\base04.png'),
         'plot': os.path.join(os.path.dirname(__file__), r'ui\img\chart.png'),
         'table': os.path.join(os.path.dirname(__file__), r'ui\img\tabla.png'),
+        'hc': os.path.join(os.path.dirname(__file__), r'ui\img\hc.png'),
         'tf1': os.path.join(os.path.dirname(__file__), r'ui\img\tf1.png'),
         'tf2': os.path.join(os.path.dirname(__file__), r'ui\img\tf2.png'),
         'tf3': os.path.join(os.path.dirname(__file__), r'ui\img\tf3.png'),
@@ -104,50 +106,78 @@ class PanelRender():
         font = self.font
         font2 = self.font2
         color = self.color
+
+        datos = {
+            'percent': -47,
+            'biomasa': -10715,
+            'chc': -10300,
+            'cosecha': -4217,
+            'residuo': -6498,
+            'fertilizacion': -415
+        }
+
+        
         
         w = 117
         h = 307
-        p1 = (67,135)
-        p2 = (232,135)
-        p3 = (400,135)
-        p4 = (566,135)
+        p1 = (67,155)
+        p2 = (232,155)
+        p3 = (400,155)
+        p4 = (566,155)
 
         img = Image.open(self.path['base2'])
+        draw = ImageDraw.Draw(img)
         if i >= 1: 
             tf1 = Image.open(self.path['tf1'])
             tf1 = tf1.resize((w, h))
             img.paste(tf1, p1, mask=tf1)
             f1 = self.formulas[0]
-            formula_1 = ImageDraw.Draw(img)
-            formula_1.text((67,100), f1, font=font,fill=color)
-            peso_1 = ImageDraw.Draw(img)
-            peso_1.text((100, 430), "125951 Kg/Ha", font=font, fill=color)
-            precio_1 = ImageDraw.Draw(img)
-            precio_1.text((100, 450), "4580 \u20ac/Ha", font=font2, fill=color)
+            draw.text((120,140), f1, font=ImageFont.truetype("arialbi.ttf", 16),fill=color,anchor='mm') #! FORMULA 1
+            draw.text((75, 450), "125951 Kg/Ha\n4580 \u20ac/Ha", font=font, fill=color, align='center', spacing=8)
         if i >= 2:
             tf2 = Image.open(self.path['tf2'])
             tf2 = tf2.resize((w, h))
             img.paste(tf2, p2, mask=tf2)
-            peso_2 = ImageDraw.Draw(img)
-            peso_2.text((266, 430), "125952 Kg/Ha", font=font, fill=color)
-            precio_2 = ImageDraw.Draw(img)
-            precio_2.text((266, 450), "4580 $", font=font2, fill=color)
+            f2 = self.formulas[1]
+            draw.text((285,140), f2, font=ImageFont.truetype("arialbi.ttf", 16),fill=color,anchor='mm') #! FORMULA 1
+            draw.text((245, 450), "125952 Kg/Ha\n4580 $", font=font,fill=color, align='center', spacing=8)
         if i >= 3:
             tf3 = Image.open(self.path['tf3'])
             tf3 = tf3.resize((w, h))
             img.paste(tf3, p3, mask=tf3)
-            peso_3 = ImageDraw.Draw(img)
-            peso_3.text((432, 430), "125953 Kg/Ha", font=font, fill=color)
-            precio_3 = ImageDraw.Draw(img)
-            precio_3.text((432, 450), "4580 $", font=font2, fill=color)
+            f3 = self.formulas[2]
+            draw.text((455,140), f3, font=ImageFont.truetype("arialbi.ttf", 16),fill=color,anchor='mm') #! FORMULA 1
+            draw.text((410, 450), "125952 Kg/Ha\n4580 $", font=font,fill=color, align='center', spacing=8)
+   
         if i >= 4:
             tf4 = Image.open(self.path['tf4'])
             tf4 = tf4.resize((w, h))
             img.paste(tf4, p4, mask=tf4)
-            peso_4 = ImageDraw.Draw(img)
-            peso_4.text((598, 430), "125954 Kg/Ha", font=font, fill=color)
-            precio_3 = ImageDraw.Draw(img)
-            precio_3.text((598, 450), "4580 $", font=font2, fill=color)
+            f4 = self.formulas[3]
+            draw.text((620,140), f4, font=ImageFont.truetype("arialbi.ttf", 16),fill=color,anchor='mm') #! FORMULA 1
+            draw.text((580, 450), "125952 Kg/Ha\n4580 $", font=font,fill=color, align='center', spacing=8)
+        
+        txt = 'Si hacemos las coseas BIEN, además\nde ahorrar Fertilizante, conseguimos un\n{}% de HUELLA DE CARBONO\nrepecto a seguir haciendolas como\nsiempre'.format(
+            datos['percent'])
+        draw = ImageDraw.Draw(img)
+        draw.text((210, 735), txt, 
+                    font=ImageFont.truetype("arialbi.ttf", 16),
+        fill=self.color,
+        anchor='mm', 
+        align='center', 
+        spacing=10)  # ! TEXTO PANEL
+        draw.text((520, 652), '{:,} KgCO2eq/ha'.format(datos['chc']), font=ImageFont.truetype("arialbi.ttf", 22), fill=(110, 178, 83),
+                  anchor='mm', align='center', spacing=12)  # ! CAPTURA HUELLA DE CARBONO
+        draw.text((590, 687), '{:,} KgCO2eq/ha'.format(datos['biomasa']), font=ImageFont.truetype("arialbi.ttf", 15), fill=(110, 178, 83),
+                  anchor='mm', align='center', spacing=12)  # ! CAPTURA BIOMASA
+        draw.text((605, 722), '{:,} KgCO2eq/ha'.format(datos['cosecha']), font=ImageFont.truetype("arialbi.ttf", 15), fill=(110, 178, 83),
+                  anchor='mm', align='center', spacing=12)  # ! CAPTURA COSECHA
+        draw.text((605, 760), '{:,} KgCO2eq/ha'.format(datos['residuo']), font=ImageFont.truetype("arialbi.ttf", 15), fill=(110, 178, 83),
+                  anchor='mm', align='center', spacing=12)  # ! CAPTURA RESIDUO
+        draw.text((580, 797), '{:,} KgCO2eq/ha'.format(datos['fertilizacion']*(-1)), font=ImageFont.truetype("arialbi.ttf", 15), fill=(226, 59, 59),
+                  anchor='mm', align='center', spacing=12)  # ! CAPTURA FERTILZIACION VARIABLE
+
+        
 
         img.show()
 
@@ -241,7 +271,37 @@ class PanelRender():
 
 
         pass 
-
+    
+    def panelHuellaCarbono(self, 
+    datos:dict={
+        'percent':0,
+        'chc':0,
+        'biomasa':0,
+        'cosecha':0,
+        'residuo':0,
+        'fertilizacion':0
+        }):
+        font = ImageFont.truetype("arialbi.ttf", 18)
+        font2 = ImageFont.truetype("arialbi.ttf", 12)
+        img = Image.open(self.path['base4'])
+        draw = ImageDraw.Draw(img)
+        txt = 'Si hacemos las coseas BIEN, además de\nahorrar Fertilizante, conseguimos un\n{}% de HUELLA DE CARBONO\nrepecto a seguir haciendolas como siempre'.format(datos['percent'])
+        draw.text((240, 140), txt, font=font, fill=self.color,
+                  anchor='mm', align='center', spacing=12)  # ! TEXTO PANEL
+        draw.text((620, 100), '{:,} KgCO2eq/ha'.format(datos['chc']), font=font, fill=(110,178,83),
+                  anchor='mm', align='center', spacing=12) #! CAPTURA HUELLA DE CARBONO
+        draw.text((680, 135), '{:,} KgCO2eq/ha'.format(datos['biomasa']), font=font2, fill=(0, 0, 0),
+                  anchor='mm', align='center', spacing=12) #! CAPTURA BIOMASA
+        draw.text((680, 160), '{:,} KgCO2eq/ha'.format(datos['cosecha']), font=font2, fill=(0, 0, 0),
+                  anchor='mm', align='center', spacing=12) #! CAPTURA COSECHA
+        draw.text((680, 185), '{:,} KgCO2eq/ha'.format(datos['residuo']), font=font2, fill=(0, 0, 0),
+                  anchor='mm', align='center', spacing=12) #! CAPTURA RESIDUO
+        draw.text((680, 205), '{:,} KgCO2eq/ha'.format(datos['fertilizacion']*(-1)), font=font2, fill=(0, 0, 0),
+                  anchor='mm', align='center', spacing=12) #! CAPTURA FERTILZIACION VARIABLE
+        img.save(self.path['hc'])
+        img.show()
+        pass
+    
 
     def showPanel(self):
         # self.panelTres()
@@ -254,5 +314,8 @@ class PanelRender():
 
 render = PanelRender('Prueba', 'Prueba', 'TRIGO B', 7895, 2.41 ,[200,200,200],['06-16-24','30-00-00','25-16-00','15-05-05'])
 # panel = render.panelUno()
-graf = render.panelTres([250, 500,200,100],[1500,1000,2500,250])
+render.panelDos(4)
+# graf = render.panelTres([250, 500,200,100],[1500,1000,2500,250])
+
+# render.panelHuellaCarbono(datos)
 

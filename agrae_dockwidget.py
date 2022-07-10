@@ -1740,9 +1740,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         widget.setItem(row,column,i_clase)
         pass
 
-    def informe(self): 
-        print('Informe')
-        pass
+
     def analiticaDialog(self): 
         row = self.tableWidget.currentRow()
         idlotecampania = self.tableWidget.item(row, 0).text()
@@ -1862,6 +1860,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.dataNecesidades = None
         self.dataValidator = False
         self.dataAuto = None
+        self.dataHuellaCarbono = None
 
 
         self._pesos = []
@@ -1911,13 +1910,21 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.line_formula_1.textChanged.connect(self.fert)
         self.line_formula_2.setValidator(self.regexFormula)
         self.line_formula_2.textChanged.connect(self.fert)
+        self.line_formula_3.setValidator(self.regexFormula)
         self.line_formula_3.textChanged.connect(self.fert)
+        self.line_formula_4.setValidator(self.regexFormula)
         self.line_formula_4.textChanged.connect(self.fert)
 
-        self.line_precio_1.textChanged.connect(lambda t, c=self.combo_ajuste_1: self.enableCombo(t,c))
-        self.line_precio_2.textChanged.connect(lambda t, c=self.combo_ajuste_2: self.enableCombo(t,c))
-        self.line_precio_3.textChanged.connect(lambda t, c=self.combo_ajuste_3: self.enableCombo(t,c))
-        self.line_precio_4.textChanged.connect(lambda t, c=self.combo_ajuste_4: self.enableCombo(t,c))
+        # self.line_formula_5.textChanged.connect(self.fert)
+        # self.line_formula_6.textChanged.connect(self.fert)
+
+        self.line_cantidad_1.textChanged.connect(lambda t, c=self.combo_ajuste_1: self.enableCombo(t,c))
+        self.line_cantidad_2.textChanged.connect(lambda t, c=self.combo_ajuste_2: self.enableCombo(t,c))
+        self.line_cantidad_3.textChanged.connect(lambda t, c=self.combo_ajuste_3: self.enableCombo(t,c))
+        self.line_cantidad_4.textChanged.connect(lambda t, c=self.combo_ajuste_4: self.enableCombo(t,c))
+
+        # self.btn_ok_1.clicked.connect(lambda c=self.line_cantidad_5.text(): self.fertTradicional(c))
+        # self.line_cantidad_6.textChanged.connect(lambda c:self.fertTradicional(c,False))
 
         self.combo_ajuste_1.currentIndexChanged.connect(lambda i,t=self.table_aporte_1,p=self.line_precio_1,l=self.t_aporte_1, lp=self.t_precio_1, a=self.line_cantidad_1: self.fertilizar(i,t,p,l,lp,a,1))
         self.combo_ajuste_2.currentIndexChanged.connect(lambda i,t=self.table_aporte_2,p=self.line_precio_2,l=self.t_aporte_2, lp=self.t_precio_2, a=self.line_cantidad_2: self.fertilizar(i,t,p,l,lp,a,2))
@@ -1950,9 +1957,40 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             self.prod_pond.setText('{} Kg Cosecha/Ha'.format(self.prod_ponderado))
             self.area_total.setText('{} Ha'.format(round(sum(area),2)))
             self.npk_pond.setText('{} / {} / {}'.format(self.n_ponderado,self.p_ponderado,self.k_ponderado))
-        except: pass
+            # self.npk_pond_2.setText('{} / {} / {}'.format(self.n_ponderado,self.p_ponderado,self.k_ponderado))
+            # self.lbl_n.setText('{}'.format(self.n_ponderado))
+            # self.lbl_p.setText('{}'.format(self.p_ponderado))
+            # self.lbl_k.setText('{}'.format(self.k_ponderado))
+        except Exception as ex: print(ex)
         
-        # self.ajustesFertilizantes(n=n,x=0.06,p=p,y=0.16,k=k,z=0.24)
+
+    def fertTradicional(self,e,initial=True): 
+        print(initial)
+        if initial ==True: 
+            n_pond = self.n_ponderado
+            p_pond = self.p_ponderado
+            k_pond = self.k_ponderado
+        else:
+            n_pond = int(self.lbl_n.text())
+            p_pond = int(self.lbl_p.text())
+            k_pond = int(self.lbl_k.text())
+            print(n_pond,p_pond,k_pond)
+
+
+        if len(e) >=1:
+            c = int(e)
+            n = int(n_pond)-int(c)*(int(self.formula[0])/100)
+            p = int(p_pond)-int(c)*(int(self.formula[1])/100)
+            k = int(k_pond)-int(c)*(int(self.formula[2])/100)
+            self.lbl_n.setText('{}'.format(int(n)))
+            self.lbl_p.setText('{}'.format(int(p)))
+            self.lbl_k.setText('{}'.format(int(k)))
+        else: 
+            self.lbl_n.setText('{}'.format(int(n_pond)))
+            self.lbl_p.setText('{}'.format(int(p_pond)))
+            self.lbl_k.setText('{}'.format(int(k_pond)))
+        
+
 
     def populateTable(self): 
         cols = [0,1,2,3,4,5]
@@ -2102,6 +2140,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         p_aporte = self.sumaPonderada(a1, area)
         p_aporte = p_aporte  #* sum(area)
         self._pesos.append(round(p_aporte))
+        # print(l_aplicados.text())
         self._pesos_aplicados.append(float(l_aplicados.text()))
 
         pr_aporte = int(precio)*(int(p_aporte)/1000)
@@ -2117,7 +2156,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.i = self.i + 1
         self.balanceNutrientes(values,f_n,f_p,f_k)
         self.formulas.append(self.formula)
-        print(self.formulas)
+        # print(self.formulas)
 
     def balanceNutrientes(self,valores:list,dosis_n:float,dosis_p:float,dosis_k:float):
 
@@ -2207,7 +2246,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         pass
        
     def enableCombo(self,text,combo):
-        if len(text) >= 3:        
+        if len(text) >= 2:        
             combo.setEnabled(True)
         else:
             combo.setEnabled(False)
@@ -2260,7 +2299,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
     def autoFert(self):
         txt = '''<html><head/><body><p align="center">Se han calculado 1 combinaciones de <br/>fertilizantes para ajustar las<br/>necesidades del cultivo. De ellas se ha<br/>seleccionado la combinacion mas<br/>economica.<br/>Los fertilizantes que<br/>se han Analizado son:</p>'''
         data = self.dataAuto
-        print(data)
+        # print(data)
         if data[0] != None or data[1] != None or data[2] != None :
             f1 = str(data[0])
             txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 1 {} </span>  </p>'''.format(f1)   
@@ -2285,7 +2324,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             self.line_formula_3.setText(data[8])
             self.line_precio_3.setText(str(int(round(data[9]))))
             self.combo_ajuste_3.setCurrentText(str(data[10]).upper())
-            self.line_cantidad_2.setText(str(float(data[11])))
+            self.line_cantidad_3.setText(str(float(data[11])))
             time.sleep(1)
         if data[12] != None and data[13] != None and data[14] != None :
             f4 = str(data[12])
@@ -2296,23 +2335,24 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             self.line_cantidad_4.setText(str(float(data[15])))
             time.sleep(1)
         txt = txt + '''</body></html>'''
-        self.label_16.setText(txt)
+        # self.label_16.setText(txt)
         self.btn_save_data.setEnabled(True)
+        self.huellaCarbono()
     def execAutoFert(self):
         x = threading.Thread(target=self.autoFert)
         x.start()
         
     def panel(self): 
-
+        # self.huellaCarbono()
         npk = [self.n_ponderado,self.p_ponderado, self.k_ponderado]
-        render = PanelRender(self.lote, self.parcela, self.cultivo, self.prod_ponderado, self.area, npk,self.i,self._pesos,self._precios,self._pesos_aplicados,formulas=self.formulas)
+        render = PanelRender(self.lote, self.parcela, self.cultivo, self.prod_ponderado, self.area, npk,self.i,self._pesos,self._precios,self._pesos_aplicados,formulas=self.formulas,dataHuellaCarbono=self.dataHuellaCarbono)
 
         render.savePanel()
     
     def saveFertData(self):
         sql = []
         
-        if len(self.line_precio_1.text()) >= 3:
+        if len(self.line_cantidad_1.text()) >= 2:
             f1 = str(self.line_formula_1.text())
             print(f1)
             p1 = int(round(float(self.line_precio_1.text())))
@@ -2332,7 +2372,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
 
         
 
-        if len(self.line_precio_2.text()) >= 3:
+        if len(self.line_cantidad_2.text()) >= 2:
             f2 = str(self.line_formula_2.text())
             p2 = int(round(float(self.line_precio_2.text())))
             a2 = str(self.combo_ajuste_2.currentText())
@@ -2348,7 +2388,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             sql.append(sql2)
 
 
-        if len(self.line_precio_3.text()) >= 3:
+        if len(self.line_cantidad_3.text()) >= 2:
             f3 = str(self.line_formula_3.text())
             p3 = int(round(float(self.line_precio_3.text())))
             a3 = str(self.combo_ajuste_3.currentText())
@@ -2363,7 +2403,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             where idcampania = sq.id '''.format(f3, p3, a3, q_3, self.idlotecampania)
             sql.append(sql3)
 
-        if len(self.line_precio_4.text()) >= 3:
+        if len(self.line_cantidad_4.text()) >= 2:
             f4 = str(self.line_formula_4.text())
             p4 = int(round(float(self.line_precio_4.text())))
             a4 = str(self.combo_ajuste_4.currentText())
@@ -2399,6 +2439,8 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
 
 
     def huellaCarbono(self):
+        
+
         conn = self.utils.Conn() 
         data = self.dataExtraccion
         
@@ -2451,17 +2493,18 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             n = [int(e[0]) for e in lista]
             p = [int(e[1]) for e in lista]
             k = [int(e[2]) for e in lista]
-            #! CALCULO HUELLA CARBONO FERTILIZACION PARCELARIA
+            #! CALCULO HUELLA CARBONO FERTILIZACION TRADICIONAL
             n_ponderado = self.n_ponderado 
             p_ponderado = self.p_ponderado 
             k_ponderado = self.k_ponderado 
 
+            print(n_ponderado,p_ponderado,k_ponderado)
             if q_1: 
                 n_ponderado = n_ponderado - (q_1 * f1[0])
                 p_ponderado = p_ponderado - (q_1 * f1[1])
                 k_ponderado = k_ponderado - (q_1 * f1[2])
 
-                print(n_ponderado)
+
             try:
                 if q_2: 
                     n_ponderado = n_ponderado - (q_2 * f2[0])
@@ -2481,13 +2524,13 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
                     k_ponderado = k_ponderado - (q_4 * f4[2])
             except:
                 pass
-            
             n_ponderado = -1*(-self.n_ponderado + n_ponderado)
             p_ponderado = -1*(-self.p_ponderado + p_ponderado)
             k_ponderado = -1*(-self.k_ponderado + k_ponderado)
+            print(n_ponderado, p_ponderado, k_ponderado)
 
             huella_carbono_fp = round((n_ponderado * 4.9500) + (p_ponderado * 0.7333) + (k_ponderado * 0.5500))
-            print(huella_carbono_fp)
+            print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
 
 
 
@@ -2498,10 +2541,17 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             n_ponderado_ip = self.sumaPonderada(n, area)
             p_ponderado_ip = self.sumaPonderada(p, area)
             k_ponderado_ip  = self.sumaPonderada(k, area)
+            print(n_ponderado_ip, p_ponderado_ip, k_ponderado_ip)
 
             huella_carbono_fv = round((n_ponderado_ip * 4.9500) + (p_ponderado_ip * 0.7333) + (k_ponderado_ip * 0.5500))
 
-            print(huella_carbono_fv)
+            print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
+
+            #! REDUCCION HUELLA DE CARBONO: 
+            _reduccion = -huella_carbono_fp+huella_carbono_fv
+            _percent = round((+_reduccion/huella_carbono_fp)*100)
+            print('**** REDUCCION HUELLA DE CARBONO: {} KgCO2eq/ha o un {} % ****'.format(_reduccion,_percent))
+
         # print(self.table_necesidades.model().rowCount()) 
 
             #! CAPTURA DE CARBONO EN CULTIVO
@@ -2509,8 +2559,24 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             x1 = int(round((-float(self.prod) * self.ccosecha )*(44/12)))
             x2 = int(round((-float(self.residuo) * self.cresiduo )*(44/12)))
             ccc =  x1+x2
+            chc = -1*(-ccc+_reduccion)
             # print(self.prod, self.ccosecha )
-            # print(ccc)
+            print('**** HUELLA DE CARBONO: {} KgCO2eq/ha ****'.format(ccc))
+            self.lbl_hc_cantidad.setText('{} KgCO2/ha'.format(ccc))
+            self.lbl_hc_percent.setText('{}%'.format(_percent))
+
+            self.dataHuellaCarbono = {
+            'percent': _percent,
+            'chc': chc,
+            'biomasa': ccc,
+            'cosecha': x1,
+            'residuo': x2,
+            'fertilizacion': _reduccion } 
+
+            print(self.dataHuellaCarbono)
+            
+
+
 
 
         
