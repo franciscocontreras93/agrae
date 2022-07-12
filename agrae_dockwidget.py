@@ -455,6 +455,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         try: 
             param = self.tableWidget.item(row, 1).text()
             self.getNombreLote.emit(param)
+            self.close()
         except Exception as e:
             pass
 
@@ -525,6 +526,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             for f in features: 
                 cursor = self.conn.cursor()
                 idParcela = f[1]
+                # print(f'Se creo la Relacion {idParcela,idLote}')
 
                 try:
                     if idLote == None:
@@ -540,23 +542,26 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
                     error.append(idParcela)
                     # print(f'La parcela {f[1]} ya existe pertenece a un lote.')
                     QMessageBox.about(self, 'aGrae GIS',
-                                      f'La parcela {f[1]} ya existe pertenece a un lote.')
+                                    f'La parcela {f[1]} ya existe pertenece a un lote.')
                     self.conn.rollback()
-            print('EJECUTANDO SENTENCIA NECESIDADES')
-            cursor = self.conn.cursor() 
-            sql = ''' insert into necesidades(idlotecampania,uf,necesidad_n,necesidad_p,necesidad_k)
-            select ls.idlotecampania,
-            s.segmento + amb.ambiente AS uf,
-            round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
-            round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
-            round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k
-            FROM lotes ls
-            left JOIN segmentos s ON st_intersects(s.geometria, ls.geometria) 
-            JOIN ambientes amb ON st_intersects(ls.geometria, amb.geometria)
-            where ls.idlotecampania = (select lp.idlotecampania from loteparcela lp order by lp.idloteparcela desc limit 1); '''
-            cursor.execute(sql)
-            self.conn.commit()
-            print('FINALIZADO SENTENCIA NECESIDADES')
+
+            # print('EJECUTANDO SENTENCIA NECESIDADES')
+            # cursor = self.conn.cursor() 
+            # sql = ''' select ls.idlotecampania,
+            # s.segmento + amb.ambiente AS uf,
+            # round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
+            # round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
+            # round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k,
+            # round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
+            # round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
+            # round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k
+            # FROM lotes ls
+            # left JOIN segmentos S ON s.idlotecampania = ls.idlotecampania 
+            # JOIN ambientes amb ON amb.idlotecampania = ls.idlotecampania 
+            # where ls.idlotecampania = (select lp.idlotecampania from loteparcela lp order by lp.idloteparcela desc limit 1) '''
+            # cursor.execute(sql)
+            # self.conn.commit()
+            # print('FINALIZADO SENTENCIA NECESIDADES')
 
             
             if len(error) == 0:
@@ -788,6 +793,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     def UIcomponents(self):
         icons_path = self.utils.iconsPath()
+        self.setWindowIcon(QIcon(icons_path['agrae_icon']))
 
         dataParcela = self.dataAutoParcela()
         listaParcela = [e[0] for e in dataParcela]
@@ -912,7 +918,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget_3.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         self.tableWidget_4.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
-        # self.seg_combo.currentIndexChanged.connect(self.onChangeComboSemento)
+        self.seg_combo.currentIndexChanged.connect(self.onChangeComboSemento)
 
         # self.cmb_regimen.currentIndexChanged.connect(self.validarNombre)
         # for i in range(0,9):
@@ -922,7 +928,13 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             
 
     def doubleClick(self,e):
-        print(e)
+        row = e.row()
+        self.analiticaDialog(row)
+
+        # idlotecampania = self.tableWidget.item(row, 0).text()
+        # print(idlotecampania)
+
+
 
         
 
@@ -1539,19 +1551,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         nombre = 'aGrae Parcelas'
         # self.tools.addMapLayer(sql, nombre,'idparcela')
         self.tools.addMapLayer('parcela',nombre)
-    def heavyTask(self): 
-        self.thread = QThread()
-        self.worker = Worker()
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(self.worker.addLotesMap)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater) 
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.thread.start()
-        self.btn_add_lotes.setEnabled(False)
-        self.btn_add_lotes.setText('Cargando')
-        self.thread.finished.connect(lambda: self.btn_add_lotes.setEnabled(True))
-        self.thread.finished.connect(lambda: self.btn_add_lotes.setText('Agregar Lotes'))
     
     def cargarAnalitica(self): 
         print('Cargando Analitica')
@@ -1611,7 +1610,26 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                     except errors.lookup('23505'):
                         QMessageBox.about(self, 'aGrae GIS','El analisis: {} con codigo: {} ya existe en la base de datos.\nComprueba la informacion'.format(row['id'],row['COD']))
                         self.conn.rollback()
-                        pass                        
+                        pass 
+                print('EJECUTANDO SENTENCIA NECESIDADES')
+                cursor = self.conn.cursor() 
+                sql = ''' select ls.idlotecampania,
+                s.segmento + amb.ambiente AS uf,
+                round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
+                round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
+                round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k,
+                round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
+                round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
+                round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k
+                FROM lotes ls
+                left JOIN segmentos S ON s.idlotecampania = ls.idlotecampania 
+                JOIN ambientes amb ON amb.idlotecampania = ls.idlotecampania 
+                where ls.idlotecampania = (select s.idlotecampania from analisis.analitica a
+                                            join public.segmentoanalisis s on s.idsegmentoanalisis = a.idsegmentoanalisis 
+                                            order by a.idsegmentoanalisis desc limit 1) '''
+                cursor.execute(sql)
+                self.conn.commit()
+                print('FINALIZADO SENTENCIA NECESIDADES')                       
                 self.an_save_bd.setEnabled(False)
                 self.utils.msgBar('Analitica cargada correctamente',0,5)
             except Exception as ex:
@@ -1649,13 +1667,14 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     def onChangeComboSemento(self,i): 
         # print("comboSegmento: Row {} Cod {}".format(self.seg_combo.itemData(),i)
         self.precalculo(i)
+        print(i)
         pass
     
     def precalculo(self,i):
         try:
             organi = float(self.tableWidget_3.item(i, 13).text())
             cox = organi / 1.32  # ! CONSTANTE 1.32 COX
-            self.cox_lbl.setText('{} %'.format(round((cox*100), 5)))
+            self.cox_lbl.setText('{:,} %'.format(round((cox*100), 5)))
             N = float(self.tableWidget_3.item(i, 2).text())
             rel_cn = cox / N * 100  # ! VALOR ADIMENSIONAL
             self.rel_cn_lbl.setText('{}'.format(round((rel_cn), 5)))
@@ -1713,8 +1732,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
 
         
-        # print(self.seg_combo.itemText(i))
-        # print(self.seg_combo.itemData(i)) 
+        print(self.seg_combo.itemText(i))
+        print(self.seg_combo.itemData(i)) 
 
     def onChangeTableData(self):
         
@@ -1741,27 +1760,36 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         pass
 
 
-    def analiticaDialog(self): 
-        row = self.tableWidget.currentRow()
-        idlotecampania = self.tableWidget.item(row, 0).text()
-        loteName = self.tableWidget.item(row,1).text() 
-        parcelaName = self.tableWidget.item(row,2).text()
-        cultivoName = self.tableWidget.item(row,5).text()
-        prodValue = self.tableWidget.item(row,6).text()
-        ic = self.tableWidget.item(row,9).text()
-        biomasa = self.tableWidget.item(row,7).text() 
-        residuo = self.tableWidget.item(row,8).text()
-        ccosecha = self.tableWidget.item(row,10).text() 
-        cresiduo = self.tableWidget.item(row,11).text() 
+    def analiticaDialog(self,r=None):
+        if r==None: 
+            row = self.tableWidget.currentRow()
+        else:
+            row = r
+        try: 
+            row = self.tableWidget.currentRow()
+            idlotecampania = self.tableWidget.item(row, 0).text()
+            loteName = self.tableWidget.item(row,1).text() 
+            parcelaName = self.tableWidget.item(row,2).text()
+            cultivoName = self.tableWidget.item(row,5).text()
+            prodValue = self.tableWidget.item(row,6).text()
+            ic = self.tableWidget.item(row,9).text()
+            biomasa = self.tableWidget.item(row,7).text() 
+            residuo = self.tableWidget.item(row,8).text()
+            ccosecha = self.tableWidget.item(row,10).text() 
+            cresiduo = self.tableWidget.item(row,11).text() 
 
-        dataSuelo = self.getDataSuelo(idlotecampania)
-        dataExtraccion = self.getDataExtracciones(idlotecampania)
-        
+            dataSuelo = self.getDataSuelo(idlotecampania)
+            dataExtraccion = self.getDataExtracciones(idlotecampania)
+            
 
-        
-        dialog = agraeAnaliticaDialog(
-            dataSuelo=dataSuelo, dataExtraccion=dataExtraccion, lote=loteName, parcela=parcelaName, cultivo=cultivoName, idlotecampania=idlotecampania, prod=prodValue, ic=ic,biomasa=biomasa,residuo=residuo, ccosecha = ccosecha, cresiduo = cresiduo)
-        dialog.exec_()
+            
+            dialog = agraeAnaliticaDialog(
+                dataSuelo=dataSuelo, dataExtraccion=dataExtraccion, lote=loteName, parcela=parcelaName, cultivo=cultivoName, idlotecampania=idlotecampania, prod=prodValue, ic=ic,biomasa=biomasa,residuo=residuo, ccosecha = ccosecha, cresiduo = cresiduo)
+            dialog.exec_()
+        except AttributeError as ae:
+            QMessageBox.about(self, f"aGrae GIS:",f"Debe seleccionar un Lote")
+
+
 
     def getDataSuelo(self,id:int): 
         sql = 'select s.segmento, s.n_tipo, s.p_tipo, s.k_tipo, s.carb_tipo from segmentos s where s.idlotecampania = {} order by  s.segmento'.format(id)
@@ -1828,6 +1856,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         
         # self.pushButton.clicked.connect(self.loadPlot)
         self.utils = AgraeUtils()
+        self.icons_path = self.utils.iconsPath()
         self.conn = self.utils.Conn()
         with self.conn:
             try:
@@ -1838,7 +1867,6 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
                 cursor = self.conn.cursor()
                 cursor.execute(sql)
                 self.moneda = cursor.fetchone()[0]
-                print(self.moneda)
             except Exception as ex:
                 print(ex)
 
@@ -1899,11 +1927,16 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         # self.n,self.p,self.k = self.necesidadesTotales()
 
     def UIcomponents(self): 
+        icons_path = self.icons_path
+        self.tabWidget.setCurrentIndex(0)
+        # self.tabeWidget.setTabEnabled(1,False)
         leyenda = QPixmap(self.iconsPath['lgnd1'])
         p1_img = QPixmap(self.iconsPath['p1'])
+        co2_img = QPixmap(self.iconsPath['co2'])
         # leyenda.scaledToWidth(281)
         self.setStyleSheet(self.style)
         self.lgnd1.setPixmap(leyenda)
+        self.lbl_co2.setPixmap(co2_img)
         self.p1.setPixmap(p1_img)
         self.lbl_lote.setText('{} - {}'.format(self.lote.upper(),self.parcela.upper()))
         self.lbl_cultivo.setText('{}'.format(self.cultivo.upper()))
@@ -1911,11 +1944,20 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         self.tableView.setShowGrid(False)
 
         self.necesidadesTotales()
-
+        
+        self.btn_panel.setIcon(QIcon(icons_path['image']))
+        self.btn_panel.setIconSize(QtCore.QSize(20, 20))
+        self.btn_panel.setToolTip('Exportar Paneles')
         self.btn_panel.clicked.connect(self.panel)
         # self.btn_panel.clicked.connect(self.huellaCarbono)
-        self.btn_ajuste_auto.clicked.connect(self.execAutoFert)
+        
+        self.btn_save_data.setIcon(QIcon(icons_path['save']))
+        self.btn_save_data.setIconSize(QtCore.QSize(20, 20))
+        self.btn_save_data.setToolTip('Guardar Datos')
         self.btn_save_data.clicked.connect(self.saveFertData)
+
+
+        # self.btn_ajuste_auto.clicked.connect(self.execAutoFert)
 
         self.regexFormula = QRegExpValidator(QRegExp(r'(\d{2}\-\d{2}\-\d{2})'))
         self.line_formula_1.setValidator(self.regexFormula)
@@ -2289,7 +2331,8 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         ls.fertilizantecob3formula,
         ls.fertilizantecob3precio,
         ls.fertilizantecob3ajustado, 
-        ls.fertilizantecob3aplicado from lotes ls
+        ls.fertilizantecob3aplicado,
+        ls.fert_status from lotes ls
         where ls.idlotecampania = {}
         '''.format(self.idlotecampania)
         with self.conn:
@@ -2305,9 +2348,10 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
 
         if len(_validate) >= 3:
             # print(data)
-            self.btn_ajuste_auto.setEnabled(True)
-            self.btn_save_data.setEnabled(False)
+            # self.btn_ajuste_auto.setEnabled(True)
+            # self.btn_save_data.setEnabled(False)
             self.dataAuto = data
+            self.execAutoFert()
         else: 
             self.btn_save_data.setEnabled(True)
         
@@ -2349,6 +2393,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             self.combo_ajuste_4.setCurrentText(str(data[14]).upper())
             self.line_cantidad_4.setText(str(float(data[15])))
             time.sleep(1)
+        self.combo_status.setCurrentText(str(data[16]))
         txt = txt + '''</body></html>'''
         # self.label_16.setText(txt)
         self.btn_save_data.setEnabled(True)
@@ -2450,6 +2495,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
                     cursor.execute(q)
                     self.conn.commit()
                     self.utils.msgBar('Datos de Fertilizacion guardados correctamente',3,10)
+                    self.close()
                 except Exception as ex:
                     print(ex)
 
@@ -2578,8 +2624,8 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             chc = -1*(-ccc+_reduccion)
             # print(self.prod, self.ccosecha )
             # print('**** HUELLA DE CARBONO: {} KgCO2eq/ha ****'.format(ccc))
-            self.lbl_hc_cantidad.setText('{} KgCO2/ha'.format(ccc))
-            self.lbl_hc_percent.setText('{}%'.format(_percent))
+            self.lbl_hc_cantidad.setText('{:,} KgCO2/ha'.format(ccc))
+            self.lbl_hc_percent.setText('Reducción: {}%'.format(_percent))
 
             self.dataHuellaCarbono = {
             'percent': _percent,
@@ -2824,7 +2870,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         else: 
             sql = f'''
             insert into campania(idexplotacion,idcultivo,fechasiembra,fechacosecha,regimen,prod_esperada,unidadesprecio)
-            values({idexp}, {idcult},'{dateSiembra}',{regimen}, {produccion},'{moneda}');'''
+            values({idexp}, {idcult},'{dateSiembra}','{dateCosecha}',{regimen}, {produccion},'{moneda}');'''
             # print(sql)
 
         sql2 = f'''insert into lotecampania(idlote,idcampania) 
@@ -2979,7 +3025,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
     def populateLote(self, nombre):
         print(nombre)
         self.line_lote_nombre.setText(nombre)
-        self.line_lote_nombre.setReadOnly(True)
+        # self.line_lote_nombre.setReadOnly(True)
         # self.line_lote_save.triggered.disconnect(self.crearLote)        
 
     def expDialog(self):

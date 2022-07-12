@@ -114,7 +114,7 @@ class AgraeUtils():
 
     def segmentosQueryTable(self, param=''):
         if param != '': 
-            sql = f''' select sg.id,sg.idlotecampania,sg.lote,sg.regimen,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_muestra from segmentos sg 
+            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote,sg.regimen,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_muestra from segmentos sg 
             where sg.cod_control ilike '%{param}%'
             or sg.cod_muestra ilike '%{param}%' 
             '''
@@ -137,6 +137,7 @@ class AgraeUtils():
     def iconsPath(self):
         icons_path = {
             'agrae_icon': os.path.join(os.path.dirname(__file__), r'ui\icons\icon.svg'),
+            'image': os.path.join(os.path.dirname(__file__), r'ui\icons\image-solid.svg'),
             'search_icon_path': os.path.join(os.path.dirname(__file__), r'ui\icons\search.svg'),
             'search_lotes': os.path.join(os.path.dirname(__file__), r'ui\icons\search-lotes.svg'),
             'search_parcela': os.path.join(os.path.dirname(__file__), r'ui\icons\search-parcela.svg'),
@@ -163,6 +164,7 @@ class AgraeUtils():
             'settings': os.path.join(os.path.dirname(__file__), r'ui\icons\gear-solid.svg'),
             'lgnd1': os.path.join(os.path.dirname(__file__), r'ui\img\lgnd1.svg'),
             'p1': os.path.join(os.path.dirname(__file__), r'ui\img\p1.svg'),
+            'co2': os.path.join(os.path.dirname(__file__), r'ui\img\co2.svg'),
         }
 
         return icons_path
@@ -197,43 +199,46 @@ class AgraeToolset():
 
     def crearAmbientes(self,widget):
         # print('test')
-        lyr = self.iface.activeLayer()
-        srid = lyr.crs().authid()[5:]
-        features = lyr.selectedFeatures()
-        print(features)
-        
-        with self.conn as conn:
-            try:
-                cursor = conn.cursor()
-                if len(features) > 0: 
-                    for f in features:
-                        # print('test')
-                        oa = f[0]
-                        amb = f[1]
-                        ndvimax = f[2]
-                        atlas = f[3]
-                        geometria = f.geometry().asWkt()
-                        sql = f''' insert into ambiente(obj_amb,ambiente,ndvimax,atlas,geometria)
-                                values
-                                ({oa},
-                                {amb},
-                                {ndvimax},
-                                '{atlas}',
-                                st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))'''
-                        # print(f'{oa}-{amb}-{ndvimax}-{atlas}')
-                        cursor.execute(sql)
-                        conn.commit()
-                        print(f[0])
-                        
-                    QMessageBox.about(widget, 'aGrae GIS', 'Ambiente Cargado Correctamente \na la base de datos')
-                else:
-                    QMessageBox.about(
-                        widget, 'aGrae GIS', 'Debe Seleccionar al menos un ambiente')
+        try:
+            lyr = self.iface.activeLayer()
+            srid = lyr.crs().authid()[5:]
+            features = lyr.selectedFeatures()
+            print(features)
+            
+            with self.conn as conn:
+                try:
+                    cursor = conn.cursor()
+                    if len(features) > 0: 
+                        for f in features:
+                            # print('test')
+                            oa = f[0]
+                            amb = f[1]
+                            ndvimax = f[2]
+                            atlas = f[3]
+                            geometria = f.geometry().asWkt()
+                            sql = f''' insert into ambiente(obj_amb,ambiente,ndvimax,atlas,geometria)
+                                    values
+                                    ({oa},
+                                    {amb},
+                                    {ndvimax},
+                                    '{atlas}',
+                                    st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))'''
+                            # print(f'{oa}-{amb}-{ndvimax}-{atlas}')
+                            cursor.execute(sql)
+                            conn.commit()
+                            print(f[0])
+                            
+                        QMessageBox.about(widget, 'aGrae GIS', 'Ambiente Cargado Correctamente \na la base de datos')
+                    else:
+                        QMessageBox.about(
+                            widget, 'aGrae GIS', 'Debe Seleccionar al menos un ambiente')
 
-            except Exception as ex:
-                # print(ex)
-                conn.rollback()
-                pass
+                except Exception as ex:
+                    # print(ex)
+                    conn.rollback()
+                    pass
+        except: 
+            QMessageBox.about(widget, 'aGrae GIS', 'Debe seleccionar una capa')
     def cargarAmbientes(self, widget):
         dns = self.dns
         row = widget.tableWidget_2.currentRow()
@@ -526,21 +531,24 @@ class AgraeToolset():
                 # print(ex)
                 QMessageBox.about(widget, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
     def dataSegmento(self,table):
-        lyr = self.iface.activeLayer()
-        features = lyr.getFeatures()
-        columns = [fld.name() for fld in lyr.fields()]
-        data = ([f[col] for col in columns] for f in features)
-        df = pd.DataFrame.from_records(data=data, columns=columns)
-        
-        
-        nRows , nColumns = df.shape
-        table.setRowCount(nRows)
-        table.setColumnCount(nColumns)
-        table.setHorizontalHeaderLabels(columns)
-        for r in range(table.rowCount()):
-            for c in range(table.columnCount()):
-                item = QTableWidgetItem(str(df.iloc[r,c]))
-                table.setItem(r,c,item)
+        try: 
+            lyr = self.iface.activeLayer()
+            features = lyr.getFeatures()
+            columns = [fld.name() for fld in lyr.fields()]
+            data = ([f[col] for col in columns] for f in features)
+            df = pd.DataFrame.from_records(data=data, columns=columns)
+            
+            
+            nRows , nColumns = df.shape
+            table.setRowCount(nRows)
+            table.setColumnCount(nColumns)
+            table.setHorizontalHeaderLabels(columns)
+            for r in range(table.rowCount()):
+                for c in range(table.columnCount()):
+                    item = QTableWidgetItem(str(df.iloc[r,c]))
+                    table.setItem(r,c,item)
+        except Exception: 
+            pass
     def crearSegmento(self,widget,table):
         lyr = self.iface.activeLayer()
         srid = lyr.crs().authid()[5:]
