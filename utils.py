@@ -712,10 +712,16 @@ class AgraeToolset():
        
         conn = connect(dbname=self.dns['dbname'], user=self.dns['user'],
                        password=self.dns['password'], host=self.dns['host'], port=self.dns['port'])
+
+       
+        
+                        
         with conn:
             try: 
                 if regimen != 0:
                     cursor = conn.cursor()
+                    cursor.execute(_sql_verify)
+                    print(cursor.fetchall())
                     cursor.execute(sql)
                     conn.commit()
                     cursor.execute(sql2)

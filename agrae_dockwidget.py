@@ -532,6 +532,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
                     if idLote == None:
                         QMessageBox.about(self, 'aGrae GIS', f'El Lote no tiene una campaña asociada') 
                     else: 
+                        
                         sql = f''' insert into loteparcela(idparcela,idlotecampania) 
                                 values({idParcela},{idLote}) '''                    
                         cursor.execute(sql)
@@ -2879,16 +2880,44 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
        
         conn = self.conn
         
+        _sqlParcelas = '''select distinct l.idparcela from loteparcela l 
+        join lotecampania lc on lc.idlotecampania = l.idlotecampania 
+        where lc.idlote =  (select idlote from lote where nombre = '{}') '''.format(lote)
         
+        _sqlLotecampania = '''select idlotecampania from lotecampania order by idlotecampania desc limit 1'''
         with conn:
             try: 
                 if regimen != 0:
                     cursor = conn.cursor()
+                    
                     cursor.execute(sql)
+                    
                     conn.commit()
                     cursor.execute(sql2)
                     conn.commit()
                     QMessageBox.about(self, f"aGrae GIS:",f"Campaña creada y asociada correctamente")
+                    cursor.execute(_sqlParcelas)
+                    _idParcelas = [e[0] for e in cursor.fetchall()]
+                    print(_idParcelas)
+                    cursor.execute(_sqlLotecampania)
+                    _idLote =  cursor.fetchone()
+                    _idLote = _idLote[0]
+                    print(_idLote)
+                    if len(_idParcelas) > 0:
+                        confirm = QMessageBox.question(
+                            self, 'aGrae GIS', "el Lote {} tiene asignadas {} parcelas en anteriores campañas.\nQuiere asignar las mismas a la nueva campaña?".format(lote,len(_idParcelas)), QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                        if confirm == QMessageBox.Yes:
+                            try:
+                                for id in _idParcelas:
+                                    _sqlRel = f'''insert into loteparcela(idparcela,idlotecampania) 
+                                    values({id},{_idLote})'''
+                                    # print(_sqlRel)
+                                    cursor.execute(_sqlRel)
+                                    conn.commit()
+                                QMessageBox.about(self, f"aGrae GIS:",f"Parcelas Asociadas correctamente")
+                            except Exception as ex: 
+                                print(ex)
+                            
                 else: 
                     QMessageBox.about(self, f"aGrae GIS:",f"Debe seleccionar un Regimen de Cultivo")
             except InterfaceError as ie: 
