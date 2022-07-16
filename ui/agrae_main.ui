@@ -44,7 +44,7 @@
     <string notr="true"/>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="lotes_tab">
     <attribute name="title">
@@ -205,7 +205,7 @@
         <x>10</x>
         <y>80</y>
         <width>691</width>
-        <height>441</height>
+        <height>341</height>
        </rect>
       </property>
       <property name="contextMenuPolicy">
@@ -301,6 +301,80 @@
         <string>CResiduo</string>
        </property>
       </column>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_9">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>440</y>
+        <width>731</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Herramientas de Acceso Rapido</string>
+      </property>
+      <widget class="QPushButton" name="btn_add_lotes">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>121</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Agregar Lotes</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_add_parcelas">
+       <property name="geometry">
+        <rect>
+         <x>150</x>
+         <y>30</y>
+         <width>111</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Agregar Parcelas</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_add_segmentos">
+       <property name="geometry">
+        <rect>
+         <x>280</x>
+         <y>30</y>
+         <width>111</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Agregar Segmentos</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>410</x>
+         <y>30</y>
+         <width>111</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Generar Compositor</string>
+       </property>
+      </widget>
      </widget>
     </widget>
    </widget>
@@ -759,7 +833,7 @@
       </rect>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_8">
       <attribute name="title">
@@ -1292,82 +1366,6 @@
         </property>
        </item>
       </widget>
-     </widget>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="tab_7">
-    <attribute name="title">
-     <string>Herramientas</string>
-    </attribute>
-    <widget class="QGroupBox" name="groupBox_9">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>20</y>
-       <width>731</width>
-       <height>91</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Herramientas de Acceso Rapido</string>
-     </property>
-     <widget class="QPushButton" name="btn_add_lotes">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>40</y>
-        <width>121</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Agregar Lotes</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="btn_add_parcelas">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>40</y>
-        <width>111</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Agregar Parcelas</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="btn_add_segmentos">
-      <property name="geometry">
-       <rect>
-        <x>280</x>
-        <y>40</y>
-        <width>111</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Agregar Segmentos</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="pushButton_2">
-      <property name="geometry">
-       <rect>
-        <x>410</x>
-        <y>40</y>
-        <width>111</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Generar Compositor</string>
-      </property>
      </widget>
     </widget>
    </widget>

@@ -846,6 +846,7 @@ class AgraeAnalitic():
     
     def classification(self,table,value,clase,li,ls): 
         sql = 'select * from analisis.{} where {} between {} and {}'.format(table,value,li,ls)
+        
         with self.conn: 
             cursor = self.conn.cursor(cursor_factory=extras.RealDictCursor)
             cursor.execute(sql)
@@ -1220,47 +1221,47 @@ class PanelRender():
             f1 = self.formulas[0]
             f1 = modify(f1)
             formulas = formulas + f1 + ' --- '
-            t1 = round(pesos[0]*self.area)/1000*precios[0]
+            t1 = round(pesos[0]/self.area)*(precios[0]/1000)
             # print(t1)
-            draw.text((140, y), '{}\n\n{:,}Kg/ha\n{:,}{}/ha\n\n{:,} Kg'.format(f1, pesos[0], round(
-                t1/self.area),self.moneda, round(pesos[0]*self.area)), font=font2, fill=color, align='center', spacing=8)
+            draw.text((140, y), '{}\n\n{:,} Kg/ha\n{:,} {}/ha\n\n{:,} Kg'.format(f1, round(pesos[0]/self.area), round(
+                t1),self.moneda, round(pesos[0])), font=font2, fill=color, align='center', spacing=8)
             total_unitario = total_unitario + round(
-                t1/self.area)
+                t1)
+            
 
         if len(pesos) >= 2:
             f2 = self.formulas[1]
             f2 = modify(f2)
             formulas = formulas + f2 + ' --- '
-            t2 = round(pesos[1]*self.area)/1000*precios[1]
+            t2 = round(pesos[1]/self.area)*(precios[1]/1000)
             # print(t2)
-            draw.text(((148*2)+10, y), '{}\n\n{:,}Kg/ha\n{:,}{}/ha\n\n{:,} Kg'.format(f2, pesos[1], round(
-                t2/self.area), self.moneda, round(pesos[1]*self.area)), font=font2, fill=color, align='center', spacing=8)
+            draw.text(((148*2)+10, y), '{}\n\n{:,}Kg/ha\n{:,}{}/ha\n\n{:,} Kg'.format(f2, round(pesos[1]/self.area), round(
+                t2), self.moneda, round(pesos[1])), font=font2, fill=color, align='center', spacing=8)
             total_unitario = total_unitario + round(
-                t2/self.area)
+                t2)
+           
 
         if len(pesos) >= 3:
             f3 = self.formulas[2]
             f3 = modify(f3)
             formulas = formulas + f3 + ' --- '
-            t3 = round(pesos[2]*self.area)/1000*precios[2]
+            t3 = round(pesos[2]/self.area)*(precios[2]/1000)
             # print(t3)
-            draw.text(((148*3)+20, y), '{}\n\n{:,}Kg/ha\n{:,}{}/ha\n\n{:,}Kg'.format(f3, pesos[2], round(
-                t3/self.area), self.moneda, round(
-                pesos[2]*self.area)), font=font2, fill=color, align='center', spacing=8)
+            draw.text(((148*3)+20, y), '{}\n\n{:,}Kg/ha\n{:,}{}/ha\n\n{:,}Kg'.format(f3, round(pesos[2]/self.area), round(
+                t3), self.moneda, round(pesos[2])), font=font2, fill=color, align='center', spacing=8)
             total_unitario = total_unitario + round(
-                t3/self.area)
+                t3)
 
         if len(pesos) > 3:
             f4 = self.formulas[3]
             f4 = modify(f4)
             formulas = formulas + f4 + ' --- '
-            t4 = round(pesos[3]*self.area)/1000*precios[3]
+            t4= round(pesos[3]/self.area)*(precios[3]/1000)
             # print(t4)
-            draw.text(((148*4)+30, y), '{}\n\n{:,}Kg/ha\n{:,}{}/ha\n\n{:,}Kg'.format(f3, pesos[3], round(
-                t4/self.area),self.moneda, round(
-                pesos[3]*self.area)), font=font2, fill=color, align='center', spacing=8)
+            draw.text(((148*4)+30, y), '{}\n\n{:,}Kg/ha\n{:,}{}/ha\n\n{:,}Kg'.format(3, round(pesos[3]/self.area), round(
+                t4), self.moneda, round(pesos[3])), font=font2, fill=color, align='center', spacing=8)
             total_unitario = total_unitario + round(
-                t4/self.area)
+                t4)
 
         draw.text((340, 295),
                   '{:,} {}/ha'.format(total_unitario,self.moneda),
@@ -1274,7 +1275,7 @@ class PanelRender():
                   align='center')
 
         draw.text((600, 335),
-                  '{} {:,}'.format(self.moneda,round(total_unitario*self.area)),
+                  '{} {:,}'.format(self.moneda,round((total_unitario*self.area),2)),
                   font=ImageFont.truetype("arialbi.ttf", 24),
                   fill=color)
         

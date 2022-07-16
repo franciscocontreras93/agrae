@@ -240,7 +240,7 @@ class agrae:
         search_icon_path = self.icons_path['search_lotes']
         self.add_action(
             search_icon_path,
-            text=self.tr(u'Filtrar Lotes'),
+            text=self.tr(u'Panel Lotes'),
             status_tip=self.tr(u'Filtrar Lotes'),
             callback=self.filtrarLotes,
             parent=self.iface.mainWindow())
@@ -266,11 +266,6 @@ class agrae:
             callback=self.relLote,
             parent=self.iface.mainWindow())
 
-        self.add_action('',
-            text=self.tr(u'Analitica'),
-            status_tip=self.tr(u'Analitica'),
-            callback=self.runAnalitica,
-            parent=self.iface.mainWindow())
 
         self.add_action(
             '',
