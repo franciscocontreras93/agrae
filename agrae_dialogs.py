@@ -13,8 +13,8 @@ from .utils import AgraeUtils, AgraeToolset
 agraeSegmentoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/parcela_dialog.ui'))
 
 agraeParametrosDialog, _ =  uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/params_dialog.ui'))
-agraeCultivoDialog, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'ui/dialogs/cultivo_dialog.ui'))
+agraeCultivoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/cultivo_dialog.ui'))
+agraePersonaDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/cultivo_dialog.ui'))
 
 
 
@@ -1666,3 +1666,5 @@ class ColorDelegateGreen(QtWidgets.QStyledItemDelegate):
 class ReadOnlyDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         return
+
+
