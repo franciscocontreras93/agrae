@@ -1831,7 +1831,7 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
         self.pushButton.setIconSize(QtCore.QSize(20, 20))
         self.pushButton.setIcon(QIcon(icons_path['share']))
         self.pushButton_2.setIconSize(QtCore.QSize(20, 20))
-        self.pushButton_2.setIcon(QIcon(icons_path['user']))
+        self.pushButton_2.setIcon(QIcon(icons_path['user-check']))
 
         # self.date_cultivo.setDate(QDate.currentDate())
         #* ACTIONS
@@ -1947,25 +1947,30 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
         dialog.exec()
     
     #* METODOS
-    def buscarAgricultor(self,dni:str=None): 
-        if dni == None or len(self.lineEdit.text()) == 0: 
+    def buscarAgricultor(self,param:str=None): 
+        if param == None or len(self.lineEdit.text()) == 0: 
             sql = ''' select a.idagricultor ,p.dni, a.nombre, e.nombre explotacion from agricultor a 
             join explotacion e on a.idexplotacion = e.idexplotacion 
             join persona p on p.idpersona = a.idpersona    '''
             try:
                 self.tools.populateTable(sql, self.tableWidget)
+            except IndexError as ie: 
+                pass
             except Exception as ex:
                 print(ex)
         else: 
             sql = ''' select a.idagricultor ,p.dni, a.nombre, e.nombre explotacion from agricultor a 
             join explotacion e on a.idexplotacion = e.idexplotacion 
             join persona p on p.idpersona = a.idpersona  
-            where p.dni = '{}' '''.format(dni)
+            where p.dni = '{}' or a.nombre ilike '%{}%' or e.nombre ilike '%{}%' '''.format(param,param,param)
             try: 
-                print(dni)
+                # print(param)
                 self.tools.populateTable(sql, self.tableWidget)
+            except IndexError as ie: 
+                pass
             except Exception as ex: 
                 print(ex)
+
 
     def buscar(self):
         filtro = self.lineEdit.text()

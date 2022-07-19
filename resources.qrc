@@ -3,6 +3,9 @@
         <file>icon.png</file>
         <file>ui\icons\icon.svg</file>
         <file>ui\icons\user-solid.svg</file>
+        <file>ui\icons\users-solid.svg</file>
+        <file>ui\icons\farmer-solid.svg</file>
+        <file>ui\icons\user-check-solid.svg</file>
         <file>ui\icons\image-solid.svg</file>
         <file>ui\icons\search-lotes.svg</file>
         <file>ui\icons\search-parcela.svg</file>
