@@ -2476,81 +2476,89 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
    
         with conn: 
             cursor = conn.cursor() 
-            sql = '''select uf_etiqueta uf, area_has area , 
-            (-1*(-necesidad_n+necesidad_nf)) || ' / '  ||
-            (-1*(-necesidad_p+necesidad_pf)) || ' / '  ||
-            (-1*(-necesidad_k+necesidad_kf)) npk
-            from unidades 
+            sql = '''select unidadesnpktradicionales
+            from lotes 
             where idlotecampania = {}'''.format(self.idlotecampania)
             cursor.execute(sql)
             data = cursor.fetchall() 
+            print(data)
+        #     area = [float(e[1]) for e in data]
+            npk = [str(e[0]) for e in data]
+            lista = [e.split('-') for e in npk]
+            n = int(lista[0][0])
+            p = int(lista[0][1])
+            k = int(lista[0][2])
+            print(n,p,k)
+        #     #! CALCULO HUELLA CARBONO FERTILIZACION TRADICIONAL
+        #     n_ponderado = self.n_ponderado 
+        #     p_ponderado = self.p_ponderado 
+        #     k_ponderado = self.k_ponderado 
+
+        #     # print(n_ponderado,p_ponderado,k_ponderado)
+        #     if q_1: 
+        #         n_ponderado = n_ponderado - (q_1 * f1[0])
+        #         p_ponderado = p_ponderado - (q_1 * f1[1])
+        #         k_ponderado = k_ponderado - (q_1 * f1[2])
+
+
+        #     try:
+        #         if q_2: 
+        #             n_ponderado = n_ponderado - (q_2 * f2[0])
+        #             p_ponderado = p_ponderado - (q_2 * f2[1])
+        #             k_ponderado = k_ponderado - (q_2 * f2[2])
+        #     except: pass
+        #     try: 
+        #         if q_3: 
+        #             n_ponderado = n_ponderado - (q_3 * f3[0])
+        #             p_ponderado = p_ponderado - (q_3 * f3[1])
+        #             k_ponderado = k_ponderado - (q_3 * f3[2])
+        #     except: pass
+        #     try: 
+        #         if q_4: 
+        #             n_ponderado = n_ponderado - (q_4 * f4[0])
+        #             p_ponderado = p_ponderado - (q_4 * f4[1])
+        #             k_ponderado = k_ponderado - (q_4 * f4[2])
+        #     except:
+        #         pass
+        #     n_ponderado = -1*(-self.n_ponderado + n_ponderado)
+        #     p_ponderado = -1*(-self.p_ponderado + p_ponderado)
+        #     k_ponderado = -1*(-self.k_ponderado + k_ponderado)
+        #     # print(n_ponderado, p_ponderado, k_ponderado)
+
+            huella_carbono_fp = round((n * 4.9500) + (p * 0.7333) + (k * 0.5500))
+            print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
+
+
+
+            
+            
+        #     #! CALCULO HUELLA CARBONO FERTILIZACION INTRAPARCELARIA
+
+            sql = ''' select (necesidad_n+(-1*necesidad_nf)) n,  (necesidad_p+(-1*necesidad_pf)),  (necesidad_k+(-1*necesidad_kf)) k, area_has
+            from unidades where idlotecampania = {}'''.format(self.idlotecampania)
+            cursor.execute(sql)
+            data = cursor.fetchall() 
             # print(data)
-            area = [float(e[1]) for e in data]
-            npk = [str(e[2]) for e in data]
-            lista = [e.split(' / ') for e in npk]
-            n = [int(e[0]) for e in lista]
-            p = [int(e[1]) for e in lista]
-            k = [int(e[2]) for e in lista]
-            #! CALCULO HUELLA CARBONO FERTILIZACION TRADICIONAL
-            n_ponderado = self.n_ponderado 
-            p_ponderado = self.p_ponderado 
-            k_ponderado = self.k_ponderado 
-
-            # print(n_ponderado,p_ponderado,k_ponderado)
-            if q_1: 
-                n_ponderado = n_ponderado - (q_1 * f1[0])
-                p_ponderado = p_ponderado - (q_1 * f1[1])
-                k_ponderado = k_ponderado - (q_1 * f1[2])
-
-
-            try:
-                if q_2: 
-                    n_ponderado = n_ponderado - (q_2 * f2[0])
-                    p_ponderado = p_ponderado - (q_2 * f2[1])
-                    k_ponderado = k_ponderado - (q_2 * f2[2])
-            except: pass
-            try: 
-                if q_3: 
-                    n_ponderado = n_ponderado - (q_3 * f3[0])
-                    p_ponderado = p_ponderado - (q_3 * f3[1])
-                    k_ponderado = k_ponderado - (q_3 * f3[2])
-            except: pass
-            try: 
-                if q_4: 
-                    n_ponderado = n_ponderado - (q_4 * f4[0])
-                    p_ponderado = p_ponderado - (q_4 * f4[1])
-                    k_ponderado = k_ponderado - (q_4 * f4[2])
-            except:
-                pass
-            n_ponderado = -1*(-self.n_ponderado + n_ponderado)
-            p_ponderado = -1*(-self.p_ponderado + p_ponderado)
-            k_ponderado = -1*(-self.k_ponderado + k_ponderado)
-            # print(n_ponderado, p_ponderado, k_ponderado)
-
-            huella_carbono_fp = round((n_ponderado * 4.9500) + (p_ponderado * 0.7333) + (k_ponderado * 0.5500))
-            # print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
-
-
-
-            
-            
-            #! CALCULO HUELLA CARBONO FERTILIZACION INTRAPARCELARIA
+            area = [float(e[3]) for e in data]
+            n = [int(e[0]) for e in data]
+            p = [int(e[1]) for e in data]
+            k = [int(e[2]) for e in data]
+            # print(n,p,k)
 
             n_ponderado_ip = self.sumaPonderada(n, area)
             p_ponderado_ip = self.sumaPonderada(p, area)
             k_ponderado_ip  = self.sumaPonderada(k, area)
-            # print(n_ponderado_ip, p_ponderado_ip, k_ponderado_ip)
+            print(n_ponderado_ip, p_ponderado_ip, k_ponderado_ip)
 
             huella_carbono_fv = round((n_ponderado_ip * 4.9500) + (p_ponderado_ip * 0.7333) + (k_ponderado_ip * 0.5500))
 
-            # print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
+            print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
 
             #! REDUCCION HUELLA DE CARBONO: 
             _reduccion = -huella_carbono_fp+huella_carbono_fv
             _percent = round((+_reduccion/huella_carbono_fp)*100)
-            # print('**** REDUCCION HUELLA DE CARBONO: {} KgCO2eq/ha o un {} % ****'.format(_reduccion,_percent))
+            print('**** REDUCCION HUELLA DE CARBONO: {} KgCO2eq/ha o un {} % ****'.format(_reduccion,_percent))
 
-        # print(self.table_necesidades.model().rowCount()) 
 
             #! CAPTURA DE CARBONO EN CULTIVO
 
@@ -2560,7 +2568,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             chc = -1*(-ccc+_reduccion)
             # print(self.prod, self.ccosecha )
             # print('**** HUELLA DE CARBONO: {} KgCO2eq/ha ****'.format(ccc))
-            self.lbl_hc_cantidad.setText('{:,} KgCO2/ha'.format(ccc))
+            self.lbl_hc_cantidad.setText('{:,} KgCO2/ha'.format(chc))
             self.lbl_hc_percent.setText('Reducción: {}%'.format(_percent))
 
             self.dataHuellaCarbono = {
@@ -2571,7 +2579,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             'residuo': x2,
             'fertilizacion': _reduccion } 
 
-            # print(self.dataHuellaCarbono)
+            print(self.dataHuellaCarbono)
             
 
 

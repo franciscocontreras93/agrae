@@ -1900,6 +1900,7 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
     
     def UIComponents(self): 
         self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setTabEnabled(2,False)
         icons_path = self.utils.iconsPath()
         self.date_cultivo.setDate(QDate.currentDate())
         line_buscar_action = self.lineEdit.addAction(
@@ -1911,11 +1912,16 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
         line_dni_action.triggered.connect(self.personasDialog)
         line_exp_action = self.ln_exp.addAction(QIcon(icons_path['search_icon_path']), self.ln_exp.TrailingPosition)
         line_exp_action.triggered.connect(self.expDialog)
+        line_cultivo_action = self.ln_cultivo.addAction(QIcon(icons_path['search_icon_path']), self.ln_cultivo.TrailingPosition)
+        line_cultivo_action.triggered.connect(self.cultivoDialog)
 
         self.pushButton_3.setIconSize(QtCore.QSize(20, 20))
         self.pushButton_3.setIcon(QIcon(icons_path['save']))
         self.pushButton_3.clicked.connect(self.saveAgricultor)
-
+        self.pushButton_4.setIconSize(QtCore.QSize(20, 20))
+        self.pushButton_4.setIcon(QIcon(icons_path['save']))
+        self.pushButton_4.clicked.connect(self.saveCultivoAgricultor)
+        self.tableWidget.doubleClicked.connect(self.select)
         pass
     #! METODOS DE AGRICULTOR
     #* DIALOGS
@@ -1932,11 +1938,11 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
         dialog.getIdExp.connect(self.popExp)
         dialog.expName.connect(self.nameExp)
         dialog.exec_()
-
     
     def cultivoDialog(self):
         dialog = cultivoFindDialog()
         dialog.setModal(True)
+        dialog.loadData()
         dialog.getIdCultivo.connect(self.popIdCultivo)
         dialog.exec()
     
@@ -1968,7 +1974,6 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
     def popDni(self,dni:str):
         # print(dni)
         self.ln_dni.setText(dni)
-
     def popExp(self,exp):
         id = str(exp)
         self.ln_exp.setText(id)
@@ -1981,10 +1986,13 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
     def select(self,e):
         row = e.row()
         id = self.tableWidget.item(row,0).text()
-        nombre = self.tableWidget.item(row,1).text()
-        self.ln_exp.setText(id)
-        self.label_7.setText(nombre)
-        self.tabWidget.setTabEnabled(3,True)
+        # dni = self.tableWidget.item(row,1).text()
+        dni = self.tableWidget.item(row,1).text()
+        nombre = self.tableWidget.item(row,2).text()
+        
+        self.ln_idagricultor.setText(id)
+        self.label_4.setText('{}- DNI: {}'.format(nombre,dni))
+        self.tabWidget.setTabEnabled(2,True)
         self.tabWidget.setCurrentIndex(2)
 
     def saveAgricultor(self):
@@ -2005,6 +2013,36 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
 
         pass
     
+    def saveCultivoAgricultor(self): 
+        idAgricultor = self.ln_idagricultor.text() 
+        idCultivo = self.ln_cultivo.text() 
+        fechaCultivo = self.date_cultivo.date().toString('yyyy.MM.dd')
+        undNPKTradicionales = self.ln_npk.text()
+        costeFertilizante = self.ln_coste.text() 
+        costeNPK = self.ln_costenpk.text()
+
+        with self.conn.cursor() as cursor: 
+            try: 
+                sql = ''' insert into cultivoagricultor(idagricultor,idcultivo,unidadesnpktradicionales,costefertilizante,costefertilizanteunidades,fechacultivo)
+                values({},{},'{}', {},'{}','{}') '''.format(idAgricultor, idCultivo, undNPKTradicionales, costeFertilizante, costeNPK, fechaCultivo)
+                cursor.execute(sql)
+                self.conn.commit() 
+                QMessageBox.about(self, "", "Datos Guardados Correctamente")
+                self.ln_idagricultor.clear() 
+                self.ln_cultivo.clear() 
+                self.ln_npk.clear()
+                self.ln_coste.clear() 
+                self.ln_costenpk.clear()
+                self.date_cultivo.setDate(QDate.currentDate())
+                self.tabWidget.setCurrentIndex(0)
+                self.tabWidget.setTabEnabled(2,False)
+            except Exception as ex:
+                print(ex)
+                self.conn.rollback()
+                QMessageBox.about(self, "", "Ocurrio un Error")
+
+        
+
 
     
 
