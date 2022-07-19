@@ -23,12 +23,9 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Explotaciones</string>
+   <string>Registro de Personas</string>
   </property>
   <widget class="QTabWidget" name="tabWidget">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -44,7 +41,7 @@
     </size>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -82,7 +79,7 @@
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>Buscar por Nombre o Direccion</string>
+         <string>Buscar por Nombre o Explotacion</string>
         </property>
        </widget>
       </item>
@@ -103,30 +100,12 @@
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
        <widget class="QTableWidget" name="tableWidget">
-        <property name="sizeAdjustPolicy">
-         <enum>QAbstractScrollArea::AdjustToContents</enum>
-        </property>
         <property name="editTriggers">
          <set>QAbstractItemView::NoEditTriggers</set>
         </property>
         <property name="selectionBehavior">
          <enum>QAbstractItemView::SelectRows</enum>
         </property>
-        <column>
-         <property name="text">
-          <string>ID</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Nombre</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Direccion</string>
-         </property>
-        </column>
        </widget>
       </item>
      </layout>
@@ -146,48 +125,76 @@
       </rect>
      </property>
      <property name="title">
-      <string>Registro de Explotaciones</string>
+      <string>Registro Personas</string>
      </property>
-     <widget class="QPushButton" name="pushButton_2">
-      <property name="geometry">
-       <rect>
-        <x>330</x>
-        <y>150</y>
-        <width>111</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Crear Explotacion</string>
-      </property>
-     </widget>
      <widget class="QWidget" name="gridLayoutWidget">
       <property name="geometry">
        <rect>
-        <x>10</x>
+        <x>20</x>
         <y>30</y>
-        <width>431</width>
-        <height>111</height>
+        <width>381</width>
+        <height>141</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="1" column="1">
-        <widget class="QLineEdit" name="lineEdit_3"/>
+       <item row="0" column="0">
+        <widget class="QLineEdit" name="ln_dni">
+         <property name="placeholderText">
+          <string>DNI...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="ln_email">
+         <property name="placeholderText">
+          <string>Email...</string>
+         </property>
+        </widget>
        </item>
        <item row="0" column="1">
-        <widget class="QLineEdit" name="lineEdit_2"/>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>Nombre:</string>
+        <widget class="QLineEdit" name="ln_nombre">
+         <property name="placeholderText">
+          <string>Nombre...</string>
          </property>
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QLabel" name="label_3">
+        <widget class="QLineEdit" name="ln_apellido">
+         <property name="placeholderText">
+          <string>Apellido...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="ln_direccion">
+         <property name="placeholderText">
+          <string>Direccion...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLineEdit" name="ln_telefono">
+         <property name="placeholderText">
+          <string>Telefono...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_2">
+      <property name="geometry">
+       <rect>
+        <x>410</x>
+        <y>30</y>
+        <width>34</width>
+        <height>141</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QPushButton" name="pushButton_2">
          <property name="text">
-          <string>Dirección:</string>
+          <string/>
          </property>
         </widget>
        </item>
@@ -197,6 +204,18 @@
    </widget>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>lineEdit</tabstop>
+  <tabstop>tableWidget</tabstop>
+  <tabstop>pushButton</tabstop>
+  <tabstop>ln_dni</tabstop>
+  <tabstop>ln_nombre</tabstop>
+  <tabstop>ln_apellido</tabstop>
+  <tabstop>ln_direccion</tabstop>
+  <tabstop>ln_telefono</tabstop>
+  <tabstop>ln_email</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

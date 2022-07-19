@@ -2,6 +2,7 @@
     <qresource prefix="/plugins/agrae" >
         <file>icon.png</file>
         <file>ui\icons\icon.svg</file>
+        <file>ui\icons\user-solid.svg</file>
         <file>ui\icons\image-solid.svg</file>
         <file>ui\icons\search-lotes.svg</file>
         <file>ui\icons\search-parcela.svg</file>

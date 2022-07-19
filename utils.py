@@ -138,6 +138,7 @@ class AgraeUtils():
         icons_path = {
             'agrae_icon': os.path.join(os.path.dirname(__file__), r'ui\icons\icon.svg'),
             'image': os.path.join(os.path.dirname(__file__), r'ui\icons\image-solid.svg'),
+            'user': os.path.join(os.path.dirname(__file__), r'ui\icons\user-solid.svg'),
             'search_icon_path': os.path.join(os.path.dirname(__file__), r'ui\icons\search.svg'),
             'search_lotes': os.path.join(os.path.dirname(__file__), r'ui\icons\search-lotes.svg'),
             'search_parcela': os.path.join(os.path.dirname(__file__), r'ui\icons\search-parcela.svg'),

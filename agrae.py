@@ -37,7 +37,8 @@ from .dbconn import DbConnection
 from .utils import AgraeUtils, AgraeToolset
 
 # Import the code for the DockWidget
-from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget, loteFindDialog, loteFilterDialog, parcelaFindDialog, agraeAnaliticaDialog
+from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget, loteFindDialog, loteFilterDialog, parcelaFindDialog, agraeAnaliticaDialog, expFindDialog
+from .agrae_dialogs import personaDialog
 import os.path
 from PIL import Image
 from qgis.core import QgsDataSourceUri
@@ -127,6 +128,7 @@ class agrae:
         self.loteFilterDialog = None
         self.parcelaFilterDialog = None
         self.analiticaDialog = None
+        self.personaDialog = None
 
         self.dataSuelo = None
         self.dataExtracciones = None
@@ -265,6 +267,12 @@ class agrae:
             status_tip=self.tr(u'Crear Relacion'),
             callback=self.relLote,
             parent=self.iface.mainWindow())
+        self.add_action(
+            rel_icon_path,
+            text=self.tr(u'Personas'),
+            status_tip=self.tr(u'Registro de Personas'),
+            callback=self.runPersonas,
+            parent=self.iface.mainWindow())
 
 
         self.add_action(
@@ -319,7 +327,10 @@ class agrae:
         self.cultivo = None
         pass
 
-    
+    def onClosePersonaDialog(self): 
+        self.personaDialog.closingPlugin.disconnect(self.onClosePersonaDialog)
+        self.pluginIsActive = False
+        pass
     
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -848,7 +859,19 @@ class agrae:
             self.analiticaDialog.closingPlugin.connect(self.onCloseAnaliticaDialog)
             self.analiticaDialog.show()
 
-    
+    def runPersonas(self): 
+        if not self.pluginIsActive:
+            self.pluginIsActive = True
+
+            if self.personaDialog == None:
+                self.personaDialog = personaDialog()
+                # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
+
+                # self.personaDialog.test_btn.clicked.connect(dbTestConn)
+                # self.personaDialog.pushButton.clicked.connect(saveConn)
+
+            self.personaDialog.closingPlugin.connect(self.onClosePersonaDialog)
+            self.personaDialog.show()
     
     
     

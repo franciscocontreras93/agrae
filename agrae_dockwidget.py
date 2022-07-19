@@ -40,7 +40,7 @@ from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, pyqtSlot, QSettings
 from qgis.core import *
 from qgis.utils import iface
-from .agrae_dialogs import agraeSegmentoDialog, agraeParametrosDialog, cultivoFindDialog
+from .agrae_dialogs import expFindDialog, agraeSegmentoDialog, agraeParametrosDialog, cultivoFindDialog, personaDialog,agricultorDialog
 from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic, TableModel, PanelRender
 
 from .agraeTools import agraeToolset
@@ -642,132 +642,8 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             print(ex)
             pass
 
-class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
-    closingPlugin = pyqtSignal()
-    getIdExp = pyqtSignal(int)
-    
-    def __init__(self, parent=None):
-        """Constructor."""
-        super(expFindDialog, self).__init__(parent)
-        self.utils = AgraeUtils()
-        self.conn = self.utils.Conn()
-        
-        
-        # print(lista)
-        
-        # Set up the user interface from Designer.
-        # After setupUI you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
-        self.setupUi(self)
-        self.UIcomponents()
-
-    def selectIdExp(self): 
-        row = self.tableWidget.currentRow()
-        idExp = int(self.tableWidget.item(row,0).text())
-        self.getIdExp.emit(idExp)
-        self.close()
-
-    def UIcomponents(self):
-        
-        data = self.dataAuto()
-        lista = [e[0] for e in data]
-        completer = QCompleter(lista)
-        completer.setCaseSensitivity(False)
-
-        icons_path = self.utils.iconsPath() 
-        self.setWindowTitle('Administracón y Busqueda de Explotaciones')
-
-        self.lineEdit.setClearButtonEnabled(True)
-        line_buscar_action = self.lineEdit.addAction(
-            QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
-        line_buscar_action.triggered.connect(self.buscar)
-        # self.btn_buscar.clicked.connect(self.buscar)
-        self.pushButton.clicked.connect(self.selectIdExp)
-        self.pushButton.setIconSize(QtCore.QSize(20, 20))
-        self.pushButton.setIcon(QIcon(icons_path['share']))
-
-        self.pushButton_2.clicked.connect(self.crear)
-
-        self.lineEdit.setCompleter(completer)
-        self.tableWidget.horizontalHeader().setStretchLastSection(True)
 
 
-    def closeEvent(self, event):
-        self.closingPlugin.emit()
-        event.accept()
-
-    def data(self, filtro=None):
-        if filtro == None:
-            cursor = self.conn.cursor()
-            sql = "select idexplotacion,nombre, direccion from explotacion order by idexplotacion"
-            cursor.execute(sql)
-            data = cursor.fetchall()
-        else:
-            cursor = self.conn.cursor()
-            sql = f"select idexplotacion,nombre, direccion from explotacion where nombre ilike '%{filtro}%' or direccion ilike '%{filtro}%' order by idexplotacion "
-            cursor.execute(sql)
-            data = cursor.fetchall()
-        if len(data) >= 1:
-            return data
-        elif len(data) == 0:
-            data = [0, 0]
-            return data
-    def dataAuto(self):
-        cursor = self.conn.cursor()
-        sql = "select nombre from explotacion union select direccion from explotacion"
-        cursor.execute(sql)
-        data = cursor.fetchall()
-        return data
-
-    def populate(self, data):
-        try:
-            a = len(data)
-            b = len(data[0])
-            i = 1
-            j = 1
-            self.tableWidget.setRowCount(a)
-            self.tableWidget.setColumnCount(b)
-            for j in range(a):
-                for i in range(b):
-                    item = QTableWidgetItem(str(data[j][i]))
-                    self.tableWidget.setItem(j, i, item)
-        except:
-            QMessageBox.about(self, "Error:", "No Existen Registros")
-            # print('error')
-
-    def loadData(self, param=None):
-        if param == None:
-            data = self.data()
-            self.populate(data)
-        else:
-            data = self.data(param)
-            self.populate(data)
-        pass
-
-    def buscar(self):
-        filtro = self.lineEdit.text()
-        self.loadData(filtro)
-        pass
-    
-    def crear(self): 
-        cursor = self.conn.cursor() 
-        nombre = self.lineEdit_2.text()
-        direccion = self.lineEdit_3.text()
-        if nombre != '' and direccion != '': 
-            try:
-                sql = f''' insert into explotacion(nombre,direccion)
-                values('{nombre}','{direccion}') '''
-                cursor.execute(sql)
-                self.conn.commit()
-                QMessageBox.about(self, "aGrae GIS:", "Se creo correctamente")
-            except Exception as ex: 
-                print(ex)
-                QMessageBox.about(self, "Error:", "Error revisa la consola")
-                self.conn.rollback()
-        else: 
-            QMessageBox.about(self, "Error:", "Debes rellenar todos los campos")
 
 class ReadOnlyDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
@@ -886,6 +762,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         
         self.pushButton_3.clicked.connect(self.crearAmbientes)
         self.pushButton_4.clicked.connect(self.segmentoDialog)
+        self.pushButton_5.clicked.connect(self.agricultoresDialog)
         self.btn_find_segmento.clicked.connect(self.buscarSegmento)
 
         self.btn_add_lotes.clicked.connect(self.addLotesMap)
@@ -1222,6 +1099,11 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         dialog.loadData()
         dialog.getIdCultivo.connect(self.popIdCultivo)
         dialog.exec_()
+    
+    def agricultoresDialog(self):
+        dialog = agricultorDialog() 
+        dialog.exec_()
+
 
     def popIdCultivo(self,value):
         
