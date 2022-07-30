@@ -38,7 +38,7 @@ from .utils import AgraeUtils, AgraeToolset
 
 # Import the code for the DockWidget
 from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget, loteFindDialog, loteFilterDialog, parcelaFindDialog, agraeAnaliticaDialog, expFindDialog
-from .agrae_dialogs import personaDialog
+from .agrae_dialogs import personaDialog, agricultorDialog
 import os.path
 from PIL import Image
 from qgis.core import QgsDataSourceUri
@@ -129,6 +129,7 @@ class agrae:
         self.parcelaFilterDialog = None
         self.analiticaDialog = None
         self.personaDialog = None
+        self.agricultorDialog = None
 
         self.dataSuelo = None
         self.dataExtracciones = None
@@ -267,11 +268,19 @@ class agrae:
             status_tip=self.tr(u'Crear Relacion'),
             callback=self.relLote,
             parent=self.iface.mainWindow())
+        user_icon_path = self.icons_path['users']
         self.add_action(
-            rel_icon_path,
+            user_icon_path,
             text=self.tr(u'Personas'),
             status_tip=self.tr(u'Registro de Personas'),
             callback=self.runPersonas,
+            parent=self.iface.mainWindow())
+        agricultor_icon_path = self.icons_path['farmer-color']
+        self.add_action(
+            agricultor_icon_path,
+            text=self.tr(u'Agricultor'),
+            status_tip=self.tr(u'Registro de Agricultores'),
+            callback=self.runAgricultores,
             parent=self.iface.mainWindow())
 
 
@@ -332,6 +341,11 @@ class agrae:
         self.pluginIsActive = False
         pass
     
+    def onCloseAgricultorDialog(self):
+        self.agricultorDialog.closingPlugin.disconnect(self.onCloseAgricultorDialog)
+        self.pluginIsActive = False
+        pass
+
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
 
@@ -872,7 +886,20 @@ class agrae:
 
             self.personaDialog.closingPlugin.connect(self.onClosePersonaDialog)
             self.personaDialog.show()
-    
+    def runAgricultores(self): 
+        if not self.pluginIsActive:
+            self.pluginIsActive = True
+
+            if self.agricultorDialog == None:
+                self.agricultorDialog = agricultorDialog()
+                # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
+
+                # self.personaDialog.test_btn.clicked.connect(dbTestConn)
+                # self.personaDialog.pushButton.clicked.connect(saveConn)
+
+            self.agricultorDialog.closingPlugin.connect(self.onCloseAgricultorDialog)
+            self.agricultorDialog.show()
+
     
     
     def getDataSuelo(self, id: int):

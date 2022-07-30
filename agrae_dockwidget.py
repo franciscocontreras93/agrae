@@ -40,6 +40,7 @@ from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, pyqtSlot, QSettings
 from qgis.core import *
 from qgis.utils import iface
+from qgis.PyQt.QtXml import QDomDocument
 from .agrae_dialogs import expFindDialog, agraeSegmentoDialog, agraeParametrosDialog, cultivoFindDialog, personaDialog,agricultorDialog
 from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic, TableModel, PanelRender
 
@@ -740,6 +741,11 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_add_layer.setIconSize(QtCore.QSize(20, 20))
         self.btn_add_layer.clicked.connect(self.cargarLote)
 
+        self.btn_export_layer.setIcon(QIcon(icons_path['tractor']))
+        self.btn_export_layer.setToolTip('Exportar Archivo UFS')
+        self.btn_export_layer.setIconSize(QtCore.QSize(20, 20))
+        self.btn_export_layer.clicked.connect(self.exportUnidades)
+
         self.btn_reload.setIcon(QIcon(icons_path['reload_data']))
         self.btn_reload.setIconSize(QtCore.QSize(20, 20))
         self.btn_reload.setToolTip('Buscar todos los lotes')
@@ -1433,14 +1439,73 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             'public', 'unidades', 'geometria', f'"idlotecampania" = {idlotecampania}', 'id')
         lyrUnidades = QgsVectorLayer(uriUnidades.uri(
             False), f'''UNIDADES {loteNombre}-{cultivo}''', 'postgres')
-        
-        QgsProject.instance().addMapLayer(lyrUnidades)
-        QgsProject.instance().addMapLayer(lyrAmbientes)
-        QgsProject.instance().addMapLayer(lyrSegmentos)
-        QgsProject.instance().addMapLayer(lyrParcelas)
+        if lyrUnidades.isValid():
+            QgsProject.instance().addMapLayer(lyrUnidades)
+        if lyrAmbientes.isValid(): 
+            QgsProject.instance().addMapLayer(lyrAmbientes)
+        if lyrSegmentos.isValid():
+            QgsProject.instance().addMapLayer(lyrSegmentos)
+        if lyrParcelas.isValid():
+            QgsProject.instance().addMapLayer(lyrParcelas)
         self.tools.cargarLote(self)
         
+    def exportUnidades(self):
+        icons_path = self.utils.iconsPath()
+        dns = self.dns
+        row = self.tableWidget.currentRow()
+        idlotecampania = self.tableWidget.item(row, 0).text()
+        loteNombre = self.tableWidget.item(row, 1).text()
+        parcela = self.tableWidget.item(row, 2).text()
+        cultivo = self.tableWidget.item(row, 5).text()
 
+        sql = '''select row_number() OVER (ORDER BY (st_dump(geometria)).geom) as id,idlotecampania, lote,uf, uf_etiqueta , 
+        fertilizantefondoformula as aplicacion1formula , 
+        fertilizantefondocalculado as aplicacion1dosis, 
+        fertilizantecob1formula as aplicacion2formula , 
+        fertilizantecob1calculado as aplicacion2dosis,
+        fertilizantecob2formula as aplicacion3formula , 
+        fertilizantecob2calculado as aplicacion3dosis,
+        fertilizantecob3formula as aplicacion4formula , 
+        fertilizantecob3calculado as aplicacion4dosis,
+        (st_dump(geometria)).geom as geometria
+        from unidades u where idlotecampania = {}'''.format(idlotecampania)
+        try:
+            uriUnidades = QgsDataSourceUri() 
+            uriUnidades.setConnection(dns['host'], dns['port'], dns['dbname'], dns['user'], dns['password'])
+            uriUnidades.setDataSource('', f'({sql})', 'geometria', '', 'id')
+            # uriUnidades.setDataSource('public', 'unidades', 'geometria', f'"idlotecampania" = {idlotecampania}', 'id')
+            lyrUnidades = QgsVectorLayer(uriUnidades.uri(), f'''UFS-{loteNombre}-{cultivo}''', 'postgres')
+            
+            # lyrUnidades.getStyleFromDatabase(10)
+            if lyrUnidades.isValid():
+                path = QFileDialog.getExistingDirectory(None, "Seleccionar directorio de archivos UFS:")
+                if path:
+                    _NAME = str(lyrUnidades.name()).replace(' ', '')
+                    _PATH = f'{path}\\{_NAME}.shp'
+                    _OUTPUT_PATH = _PATH
+                    _CRS = QgsCoordinateReferenceSystem('EPSG:4326')
+                    _options = QgsVectorFileWriter.SaveVectorOptions()
+                    _options.driverName = 'ESRI Shapefile'
+                    _options.fileEncoding = 'utf-8'
+                    _options.overrideGeometryType = QgsWkbTypes.Polygon
+                    # _options.symbologyExport = QgsVectorFileWriter.SymbolLayerSymbology
+                    QgsVectorFileWriter.writeAsVectorFormat(lyrUnidades,_OUTPUT_PATH,_options)
+                    confirm = QMessageBox.question(self, 'aGrae GIS', "Archivo Exportado Exitosamente.\nDesea agregar la capa al mapa?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    if confirm == QMessageBox.Yes:
+                        listedStyles = lyrUnidades.listStylesInDatabase()
+                        numberOfStyles = listedStyles[0]
+                        defaultStyleId = listedStyles[1][0]
+                        styledoc = QDomDocument()
+                        styleTuple = lyrUnidades.getStyleFromDatabase(defaultStyleId)
+                        styleqml = styleTuple[0]
+                        styledoc.setContent(styleqml)
+                        lyrUnidades.importNamedStyle(styledoc)                   
+                        QgsProject.instance().addMapLayer(lyrUnidades)
+            else: 
+                print('Capa no Valida')
+        except Exception as ex:
+            print(ex)
+        
 
     def addLotesMap(self):
         sql = f'select * from lotes'
@@ -1708,6 +1773,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             dialog.exec_()
         except AttributeError as ae:
             QMessageBox.about(self, f"aGrae GIS:",f"Debe seleccionar un Lote")
+        except Exception as ex: 
+            print(ex)
+            pass
 
 
 
@@ -2442,97 +2510,40 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
         conn = self.utils.Conn() 
         data = self.dataExtraccion
         
-        try:
-            q_1 = float(self.line_cantidad_1.text())
-            f1 = str(self.line_formula_1.text())
-            f1 = f1.split('-')
-            f1 = [int(e)/100 for e in f1]
-        except:
-            pass
-        try:
-            q_2 = float(self.line_cantidad_2.text())
-            f2 = str(self.line_formula_2.text())
-            f2 = f2.split('-')
-            f2 = [int(e)/100 for e in f2]
-        except : pass
-        try:
-            q_3 = float(self.line_cantidad_3.text())
-            f3 = str(self.line_formula_3.text())
-            f3 = f3.split('-')
-            f3 = [int(e)/100 for e in f3]
-        except : pass
-        try:
-            q_4 = float(self.line_cantidad_4.text())
-            f4 = str(self.line_formula_4.text())
-            f4 = f4.split('-')
-            f4 = [int(e)/100 for e in f4]
-        except : pass
-
-
-        f1 = str(self.line_formula_1.text())
-        f1 = f1.split('-')
-        f1 = [int(e)/100 for e in f1]
+        
 
    
         with conn: 
-            cursor = conn.cursor() 
-            sql = '''select unidadesnpktradicionales
-            from lotes 
-            where idlotecampania = {}'''.format(self.idlotecampania)
-            cursor.execute(sql)
-            data = cursor.fetchall() 
-            print(data)
-        #     area = [float(e[1]) for e in data]
-            npk = [str(e[0]) for e in data]
-            lista = [e.split('-') for e in npk]
-            n = int(lista[0][0])
-            p = int(lista[0][1])
-            k = int(lista[0][2])
-            print(n,p,k)
-        #     #! CALCULO HUELLA CARBONO FERTILIZACION TRADICIONAL
-        #     n_ponderado = self.n_ponderado 
-        #     p_ponderado = self.p_ponderado 
-        #     k_ponderado = self.k_ponderado 
+            try:
+                cursor = conn.cursor() 
+                sql = '''select unidadesnpktradicionales
+                from lotes 
+                where idlotecampania = {}'''.format(self.idlotecampania)
+                cursor.execute(sql)
+                data = cursor.fetchall() 
+                print(data)
+                npk = [str(e[0]) for e in data]
+                lista = [e.split('-') for e in npk]
+                n = int(lista[0][0])
+                p = int(lista[0][1])
+                k = int(lista[0][2])
+                print(n,p,k)
+                #! CALCULO HUELLA CARBONO FERTILIZACION TRADICIONAL
 
-        #     # print(n_ponderado,p_ponderado,k_ponderado)
-        #     if q_1: 
-        #         n_ponderado = n_ponderado - (q_1 * f1[0])
-        #         p_ponderado = p_ponderado - (q_1 * f1[1])
-        #         k_ponderado = k_ponderado - (q_1 * f1[2])
+                huella_carbono_fp = round((n * 4.9500) + (p * 0.7333) + (k * 0.5500))
+                # print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
+            except ValueError as ve: 
+                QMessageBox.about(self, f"aGrae GIS:",f"No Existen datos de Fertilizacion Tradicional")
+                self.btn_panel.setEnabled(False)
+            except Exception as ex: 
+                print(ex)
 
-
-        #     try:
-        #         if q_2: 
-        #             n_ponderado = n_ponderado - (q_2 * f2[0])
-        #             p_ponderado = p_ponderado - (q_2 * f2[1])
-        #             k_ponderado = k_ponderado - (q_2 * f2[2])
-        #     except: pass
-        #     try: 
-        #         if q_3: 
-        #             n_ponderado = n_ponderado - (q_3 * f3[0])
-        #             p_ponderado = p_ponderado - (q_3 * f3[1])
-        #             k_ponderado = k_ponderado - (q_3 * f3[2])
-        #     except: pass
-        #     try: 
-        #         if q_4: 
-        #             n_ponderado = n_ponderado - (q_4 * f4[0])
-        #             p_ponderado = p_ponderado - (q_4 * f4[1])
-        #             k_ponderado = k_ponderado - (q_4 * f4[2])
-        #     except:
-        #         pass
-        #     n_ponderado = -1*(-self.n_ponderado + n_ponderado)
-        #     p_ponderado = -1*(-self.p_ponderado + p_ponderado)
-        #     k_ponderado = -1*(-self.k_ponderado + k_ponderado)
-        #     # print(n_ponderado, p_ponderado, k_ponderado)
-
-            huella_carbono_fp = round((n * 4.9500) + (p * 0.7333) + (k * 0.5500))
-            print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
 
 
 
             
             
-        #     #! CALCULO HUELLA CARBONO FERTILIZACION INTRAPARCELARIA
+            #! CALCULO HUELLA CARBONO FERTILIZACION INTRAPARCELARIA
 
             sql = ''' select (necesidad_n+(-1*necesidad_nf)) n,  (necesidad_p+(-1*necesidad_pf)),  (necesidad_k+(-1*necesidad_kf)) k, area_has
             from unidades where idlotecampania = {}'''.format(self.idlotecampania)
@@ -2548,38 +2559,41 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
             n_ponderado_ip = self.sumaPonderada(n, area)
             p_ponderado_ip = self.sumaPonderada(p, area)
             k_ponderado_ip  = self.sumaPonderada(k, area)
-            print(n_ponderado_ip, p_ponderado_ip, k_ponderado_ip)
+            # print(n_ponderado_ip, p_ponderado_ip, k_ponderado_ip)
 
             huella_carbono_fv = round((n_ponderado_ip * 4.9500) + (p_ponderado_ip * 0.7333) + (k_ponderado_ip * 0.5500))
 
-            print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
+            # print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
 
             #! REDUCCION HUELLA DE CARBONO: 
-            _reduccion = -huella_carbono_fp+huella_carbono_fv
-            _percent = round((+_reduccion/huella_carbono_fp)*100)
-            print('**** REDUCCION HUELLA DE CARBONO: {} KgCO2eq/ha o un {} % ****'.format(_reduccion,_percent))
+            try: 
+                _reduccion = -huella_carbono_fp+huella_carbono_fv
+                _percent = round((+_reduccion/huella_carbono_fp)*100)
+                # print('**** REDUCCION HUELLA DE CARBONO: {} KgCO2eq/ha o un {} % ****'.format(_reduccion,_percent))
 
 
-            #! CAPTURA DE CARBONO EN CULTIVO
+                #! CAPTURA DE CARBONO EN CULTIVO
 
-            x1 = int(round((-float(self.prod) * self.ccosecha )*(44/12)))
-            x2 = int(round((-float(self.residuo) * self.cresiduo )*(44/12)))
-            ccc =  x1+x2
-            chc = -1*(-ccc+_reduccion)
-            # print(self.prod, self.ccosecha )
-            # print('**** HUELLA DE CARBONO: {} KgCO2eq/ha ****'.format(ccc))
-            self.lbl_hc_cantidad.setText('{:,} KgCO2/ha'.format(chc))
-            self.lbl_hc_percent.setText('Reducción: {}%'.format(_percent))
+                x1 = int(round((-float(self.prod) * self.ccosecha )*(44/12)))
+                x2 = int(round((-float(self.residuo) * self.cresiduo )*(44/12)))
+                ccc =  x1+x2
+                chc = -1*(-ccc+_reduccion)
+                # print(self.prod, self.ccosecha )
+                # print('**** HUELLA DE CARBONO: {} KgCO2eq/ha ****'.format(ccc))
+                self.lbl_hc_cantidad.setText('{:,} KgCO2/ha'.format(chc))
+                self.lbl_hc_percent.setText('Reducción: {}%'.format(_percent))
 
-            self.dataHuellaCarbono = {
-            'percent': _percent,
-            'chc': chc,
-            'biomasa': ccc,
-            'cosecha': x1,
-            'residuo': x2,
-            'fertilizacion': _reduccion } 
+                self.dataHuellaCarbono = {
+                'percent': _percent,
+                'chc': chc,
+                'biomasa': ccc,
+                'cosecha': x1,
+                'residuo': x2,
+                'fertilizacion': _reduccion } 
 
-            print(self.dataHuellaCarbono)
+                # print(self.dataHuellaCarbono)
+            except Exception as ex:
+                print(ex)
             
 
 

@@ -5,6 +5,7 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import * 
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import pyqtSignal
+from psycopg2 import OperationalError, InterfaceError, errors, extras
 
 
 
@@ -40,10 +41,10 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         self.UIcomponents()
 
     def selectIdExp(self,r=None):
-        if r != None: 
-            row = r.row()
-        else: 
-            row = self.tableWidget.currentRow()
+        # if r != None: 
+        #     row = r.row()
+
+        row = self.tableWidget.currentRow()
         
         idExp = int(self.tableWidget.item(row, 0).text())
         _expName = str(self.tableWidget.item(row,1).text())
@@ -66,7 +67,13 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         line_buscar_action = self.lineEdit.addAction(
             QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
         line_buscar_action.triggered.connect(self.buscar)
-        # self.btn_buscar.clicked.connect(self.buscar)
+
+        self.tableWidget.setColumnHidden(0, True)
+        # self.tableWidget.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+
         self.pushButton.clicked.connect(self.selectIdExp)
         self.pushButton.setIconSize(QtCore.QSize(20, 20))
         self.pushButton.setIcon(QIcon(icons_path['share']))
@@ -94,12 +101,18 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
     def data(self, filtro=None):
         if filtro == None:
             cursor = self.conn.cursor()
-            sql = "select idexplotacion,nombre, direccion from explotacion order by idexplotacion"
+            sql = '''select e.idexplotacion, e.nombre, e.direccion, count(a.idagricultor) agricultores from explotacion e
+            left join agricultor a on a.idexplotacion = e.idexplotacion
+            group by e.idexplotacion, e.nombre, e.direccion
+            order by e.idexplotacion '''
             cursor.execute(sql)
             data = cursor.fetchall()
         else:
             cursor = self.conn.cursor()
-            sql = f"select idexplotacion,nombre, direccion from explotacion where nombre ilike '%{filtro}%' or direccion ilike '%{filtro}%' order by idexplotacion "
+            sql = f'''select e.idexplotacion,e.nombre,e.direccion , count(a.idagricultor) agricultores from explotacion e 
+            left join agricultor a on a.idexplotacion = e.idexplotacion 
+            group by e.idexplotacion,e.nombre,e.direccion 
+            where nombre ilike '%{filtro}%' or direccion ilike '%{filtro}%' order by e.idexplotacion '''
             cursor.execute(sql)
             data = cursor.fetchall()
         if len(data) >= 1:
@@ -183,6 +196,7 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
 
     def UIcomponents(self):
         icons_path = self.utils.iconsPath()
+        self.setWindowIcon(QIcon(icons_path['cultivo-icon']))
         data = self.dataAuto()
         lista = [e[0] for e in data]
         # print(lista)
@@ -199,7 +213,8 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
 
         # self.btn_buscar.clicked.connect(self.buscar)
         self.lineEdit.setCompleter(completer)
-
+        self.lineEdit.textChanged.connect(self.buscar)
+        self.tableWidget.setColumnHidden(0, True)
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         self.pushButton.clicked.connect(self.selectIdCultivo)
         self.pushButton.setIconSize(QtCore.QSize(20, 20))
@@ -1827,32 +1842,53 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
     def UIComponents(self):
         #* UI 
         icons_path = self.utils.iconsPath()
+        self.setWindowIcon(QIcon(icons_path['users']))
         self.tabWidget.setCurrentIndex(0)
         self.pushButton.setIconSize(QtCore.QSize(20, 20))
         self.pushButton.setIcon(QIcon(icons_path['share']))
         self.pushButton_2.setIconSize(QtCore.QSize(20, 20))
         self.pushButton_2.setIcon(QIcon(icons_path['user-check']))
+        self.tabWidget.setTabIcon(0, QIcon(icons_path['search_icon_path']))
+        self.tabWidget.setTabIcon(1, QIcon(icons_path['pen-to-square']))
+
+
+
 
         # self.date_cultivo.setDate(QDate.currentDate())
         #* ACTIONS
-        
+        line_buscar_action = self.lineEdit.addAction(
+            QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
+        line_buscar_action.triggered.connect(self.buscar)
+        self.lineEdit.textChanged.connect(self.buscarPersona)
 
         self.pushButton_2.clicked.connect(self.crearPersona)
 
 
         #* SIGNALS
         self.tableWidget.doubleClicked.connect(self.doubleClick)
-
-    def buscarPersona(self,dni:str=None): 
-        if not dni: 
-            sql = ''' select * from persona '''
-        else: 
-            sql = ''' select * from persona where dni = '{}' '''.format(dni)
-        try: 
-
-            self.tools.populateTable(sql, self.tableWidget)
-        except Exception as ex: 
-            print(ex)
+    
+    def buscar(self):
+        filtro = self.lineEdit.text()
+        # print(filtro)
+        self.buscarPersona(filtro)
+    def buscarPersona(self,param:str=None): 
+        if param == None or len(self.lineEdit.text()) == 0:
+            sql = ''' select * from persona p   '''
+            try:
+                self.tools.populateTable(sql, self.tableWidget)
+            except IndexError as ie:
+                pass
+            except Exception as ex:
+                print(ex)
+        else:
+            sql = ''' select * from persona p where p.dni = '{}' or p.nombre ilike '%{}%' or p.direccion ilike '%{}%' '''.format(param, param, param)
+            try:
+                # print(param)
+                self.tools.populateTable(sql, self.tableWidget)
+            except IndexError as ie:
+                pass
+            except Exception as ex:
+                print(ex)
 
     def crearPersona(self): 
         with self.conn.cursor() as cursor: 
@@ -1899,9 +1935,10 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
         event.accept()
     
     def UIComponents(self): 
+        icons_path = self.utils.iconsPath()
+        self.setWindowIcon(QIcon(icons_path['farmer-color']))
         self.tabWidget.setCurrentIndex(0)
         self.tabWidget.setTabEnabled(2,False)
-        icons_path = self.utils.iconsPath()
         self.date_cultivo.setDate(QDate.currentDate())
         line_buscar_action = self.lineEdit.addAction(
             QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
@@ -1916,12 +1953,15 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
         line_cultivo_action.triggered.connect(self.cultivoDialog)
 
         self.pushButton_3.setIconSize(QtCore.QSize(20, 20))
-        self.pushButton_3.setIcon(QIcon(icons_path['save']))
+        self.pushButton_3.setIcon(QIcon(icons_path['user-check']))
         self.pushButton_3.clicked.connect(self.saveAgricultor)
         self.pushButton_4.setIconSize(QtCore.QSize(20, 20))
-        self.pushButton_4.setIcon(QIcon(icons_path['save']))
+        self.pushButton_4.setIcon(QIcon(icons_path['user-check']))
         self.pushButton_4.clicked.connect(self.saveCultivoAgricultor)
         self.tableWidget.doubleClicked.connect(self.select)
+        self.tabWidget.setTabIcon(0, QIcon(icons_path['search_icon_path']))
+        self.tabWidget.setTabIcon(1, QIcon(icons_path['pen-to-square']))
+        self.tabWidget.setTabIcon(2, QIcon(icons_path['farmer']))
         pass
     #! METODOS DE AGRICULTOR
     #* DIALOGS
@@ -2012,9 +2052,16 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
                 cursor.execute(sql)
                 self.conn.commit()
                 QMessageBox.about(self, "", "Datos Guardados Correctamente")
+                self.ln_exp.clear()
+                self.ln_dni.clear()
+                self.label_7.clear()
+            except errors.lookup('23505'):
+                QMessageBox.about(self, "", "El Agricultor ya existe en la explotacion seleccionada")
+                self.conn.rollback()
             except Exception as ex: 
                 print(ex)
-                QMessageBox.about(self, "", "Error")
+                QMessageBox.about(self, "", "Ocurrio un error")
+                self.conn.rollback()
 
         pass
     

@@ -138,9 +138,13 @@ class AgraeUtils():
         icons_path = {
             'agrae_icon': os.path.join(os.path.dirname(__file__), r'ui\icons\icon.svg'),
             'image': os.path.join(os.path.dirname(__file__), r'ui\icons\image-solid.svg'),
+            'ceap': os.path.join(os.path.dirname(__file__), r'ui\icons\ceap-solid.svg'),
             'user': os.path.join(os.path.dirname(__file__), r'ui\icons\user-solid.svg'),
             'users': os.path.join(os.path.dirname(__file__), r'ui\icons\users-solid.svg'),
             'farmer': os.path.join(os.path.dirname(__file__), r'ui\icons\farmer-solid.svg'),
+            'farmer-color': os.path.join(os.path.dirname(__file__), r'ui\icons\farmer-solid-color.svg'),
+            'tractor': os.path.join(os.path.dirname(__file__), r'ui\icons\tractor-solid.svg'),
+            'cultivo-icon': os.path.join(os.path.dirname(__file__), r'ui\icons\cultivo-solid.svg'),
             'user-check': os.path.join(os.path.dirname(__file__), r'ui\icons\user-check-solid.svg'),
             'search_icon_path': os.path.join(os.path.dirname(__file__), r'ui\icons\search.svg'),
             'search_lotes': os.path.join(os.path.dirname(__file__), r'ui\icons\search-lotes.svg'),

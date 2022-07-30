@@ -2,9 +2,13 @@
     <qresource prefix="/plugins/agrae" >
         <file>icon.png</file>
         <file>ui\icons\icon.svg</file>
+        <file>ui\icons\cultivo-solid.svg</file>
+        <file>ui\icons\ceap-solid.svg</file>
         <file>ui\icons\user-solid.svg</file>
         <file>ui\icons\users-solid.svg</file>
         <file>ui\icons\farmer-solid.svg</file>
+        <file>ui\icons\farmer-solid-color.svg</file>
+        <file>ui\icons\tractor-solid.svg</file>
         <file>ui\icons\user-check-solid.svg</file>
         <file>ui\icons\image-solid.svg</file>
         <file>ui\icons\search-lotes.svg</file>
