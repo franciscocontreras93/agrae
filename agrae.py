@@ -38,7 +38,7 @@ from .utils import AgraeUtils, AgraeToolset
 
 # Import the code for the DockWidget
 from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget, loteFindDialog, loteFilterDialog, parcelaFindDialog, agraeAnaliticaDialog, expFindDialog
-from .agrae_dialogs import personaDialog, agricultorDialog
+from .agrae_dialogs import personaDialog, agricultorDialog, ceapPrevDialog
 import os.path
 from PIL import Image
 from qgis.core import QgsDataSourceUri
@@ -130,6 +130,7 @@ class agrae:
         self.analiticaDialog = None
         self.personaDialog = None
         self.agricultorDialog = None
+        self.verisDataDialog = None
 
         self.dataSuelo = None
         self.dataExtracciones = None
@@ -282,6 +283,13 @@ class agrae:
             status_tip=self.tr(u'Registro de Agricultores'),
             callback=self.runAgricultores,
             parent=self.iface.mainWindow())
+        veris_icon_path = self.icons_path['ceap']
+        self.add_action(
+            veris_icon_path,
+            text=self.tr(u'Veris DATA'),
+            status_tip=self.tr(u'Preprocesamiento datos Veris'),
+            callback=self.runVeris,
+            parent=self.iface.mainWindow())
 
 
         self.add_action(
@@ -345,7 +353,10 @@ class agrae:
         self.agricultorDialog.closingPlugin.disconnect(self.onCloseAgricultorDialog)
         self.pluginIsActive = False
         pass
-
+    
+    def onCloseCeapDialog(self): 
+        self.verisDataDialog.closingPlugin.disconnect(self.onCloseCeapDialog)
+        self.pluginIsActive = False
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
 
@@ -852,26 +863,7 @@ class agrae:
                 self.onCloseParcelaFilterDialog)
             self.parcelaFilterDialog.show()
 
-    def runAnalitica(self): 
-        if not self.pluginIsActive: 
-            self.pluginIsActive = True  
-            lyr = self.iface.activeLayer()
-            for f in lyr.getFeatures():
-                self.idlotecampania = f['idlotecampania']
-                self.lote = f['lote']
-                self.parcela = f['parcela']
-                self.prod = str(f['prod_esperada'])
-                self.cultivo = f['cultivo'] 
-            self.dataSuelo = self.getDataSuelo(self.idlotecampania)
-            self.dataExtracciones = self.getDataExtracciones(
-                self.idlotecampania)
-
-
-            if self.analiticaDialog == None:            
-               
-                self.analiticaDialog = agraeAnaliticaDialog(dataSuelo=self.dataSuelo, dataExtraccion=self.dataExtracciones,lote=self.lote,parcela=self.parcela,cultivo=self.cultivo,prod=self.prod)
-            self.analiticaDialog.closingPlugin.connect(self.onCloseAnaliticaDialog)
-            self.analiticaDialog.show()
+    
 
     def runPersonas(self): 
         if not self.pluginIsActive:
@@ -900,63 +892,21 @@ class agrae:
             self.agricultorDialog.closingPlugin.connect(self.onCloseAgricultorDialog)
             self.agricultorDialog.show()
 
-    
-    
-    def getDataSuelo(self, id: int):
-        sql = 'select s.segmento, s.n_tipo, s.p_tipo, s.k_tipo, s.carb_tipo from segmentos s where s.idlotecampania = {} order by  s.segmento'.format(
-            id)
-        with self.conn:
-            cursor = self.conn.cursor()
-            cursor.execute(sql)
-            data = cursor.fetchall()
-            print(data)
-            # self.dataSignal.emit(data)
-        return data
+    def runVeris(self):
+        if not self.pluginIsActive:
+            self.pluginIsActive = True
 
-    def getDataExtracciones(self, idLote: int):
-        sql = f'''select distinct u.uf_etiqueta, 
-        u.prod_esperada,
-        (u.extraccioncosechan || ' / ' ||
-        u.extraccioncosechap || ' / ' ||
-        u.extraccioncosechak) cos_npk,
-        (u.extraccionresiduon || ' / ' ||
-        u.extraccionresiduop || ' / ' ||
-        u.extraccioncosechak) res_npk,
-        (u.n_aporte || ' / ' ||
-        u.p_aporte || ' / ' ||
-        u.k_aporte) aportes_npk,
-        round(cast(u.area_has as numeric),2) area
-        from unidades u
-        join lotes ls on ls.idlotecampania = u.idlotecampania
-        join cultivo c on c.nombre = ls.cultivo
-        where u.idlotecampania = {idLote}
-        order by uf_etiqueta'''
-        with self.conn:
-            cursor = self.conn.cursor()
-            cursor.execute(sql)
-            data = cursor.fetchall()
-            # print(data)
-            # self.dataSignal.emit(data)
+            if self.verisDataDialog == None:
+                self.verisDataDialog = ceapPrevDialog()
+                # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
 
-        ufs = ['UF1', 'UF2', 'UF3']
-        for e in ufs:
-            data = self.checkData(data, e)
-        data = sorted(data)
-        print(data)
-        return data
+                # self.personaDialog.test_btn.clicked.connect(dbTestConn)
+                # self.personaDialog.pushButton.clicked.connect(saveConn)
 
-    def checkData(self, data, uf):
-        for e in data:
-            # print(e[0])
-            if uf not in e[0] and len(data) < 9:
-                data.append((uf, 0, 'N/D', 'N/D', 'N/D', 0))
-                break
-            else:
-                break
-        return data
+            self.verisDataDialog.closingPlugin.connect(
+                self.onCloseCeapDialog)
+            self.verisDataDialog.show()
 
-
-        
 
     def testFunction(self): 
         sql = f'select * from lotes'

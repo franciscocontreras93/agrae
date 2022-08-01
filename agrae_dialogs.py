@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import *
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import pyqtSignal
 from psycopg2 import OperationalError, InterfaceError, errors, extras
+from .processing import *
 
 
 
@@ -17,6 +18,7 @@ agraeParametrosDialog, _ =  uic.loadUiType(os.path.join(os.path.dirname(__file__
 agraeCultivoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/cultivo_dialog.ui'))
 agraePersonaDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/personas_dialog.ui'))
 agraeAgricultorDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/agricultor_dialog.ui'))
+agraeCeapDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/ceap_dialog.ui'))
 
 
 class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
@@ -2093,7 +2095,71 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
                 self.conn.rollback()
                 QMessageBox.about(self, "", "Ocurrio un Error")
 
+class ceapPrevDialog(QtWidgets.QDialog, agraeCeapDialog): 
+    closingPlugin = pyqtSignal()
+    def __init__(self, parent=None):
+        super(ceapPrevDialog, self).__init__(parent)
+        uic.loadUi(os.path.join(os.path.dirname(__file__),'ui/dialogs/ceap_dialog.ui'),self)
+        self.tools = AgraeToolset()
+        self.utils = AgraeUtils()
+        self.UIComponents()
+
+    def closeEvent(self, event):
+        self.closingPlugin.emit()
+        self.progressBar.setValue(0)
+        event.accept()
+
+    def UIComponents(self):
+        icons_path = self.utils.iconsPath()
+        self.setWindowIcon(QIcon(icons_path['ceap']))
         
+        self.pushButton.clicked.connect(self.openFileDialog)
+        self.pushButton_2.clicked.connect(self.saveFileDialog)
+
+        self.btn_run.clicked.connect(self.run)
+    
+    def run(self):
+        # print(self.ln_input.text())
+        try: 
+            inp = os.path.normpath(self.ln_input.text())
+            out = os.path.normpath(self.ln_output.text())
+            n_class = self.spinBox.value()
+            if len(inp) > 3:
+                if len(out) > 3:
+                    alg = agraeVerisAlgorithm(inp, self.progressBar, segmento=out)
+                else: 
+                    alg = agraeVerisAlgorithm(inp, self.progressBar)
+                alg.processVerisData(n_class)
+            else: 
+                pass
+        except Exception as ex: 
+            print(ex)
+
+        finally: 
+            self.progressBar.setValue(100)
+    
+
+
+    def openFileDialog(self):
+        options = QFileDialog.Options()
+        # options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(
+            self, "aGrae GIS", "", "Todos los archivos (*);;Archivos separados por coma (*.csv);;Archivos DAT(*.dat)", options=options)
+        if fileName:
+            self.ln_input.setText(fileName)
+            # return fileName
+        else:
+            return False
+    
+    def saveFileDialog(self):
+        options = QFileDialog.Options()
+        fileName, _ = QFileDialog.getSaveFileName(
+            None, "aGrae GIS", "", "Archivos Shapefile (*.shp)", options=options)
+        if fileName:
+            self.ln_output.setText(fileName)
+            # return fileName
+        else:
+            return False
 
 
     

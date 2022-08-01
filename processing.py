@@ -1,15 +1,23 @@
 from osgeo import gdal, gdal_array, osr
+from qgis import processing
+from qgis.core import *
+
 import numpy as np
 import jenkspy
 import tempfile
 import time
 
 
-class agraeAlgorithm():
+class agraeVerisAlgorithm():
 
-    def __init__(self, verisFile):
+    def __init__(self, verisFile, bar, segmento='TEMPORARY_OUTPUT'):
 
         self.verisFile = verisFile
+        self.bar = bar
+        self.f = QgsProcessingFeedback()
+        self.f.progressChanged.connect(self.progress_changed)
+        self.out = segmento
+
 
         pass
 
@@ -30,6 +38,10 @@ class agraeAlgorithm():
     #        print(f'Unexpected {err}, {type(err)}')
             return(None)
 
+    def progress_changed(self, progress):
+        #print(progress)
+        self.bar.setValue(progress)
+
     def processVerisData(self, n_clases):
         path = self.verisFile
         process = {}
@@ -42,7 +54,7 @@ class agraeAlgorithm():
             'OUTPUT': 'TEMPORARY_OUTPUT'
         }
         process['filter'] = processing.run(
-            "native:extractbyexpression", alg_params)
+            "native:extractbyexpression", alg_params,feedback=self.f)
         output['filter'] = process['filter']['OUTPUT']
         alg_params = {
             'INPUT': output['filter'],
@@ -58,7 +70,7 @@ class agraeAlgorithm():
             'DATA_TYPE': 5,
             'OUTPUT': f'{tempfile.gettempdir()}\idw.tif'}
         process['idw'] = processing.run(
-            "gdal:gridinversedistancenearestneighbor", alg_params)
+            "gdal:gridinversedistancenearestneighbor", alg_params,feedback=self.f)
         output['idw'] = QgsRasterLayer(process['idw']['OUTPUT'], 'idw')
         dataset = gdal.Open(output['idw'].source())
         band = dataset.GetRasterBand(1)
@@ -78,7 +90,7 @@ class agraeAlgorithm():
                       'DATA_TYPE': 5,
                       'OUTPUT': f'{tempfile.gettempdir()}\idw_reclass.tif'}
         process['reclass'] = processing.run(
-            "native:reclassifybytable", alg_params)
+            "native:reclassifybytable", alg_params,feedback=self.f)
         output['reclass'] = QgsRasterLayer(
             process['reclass']['OUTPUT'], 'idw Reclasificado')
 
@@ -90,21 +102,21 @@ class agraeAlgorithm():
             'EXTRA': '',
             'OUTPUT': f'TEMPORARY_OUTPUT'
         }
-        process['polygonize'] = processing.run("gdal:polygonize", alg_params)
+        process['polygonize'] = processing.run("gdal:polygonize", alg_params,feedback=self.f)
         output['polygonize'] = process['polygonize']['OUTPUT']
 
         alg_params = {
             'INPUT': output['polygonize'],
             'OUTPUT': 'TEMPORARY_OUTPUT'}
         process['fixgeometries'] = processing.run(
-            "native:fixgeometries", alg_params)
+            "native:fixgeometries", alg_params,feedback=self.f)
         output['fixgeometries'] = process['fixgeometries']['OUTPUT']
 
         alg_params = {
             'INPUT': output['fixgeometries'],
             'FIELD': ['segmento'],
             'OUTPUT': 'TEMPORARY_OUTPUT'}
-        process['dissolve'] = processing.run("native:dissolve", alg_params)
+        process['dissolve'] = processing.run("native:dissolve", alg_params,feedback=self.f)
         output['dissolve'] = process['dissolve']['OUTPUT']
 
         alg_params = {
@@ -112,7 +124,7 @@ class agraeAlgorithm():
             'OUTPUT': 'TEMPORARY_OUTPUT'
         }
         process['multiparttosingleparts'] = processing.run(
-            "native:multiparttosingleparts", alg_params)
+            "native:multiparttosingleparts", alg_params,feedback=self.f)
         output['multiparttosingleparts'] = process['multiparttosingleparts']['OUTPUT']
     #    values = [f[0] for f in lyr.getFeatures()]
     #    values = list(set(values))
@@ -122,21 +134,21 @@ class agraeAlgorithm():
             'EXPRESSION': '$area < 1000',
             'METHOD': 0}
         process['selectbyexpression'] = processing.run(
-            "qgis:selectbyexpression", alg_params)
+            "qgis:selectbyexpression", alg_params,feedback=self.f)
         alg_params = {
             'INPUT': output['multiparttosingleparts'],
             'MODE': 0,
             'OUTPUT': 'TEMPORARY_OUTPUT'
         }
         process['eliminateselectedpolygons'] = processing.run(
-            "qgis:eliminateselectedpolygons", alg_params)
+            "qgis:eliminateselectedpolygons", alg_params,feedback=self.f)
         output['eliminateselectedpolygons'] = process['eliminateselectedpolygons']['OUTPUT']
 
         alg_params = {
             'INPUT': output['eliminateselectedpolygons'],
             'FIELD': ['segmento'],
             'OUTPUT': 'TEMPORARY_OUTPUT'}
-        process['dissolve2'] = processing.run("native:dissolve", alg_params)
+        process['dissolve2'] = processing.run("native:dissolve", alg_params,feedback=self.f)
         output['dissolve2'] = process['dissolve2']['OUTPUT']
         alg_params = {
             'INPUT': output['dissolve2'],
@@ -147,7 +159,7 @@ class agraeAlgorithm():
             'OUTPUT': 'TEMPORARY_OUTPUT'
         }
         process['zonalstatisticsfb'] = processing.run(
-            "native:zonalstatisticsfb", alg_params)
+            "native:zonalstatisticsfb", alg_params,feedback=self.f)
         output['zonalstatisticsfb'] = process['zonalstatisticsfb']['OUTPUT']
         alg_params = {
             'INPUT': output['zonalstatisticsfb'],
@@ -161,18 +173,21 @@ class agraeAlgorithm():
                                 'name': 'ceap',
                                 'precision': 0,
                                 'type': 6}],
-            'OUTPUT': 'TEMPORARY_OUTPUT'
+            'OUTPUT': self.out
         }
         process['refactorfields'] = processing.run(
-            "native:refactorfields", alg_params)
+            "native:refactorfields", alg_params,feedback=self.f)
         output['refactorfields'] = process['refactorfields']['OUTPUT']
 
     #    print(j)
-        lyr = output['refactorfields']
+        if self.out != 'TEMPORARY_OUTPUT': 
+            lyr = QgsVectorLayer(self.out, 'segmentos', 'ogr')
+        else:
+            lyr = output['refactorfields']
         QgsProject.instance().addMapLayer(lyr)
 
 
-path = r'C:/Users/FRANCISCO/Downloads/VSEC_ARY05.DAT'
+# path = r'C:/Users/FRANCISCO/Downloads/VSEC_ARY05.DAT'
 
-alg = agraeAlgorithm(path)
-alg.processVerisData(3)
+# alg = agraeAlgorithm(path)
+# alg.processVerisData(3)
