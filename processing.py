@@ -10,7 +10,7 @@ import time
 
 class agraeVerisAlgorithm():
 
-    def __init__(self, verisFile, bar, segmento='TEMPORARY_OUTPUT'):
+    def __init__(self, verisFile, bar, segmento='memory:Segmentos'):
 
         self.verisFile = verisFile
         self.bar = bar
@@ -173,17 +173,104 @@ class agraeVerisAlgorithm():
                                 'name': 'ceap',
                                 'precision': 0,
                                 'type': 6}],
-            'OUTPUT': self.out
+            'OUTPUT': 'TEMPORARY_OUTPUT'
         }
         process['refactorfields'] = processing.run(
             "native:refactorfields", alg_params,feedback=self.f)
         output['refactorfields'] = process['refactorfields']['OUTPUT']
+        
+
+
+        alg_params = {
+            'INPUT': verisData,
+            'EXPRESSION': 'field_1 = minimum(field_1) or field_1 = maximum(field_1) or field_2 = minimum(field_2) or field_2 = maximum(field_2)',
+            'OUTPUT': 'TEMPORARY_OUTPUT'
+        }
+        
+        process['vertex'] = processing.run(
+            "native:extractbyexpression", alg_params, feedback=self.f)
+        output['vertex'] = process['vertex']['OUTPUT']
+
+        
+
+        alg_params = {'INPUT': output['vertex'],
+                      'FIELD_NAME': 'order', 
+                      'FIELD_TYPE': 1, 
+                      'FIELD_LENGTH': 0, 
+                      'FIELD_PRECISION': 0, 
+                      'FORMULA': 'case\r\nwhen field_2 = maximum(field_2) then 0\r\nwhen field_1= maximum(field_1) then 1\r\nwhen field_2 = minimum(field_2) then 2\r\nwhen field_1 = minimum(field_1) then 3\r\nend', 
+                      'OUTPUT': 'TEMPORARY_OUTPUT'}
+
+        process['orderVertex'] = processing.run("native:fieldcalculator", alg_params, feedback=self.f )
+        output['orderVertex'] = process['orderVertex']['OUTPUT']
+
+        
+        
+        alg_params = {'INPUT': output['orderVertex'],
+         'CLOSE_PATH': True, 
+         'ORDER_FIELD': 'order', 
+         'GROUP_FIELD': '', 
+         'DATE_FORMAT': '', 
+         'OUTPUT': 'TEMPORARY_OUTPUT'}
+        process['pointstopath'] = processing.run("qgis:pointstopath", alg_params, feedback=self.f)
+        output['pointstopath'] = process['pointstopath']['OUTPUT']
+        
+        
+        alg_params = {
+            'INPUT': output['pointstopath'], 
+            'OUTPUT': 'TEMPORARY_OUTPUT'}
+        process['linestopolygons'] = processing.run("qgis:linestopolygons",  alg_params, feedback=self.f)
+        output['linestopolygons'] = process['linestopolygons']['OUTPUT']
+        
+        
+        alg_params = {
+            'INPUT': output['linestopolygons'], 
+            'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:3857'), 
+            'OPERATION': '+proj=pipeline +step +proj=unitconvert +xy_in=deg +xy_out=rad +step +proj=webmerc +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84', 
+            'OUTPUT': 'TEMPORARY_OUTPUT'}
+        process['reprojectlayer'] = processing.run("native:reprojectlayer", alg_params, feedback=self.f)
+        output['reprojectlayer'] = process['reprojectlayer']['OUTPUT']
+        
+
+        alg_params = {
+            'INPUT': output['reprojectlayer'],
+            'DISTANCE': 3, 
+            'SEGMENTS': 5, 
+            'END_CAP_STYLE': 1, 
+            'JOIN_STYLE': 1, 
+            'MITER_LIMIT': 2, 
+            'DISSOLVE': False, 
+            'OUTPUT': 'TEMPORARY_OUTPUT'}
+        process['buffer'] = processing.run("native:buffer", alg_params, feedback=self.f )
+        output['buffer'] = process['buffer']['OUTPUT']
+        
+        alg_params = {
+            'INPUT': output['buffer'], 
+            'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:4326'), 
+            'OPERATION': '+proj=pipeline +step +inv +proj=webmerc +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +step +proj=unitconvert +xy_in=rad +xy_out=deg', 
+            'OUTPUT': 'TEMPORARY_OUTPUT'}
+        process['reprojectlayer2']=  processing.run("native:reprojectlayer", alg_params, feedback=self.f)
+        output['reprojectlayer2'] = process['reprojectlayer2']['OUTPUT']
+        
+        alg_params = {
+            'INPUT': output['refactorfields'],
+            'OVERLAY': output['reprojectlayer2'], 
+            'OUTPUT': self.out}
+        process['clip'] = processing.run("native:clip", alg_params, feedback=self.f)
+        output['clip'] = process['clip']['OUTPUT']
+        
+
+
+
+
 
     #    print(j)
-        if self.out != 'TEMPORARY_OUTPUT': 
-            lyr = QgsVectorLayer(self.out, 'segmentos', 'ogr')
+        if self.out != 'memory:Segmentos':
+            lyr = QgsVectorLayer(self.out, 'Segmentos', 'ogr')
         else:
-            lyr = output['refactorfields']
+            lyr = output['clip']
+
+        # print(output['vertex'])
         QgsProject.instance().addMapLayer(lyr)
 
 
