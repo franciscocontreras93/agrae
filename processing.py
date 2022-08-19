@@ -5,7 +5,6 @@ from qgis.core import *
 import numpy as np
 import jenkspy
 import tempfile
-import time
 
 
 class agraeVerisAlgorithm():
@@ -263,9 +262,3 @@ class agraeVerisAlgorithm():
 
         process = {}
         output = {}
-
-
-# path = r'C:/Users/FRANCISCO/Downloads/VSEC_ARY05.DAT'
-
-# alg = agraeAlgorithm(path)
-# alg.processVerisData(3)

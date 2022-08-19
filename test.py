@@ -1,7 +1,12 @@
+from string import ascii_uppercase, digits
+from itertools import product
+from string import ascii_uppercase
+import itertools
+import string
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
-import os, re
-
+import os, re, math
+import psycopg2
 
 
 class PanelRender():
@@ -351,10 +356,32 @@ class PanelRender():
         self.img.save(f'{filename}\\{self.lote}-{self.parcela}-{self.cultivo}_{self.date}.png')
     
 
-render = PanelRender('Prueba', 'Prueba', 'TRIGO B', 7895, 2.41 ,[200,200,200],['06-16-24','30-00-00'])
-# panel = render.panelUno()
-# render.panelDos(4)
-graf = render.panelTres(pesos=[250, 500],precios=[1500,2000])
+# render = PanelRender('Prueba', 'Prueba', 'TRIGO B', 7895, 2.41 ,[200,200,200],['06-16-24','30-00-00'])
+# # panel = render.panelUno()
+# # render.panelDos(4)
+# graf = render.panelTres(pesos=[250, 500],precios=[1500,2000])
 
 # render.panelHuellaCarbono(datos)
 
+class Codigos(): 
+    def __init__(self):
+        self.conn = psycopg2.connect("dbname=agrae user=postgres password=23826405")
+        pass
+
+    def cods(self):
+        l = [] 
+        for a, b, d in product(ascii_uppercase, ascii_uppercase, range(1)):
+            l.append(f'{a}{b}')
+        # print(l)
+        return l
+    
+    def push(self): 
+        l = self.cods()
+        with self.conn: 
+            cur = self.conn.cursor() 
+
+            for e in l: 
+                exp =  "insert into datos.codigos(cod) values('{}')".format(e)
+                cur.execute(exp)
+
+            self.conn.commit()

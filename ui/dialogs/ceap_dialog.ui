@@ -145,6 +145,13 @@
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout_2">
+     <item row="0" column="0">
+      <widget class="QProgressBar" name="progressBar">
+       <property name="value">
+        <number>0</number>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="1">
       <widget class="QPushButton" name="btn_run">
        <property name="maximumSize">
@@ -158,10 +165,13 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QProgressBar" name="progressBar">
-       <property name="value">
-        <number>0</number>
+     <item row="0" column="2">
+      <widget class="QPushButton" name="pushButton_3">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Guardar en BD</string>
        </property>
       </widget>
      </item>

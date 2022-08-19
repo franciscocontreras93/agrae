@@ -15,8 +15,8 @@ from .processing import *
 from .utils import AgraeUtils, AgraeToolset
 
 agraeExpDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/exp_dialog.ui'))
-agraeSegmentoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/parcela_dialog.ui'))
-agraeParametrosDialog, _ =  uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/params_dialog.ui'))
+_agraeSegmentoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/parcela_dialog.ui'))
+_agraeParametrosDialog, _ =  uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/params_dialog.ui'))
 agraeCultivoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/cultivo_dialog.ui'))
 agraePersonaDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/personas_dialog.ui'))
 agraeAgricultorDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/agricultor_dialog.ui'))
@@ -375,7 +375,7 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
         print('Cambio en Columna {} Fila {}'.format(item.column(),item.row()))
         pass
 
-class agraeSegmentoDialog(QtWidgets.QDialog, agraeSegmentoDialog):
+class agraeSegmentoDialog(QtWidgets.QDialog, _agraeSegmentoDialog):
 
     closingPlugin = pyqtSignal()
 
@@ -411,7 +411,7 @@ class agraeSegmentoDialog(QtWidgets.QDialog, agraeSegmentoDialog):
         self.tools.crearSegmento(self, table) 
         
 
-class agraeParametrosDialog(QtWidgets.QDialog, agraeParametrosDialog): 
+class agraeParametrosDialog(QtWidgets.QDialog, _agraeParametrosDialog): 
     closingPlugin = pyqtSignal()
     
     def __init__(self, parent=None):
@@ -2104,6 +2104,9 @@ class ceapPrevDialog(QtWidgets.QDialog, agraeCeapDialog):
         uic.loadUi(os.path.join(os.path.dirname(__file__),'ui/dialogs/ceap_dialog.ui'),self)
         self.tools = AgraeToolset()
         self.utils = AgraeUtils()
+        
+        self.conn = self.utils.Conn() 
+        
         self.UIComponents()
 
     def closeEvent(self, event):
@@ -2117,6 +2120,8 @@ class ceapPrevDialog(QtWidgets.QDialog, agraeCeapDialog):
         
         self.pushButton.clicked.connect(self.openFileDialog)
         self.pushButton_2.clicked.connect(self.saveFileDialog)
+        
+        self.pushButton_3.clicked.connect(self.saveInDataBase)
 
         self.btn_run.clicked.connect(self.run)
     
@@ -2139,10 +2144,35 @@ class ceapPrevDialog(QtWidgets.QDialog, agraeCeapDialog):
 
         finally: 
             self.progressBar.setValue(100)
+            self.pushButton_3.setEnabled(True)
             lyr = QgsProject.instance().mapLayersByName('Veris DAT')[0]
             iface.layerTreeView().refreshLayerSymbology(lyr.id())
     
 
+    def saveInDataBase(self): 
+        lyr = QgsProject.instance().mapLayersByName('Segmentos')[0]
+        srid = lyr.crs().authid()[5:]
+        for f in lyr.getFeatures(): 
+            s = f[0]
+            ceap = f[1]
+            geom = f.geometry().asWkt()
+            try: 
+                with self.conn: 
+                    cursor = self.conn.cursor() 
+                    sql = f''' insert into segmentocampo(segmento,ceap,geometria)
+                                            values
+                                            ({s},{ceap},
+                                            st_multi(st_force2d(st_transform(st_geomfromtext('{geom}',{srid}),4326)))) '''
+                                            
+                    cursor.execute(sql)
+                    self.conn.commit() 
+                    print('GUARDADO EXITOSAMENTE')
+            except Exception as ex: 
+                print(ex)
+                self.conn.rollback()
+                                            
+            
+            
 
     def openFileDialog(self):
         options = QFileDialog.Options()
