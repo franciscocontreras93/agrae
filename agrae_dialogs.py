@@ -2150,23 +2150,28 @@ class ceapPrevDialog(QtWidgets.QDialog, agraeCeapDialog):
     
 
     def saveInDataBase(self): 
-        lyr = QgsProject.instance().mapLayersByName('Segmentos')[0]
+        lyr = iface.activeLayer() 
         srid = lyr.crs().authid()[5:]
         for f in lyr.getFeatures(): 
             s = f[0]
             ceap = f[1]
             geom = f.geometry().asWkt()
             try: 
-                with self.conn: 
-                    cursor = self.conn.cursor() 
-                    sql = f''' insert into segmentocampo(segmento,ceap,geometria)
-                                            values
-                                            ({s},{ceap},
-                                            st_multi(st_force2d(st_transform(st_geomfromtext('{geom}',{srid}),4326)))) '''
-                                            
-                    cursor.execute(sql)
-                    self.conn.commit() 
-                    print('GUARDADO EXITOSAMENTE')
+                with self.conn:
+                    if 'Segmentos' in lyr.name(): 
+                        cursor = self.conn.cursor() 
+                        sql = f''' insert into segmentocampo(segmento,ceap,geometria)
+                                                values
+                                                ({s},{ceap},
+                                                st_multi(st_force2d(st_transform(st_geomfromtext('{geom}',{srid}),4326)))) '''
+                                                
+                        cursor.execute(sql)
+                        self.conn.commit() 
+                        iface.messageBar().pushMessage(
+                            'aGraes GIS', 'Segmentos guardados Correctamente', level=3, duration=3)
+                    else: 
+                        iface.messageBar().pushMessage(
+                            'Error', 'Capa invalida', level=2, duration=3)
             except Exception as ex: 
                 print(ex)
                 self.conn.rollback()
