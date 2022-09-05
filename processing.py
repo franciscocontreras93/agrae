@@ -24,11 +24,11 @@ class agraeVerisAlgorithm():
         ''' TABLE STRUCTURE = [MIN-MAX-VALUE] '''
         try:
             if n_class == 2:
-                j = jenkspy.jenks_breaks(values, nb_class=n_class)
+                j = jenkspy.jenks_breaks(values, n_classes=n_class)
                 table = [j[0], j[1], 1, j[1], j[2], 2]
                 return table, j
             if n_class == 3:
-                j = jenkspy.jenks_breaks(values, nb_class=n_class)
+                j = jenkspy.jenks_breaks(values, n_classes=n_class)
                 table = [j[0], j[1], 1, j[1], j[2], 2, j[2], j[3], 3]
                 return table, j
         except ValueError as err:
@@ -70,7 +70,6 @@ class agraeVerisAlgorithm():
         output = {}
         uri = f'file:///{path}?type=csv&delimiter=%5Ct&useHeader=No&maxFields=10000&detectTypes=yes&xField=field_1&yField=field_2&crs=EPSG:4326&spatialIndex=yes&subsetIndex=no&watchFile=no'
         verisData = QgsVectorLayer(uri, 'Veris DAT', 'delimitedtext')
-        QgsProject.instance().addMapLayer(verisData)
         alg_params = {
             'INPUT': verisData,
             'EXPRESSION': 'field_3 > 0.01',

@@ -2142,11 +2142,11 @@ class ceapPrevDialog(QtWidgets.QDialog, agraeCeapDialog):
         except Exception as ex: 
             print(ex)
 
-        # finally: 
-        #     self.progressBar.setValue(100)
-        #     self.pushButton_3.setEnabled(True)
-        #     # lyr = QgsProject.instance().mapLayersByName('Veris DAT')[0]
-        #     # iface.layerTreeView().refreshLayerSymbology(lyr.id())
+        finally: 
+            self.progressBar.setValue(100)
+            self.pushButton_3.setEnabled(True)
+            lyr = QgsProject.instance().mapLayersByName('Veris DAT')[0]
+            iface.layerTreeView().refreshLayerSymbology(lyr.id())
     
 
     def saveInDataBase(self): 
