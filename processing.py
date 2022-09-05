@@ -70,6 +70,7 @@ class agraeVerisAlgorithm():
         output = {}
         uri = f'file:///{path}?type=csv&delimiter=%5Ct&useHeader=No&maxFields=10000&detectTypes=yes&xField=field_1&yField=field_2&crs=EPSG:4326&spatialIndex=yes&subsetIndex=no&watchFile=no'
         verisData = QgsVectorLayer(uri, 'Veris DAT', 'delimitedtext')
+        QgsProject.instance().addMapLayer(verisData)
         alg_params = {
             'INPUT': verisData,
             'EXPRESSION': 'field_3 > 0.01',
