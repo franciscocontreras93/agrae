@@ -93,6 +93,7 @@ class agraeVerisAlgorithm():
             'OUTPUT': f'{tempfile.gettempdir()}\idw.tif'}
         process['idw'] = processing.run(
             "gdal:gridinversedistancenearestneighbor", alg_params,feedback=self.f)
+        print('1')
         output['idw'] = QgsRasterLayer(process['idw']['OUTPUT'], 'idw')
         dataset = gdal.Open(output['idw'].source())
         band = dataset.GetRasterBand(1)
@@ -115,6 +116,7 @@ class agraeVerisAlgorithm():
             "native:reclassifybytable", alg_params,feedback=self.f)
         output['reclass'] = QgsRasterLayer(
             process['reclass']['OUTPUT'], 'idw Reclasificado')
+        print('2')
 
         alg_params = {
             'INPUT': output['reclass'],
@@ -126,6 +128,7 @@ class agraeVerisAlgorithm():
         }
         process['polygonize'] = processing.run("gdal:polygonize", alg_params,feedback=self.f)
         output['polygonize'] = process['polygonize']['OUTPUT']
+        print('3')
 
         alg_params = {
             'INPUT': output['polygonize'],
