@@ -2145,8 +2145,8 @@ class ceapPrevDialog(QtWidgets.QDialog, agraeCeapDialog):
         finally: 
             self.progressBar.setValue(100)
             self.pushButton_3.setEnabled(True)
-            lyr = QgsProject.instance().mapLayersByName('Veris DAT')[0]
-            iface.layerTreeView().refreshLayerSymbology(lyr.id())
+            # lyr = QgsProject.instance().mapLayersByName('Veris DAT')[0]
+            # iface.layerTreeView().refreshLayerSymbology(lyr.id())
     
 
     def saveInDataBase(self): 
