@@ -1,4 +1,4 @@
-from osgeo import gdal, gdal_array, osr
+from osgeo import gdal
 from qgis import processing
 from qgis.core import *
 

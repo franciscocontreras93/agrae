@@ -25,29 +25,23 @@ import os
 import csv
 import pandas as pd
 import numpy as np
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-import psycopg2
 import time
-from datetime import datetime
 # from datetime import date
-from PIL import Image, ImageDraw, ImageFont
-from psycopg2 import OperationalError,InterfaceError, errors, extras
-from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QAbstractTableModel
-from PyQt5.QtGui import QRegExpValidator, QIcon, QPixmap, QFont
+from psycopg2 import InterfaceError, errors, extras
+from PyQt5.QtCore import QRegExp, QDate
+from PyQt5.QtGui import QRegExpValidator, QIcon, QPixmap
 from PyQt5.QtWidgets import *
-from qgis.PyQt import QtGui, QtWidgets, uic
-from qgis.PyQt.QtCore import pyqtSignal, pyqtSlot, QSettings
+from qgis.PyQt import QtWidgets, uic
+from qgis.PyQt.QtCore import pyqtSignal, QSettings
 from qgis.core import *
 from qgis.utils import iface
 from qgis.PyQt.QtXml import QDomDocument
-from .agrae_dialogs import expFindDialog, agraeSegmentoDialog, agraeParametrosDialog, cultivoFindDialog, personaDialog,agricultorDialog
+from .agrae_dialogs import expFindDialog, agraeSegmentoDialog, agraeParametrosDialog, cultivoFindDialog, agricultorDialog
 from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic, TableModel, PanelRender
 
-from .agraeTools import agraeToolset
 from .resources import *
 
-from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from PyQt5 import QtCore, QtWidgets
 import sys
@@ -67,7 +61,7 @@ agraeLoteParcelaDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__
 agraeExpDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/exp_dialog.ui'))
 agraeCultivoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/cultivo_dialog.ui'))
 
-agraeAnaliticaDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/analitica_dialog.ui'))
+agraeAnaliticaDialog_, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/analitica_dialog.ui'))
 
 class agraeDockWidget(QtWidgets.QDockWidget, agraeSidePanel):
     closingPlugin = pyqtSignal()
@@ -1833,7 +1827,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         return data
 
 
-class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog):
+class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
     matplotlib.use('Qt5Agg')
     closingPlugin = pyqtSignal()
 

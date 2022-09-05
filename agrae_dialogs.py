@@ -1,13 +1,13 @@
 import os
-from PyQt5.QtCore import QRegExp, QDate
-from PyQt5.QtGui import QRegExpValidator, QIcon
+from PyQt5.QtCore import QDate
+from PyQt5.QtGui import QIcon
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import * 
 from qgis.core import * 
 from qgis.utils import iface
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import pyqtSignal
-from psycopg2 import OperationalError, InterfaceError, errors, extras
+from psycopg2 import errors
 from .processing import *
 
 
