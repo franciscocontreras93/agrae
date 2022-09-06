@@ -2128,9 +2128,11 @@ class ceapPrevDialog(QtWidgets.QDialog, agraeCeapDialog):
     def run(self):
         # print(self.ln_input.text())
         try: 
-            inp = os.path.normpath(self.ln_input.text())
+            # inp = os.path.normpath(self.ln_input.text())
+            inp = os.path.normpath(r"C:\Users\FRANCISCO\Downloads\VSEC_ARY05.DAT")
             out = os.path.normpath(self.ln_output.text())
-            n_class = self.spinBox.value()
+            # n_class = self.spinBox.value()
+            n_class = 3
             if len(inp) > 3:
                 if len(out) > 3:
                     alg = agraeVerisAlgorithm(inp, self.progressBar, segmento=out)
@@ -2145,8 +2147,8 @@ class ceapPrevDialog(QtWidgets.QDialog, agraeCeapDialog):
         finally: 
             self.progressBar.setValue(100)
             self.pushButton_3.setEnabled(True)
-            lyr = QgsProject.instance().mapLayersByName('Veris DAT')[0]
-            iface.layerTreeView().refreshLayerSymbology(lyr.id())
+            # lyr = QgsProject.instance().mapLayersByName('Veris DAT')[0]
+            # iface.layerTreeView().refreshLayerSymbology(lyr.id())
     
 
     def saveInDataBase(self): 
