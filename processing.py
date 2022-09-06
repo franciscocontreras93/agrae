@@ -115,8 +115,8 @@ class agraeVerisAlgorithm():
         nan_array = array
         nan_array[array == nodata] = np.nan
         array = np.unique(nan_array)
-        self.quantile(nan_array)
-        return None
+        # self.quantile(nan_array)
+        # return None
         table, j = self.jenks(array, n_clases)
         alg_params = {'INPUT_RASTER': output['idw'],
                       'RASTER_BAND': 1,
