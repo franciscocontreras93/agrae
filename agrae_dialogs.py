@@ -47,15 +47,18 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
     def selectIdExp(self,r=None):
         # if r != None: 
         #     row = r.row()
-
-        row = self.tableWidget.currentRow()
-        
-        idExp = int(self.tableWidget.item(row, 0).text())
-        _expName = str(self.tableWidget.item(row,1).text())
-
-        self.getIdExp.emit(idExp)
-        self.expName.emit(_expName)
-        self.close()
+        try:
+            row = self.tableWidget.currentRow()        
+            idExp = int(self.tableWidget.item(row, 0).text())
+            _expName = str(self.tableWidget.item(row,1).text())
+            self.getIdExp.emit(idExp)
+            self.expName.emit(_expName)
+            self.close()
+            
+        except AttributeError as ae: 
+            pass
+        except Exception as ex: 
+            QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
 
     def UIcomponents(self):
 
@@ -81,6 +84,9 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         self.pushButton.clicked.connect(self.selectIdExp)
         self.pushButton.setIconSize(QtCore.QSize(20, 20))
         self.pushButton.setIcon(QIcon(icons_path['share']))
+        
+        self.pushButton_3.setIconSize(QtCore.QSize(20, 20))
+        self.pushButton_3.setIcon(QIcon(icons_path['drop_rel']))
 
         self.tabWidget.setCurrentIndex(0)
         self.tabWidget.setTabIcon(0, QIcon(icons_path['search_icon_path']))
@@ -89,8 +95,8 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         
 
         #* ACTIONS
-        self.pushButton_2.clicked.connect(self.crear)
-
+        self.pushButton_2.clicked.connect(self.create)
+        self.pushButton_3.clicked.connect(self.remove)
         self.lineEdit.setCompleter(completer)
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
 
@@ -103,7 +109,8 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         event.accept()
 
     def data(self, filtro=None):
-        if filtro == None:
+       
+        if filtro == None or filtro == '':
             cursor = self.conn.cursor()
             sql = '''select e.idexplotacion, e.nombre, e.direccion, count(a.idagricultor) agricultores from explotacion e
             left join agricultor a on a.idexplotacion = e.idexplotacion
@@ -115,8 +122,9 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
             cursor = self.conn.cursor()
             sql = f'''select e.idexplotacion,e.nombre,e.direccion , count(a.idagricultor) agricultores from explotacion e 
             left join agricultor a on a.idexplotacion = e.idexplotacion 
+            where e.nombre ilike '%{filtro}%' or e.direccion ilike '%{filtro}%' 
             group by e.idexplotacion,e.nombre,e.direccion 
-            where nombre ilike '%{filtro}%' or direccion ilike '%{filtro}%' order by e.idexplotacion '''
+            order by e.idexplotacion'''
             cursor.execute(sql)
             data = cursor.fetchall()
         if len(data) >= 1:
@@ -145,6 +153,7 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
                     item = QTableWidgetItem(str(data[j][i]))
                     self.tableWidget.setItem(j, i, item)
         except:
+            self.tableWidget.setRowCount(0)
             QMessageBox.about(self, "Error:", "No Existen Registros")
             # print('error')
 
@@ -162,9 +171,10 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         self.loadData(filtro)
         pass
 
-    def crear(self):
+    def create(self):
         cursor = self.conn.cursor()
         nombre = self.lineEdit_2.text()
+        nombre = nombre.upper()
         direccion = self.lineEdit_3.text()
         if nombre != '' and direccion != '':
             try:
@@ -172,7 +182,15 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
                 values('{nombre}','{direccion}') '''
                 cursor.execute(sql)
                 self.conn.commit()
-                QMessageBox.about(self, "aGrae GIS:", "Se creo correctamente")
+                QMessageBox.about(self, "aGrae GIS:", "Explotacion {} creada correctamente".format(nombre))
+                self.lineEdit_2.clear()
+                self.lineEdit_3.clear()
+                try: 
+                    self.tabWidget.setCurrentIndex(0)
+                    self.tableWidget.setRowCount(0)
+                    self.loadData()
+                except: 
+                    pass
             except Exception as ex:
                 print(ex)
                 QMessageBox.about(self, "Error:", "Error revisa la consola")
@@ -180,6 +198,26 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         else:
             QMessageBox.about(
                 self, "Error:", "Debes rellenar todos los campos")
+            
+            
+    def remove(self): 
+        try:
+            cursor = self.conn.cursor()
+            row = self.tableWidget.currentRow()
+            idExp = int(self.tableWidget.item(row, 0).text())
+            sql = 'delete from explotacion where explotacion.idexplotacion = {};'.format(idExp)
+            cursor.execute(sql)
+            self.conn.commit()
+            self.tableWidget.setRowCount(0)
+            self.loadData()
+        
+        except AttributeError as ae: 
+            pass
+            
+        except Exception as ex:
+            self.conn.rollback()
+            QMessageBox.about(self, "Error:", "Ocurrio un error, revisa el panel de registros ")
+            QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
 
 
 
@@ -187,6 +225,7 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
 
     closingPlugin = pyqtSignal()
     getIdCultivo = pyqtSignal(int)
+    getCultivoName = pyqtSignal(str)
 
     def __init__(self, parent=None):
         """Constructor."""
@@ -240,7 +279,10 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
     def selectIdCultivo(self):
         row = self.tableWidget.currentRow()
         idCultivo = int(self.tableWidget.item(row, 0).text())
+        nameCultivo = self.tableWidget.item(row, 1).text()
         self.getIdCultivo.emit(idCultivo)
+        self.getCultivoName.emit(nameCultivo)
+        
         self.close()
 
     def closeEvent(self, event):

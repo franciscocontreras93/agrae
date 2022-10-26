@@ -105,6 +105,11 @@
        </column>
        <column>
         <property name="text">
+         <string>Explotacion</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
          <string>Num. Parcelas</string>
         </property>
        </column>
@@ -145,6 +150,9 @@
        <property name="text">
         <string/>
        </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
        <property name="flat">
         <bool>false</bool>
        </property>
@@ -154,6 +162,9 @@
       <widget class="QPushButton" name="pushButton_3">
        <property name="text">
         <string/>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
        </property>
        <property name="flat">
         <bool>false</bool>
@@ -168,6 +179,9 @@
        <property name="text">
         <string/>
        </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
        <property name="flat">
         <bool>false</bool>
        </property>
@@ -180,6 +194,9 @@
        </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
        </property>
        <property name="flat">
         <bool>false</bool>
@@ -196,6 +213,9 @@
        </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
        </property>
        <property name="flat">
         <bool>false</bool>

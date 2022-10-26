@@ -356,7 +356,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>Agregar Parcelas</string>
+        <string>Visualizar Parcelas</string>
        </property>
       </widget>
       <widget class="QPushButton" name="btn_add_segmentos">

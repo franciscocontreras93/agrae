@@ -7,7 +7,7 @@ from qgis.PyQt.QtCore import QSettings
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 
-from qgis.gui import QgsMessageBar
+from qgis.gui import QgsMessageBar 
 from qgis.utils import iface
 from qgis.core import *
 
@@ -181,7 +181,10 @@ class AgraeUtils():
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(
-            self, "QFileDialog.getSaveFileName()", "", "Todos los Archivos (*);;Archivos separados por coma (*.csv)", options=options)
+            self, "QFileDialog.getSaveFileName()", 
+            "",
+            "Todos los Archivos (*);;Archivos separados por coma (*.csv)", 
+            options=options)
         if fileName:
             return fileName
         else:
@@ -189,6 +192,20 @@ class AgraeUtils():
 
     def msgBar(self,text:str,level:int,duration:int): 
         self.iface.messageBar().pushMessage('aGraes GIS', '{}'.format(text), level=level, duration=duration)
+        
+    def logger(self,text:str,level:int):
+        """logger aGrae Logger
+
+        :param str text: text of log.
+        :param int level: level of message: 
+            0-Info
+            1-Warning
+            2-Critical
+            3-Success
+        """()
+        QgsMessageLog.logMessage(f'{text}', 'aGrae GIS', level=level)
+        if level == 2: 
+            self.iface.messageBar().pushMessage('aGraes GIS', 'Ocurrio un Error, Revisa el panel de registro.', level=level, duration=5)      
 
 class AgraeToolset():
     def __init__(self):
@@ -272,23 +289,52 @@ class AgraeToolset():
                 cur = conn.cursor()
                 layer = self.iface.activeLayer()
                 # print(layer.name())
-                features = layer.getFeatures()
+                if len(layer.selectedFeatures()) > 0:
+                    features = layer.selectedFeatures()
+                else: 
+                    features = [f for f in layer.getFeatures()]
+                
                 confirm = QMessageBox.question(
-                    widget, 'aGrae GIS', f"Se Cargaran {layer.featureCount()} recintos, de la capa {layer.name()} a la Base de Datos.\nProceder con la carga? ", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    widget, 'aGrae GIS', f"Se Cargaran {len(features)} recintos, de la capa {layer.name()} a la Base de Datos.\nProceder con la carga? ", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if confirm == QMessageBox.Yes: 
                     for feat in features: 
                         
                         ls = feat.geometry().asWkt()
                         srid = layer.crs().authid()[5:]
                         name = ''
-                        prov = feat[2]
-                        mcpo = feat[3]
-                        aggregate = feat[4]
-                        zone = feat[5]
-                        poly = feat[6]
-                        allotment = feat[7]
-                        inclosure = feat[8]
-                        idsigpac = feat[0]
+                        #* update select of features attributes
+                        
+                        if feat['provincia']: 
+                            prov = feat['provincia'] 
+                        else: 
+                            prov = feat['PROVINCIA']
+                        if feat['municipio']: 
+                            mcpo = feat['municipio'] 
+                        else: 
+                            mcpo = feat['MUNICIPIO']
+                        if feat['agregado']: 
+                            aggregate = feat['agregado'] 
+                        else: 
+                            aggregate = feat['AGREGADO']
+                        if feat['zona']: 
+                            zone = feat['zona'] 
+                        else: 
+                            zone = feat['ZONA']
+                        if feat['poligono']: 
+                            poly = feat['poligono'] 
+                        else: 
+                            poly = feat['POLIGONO']
+                        if feat['parcela']: 
+                            allotment = feat['parcela'] 
+                        else: 
+                            allotment = feat['PARCELA']
+                        if feat['recinto']: 
+                            inclosure = feat['recinto'] 
+                        else: 
+                            inclosure = feat['RECINTO']
+                            
+                        
+                        idsigpac = f'{prov:02d}{mcpo:03d}{aggregate:02d}{zone:02d}{poly:03d}{allotment:05d}{inclosure:05d}'
 
                         sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria,idsigpac) VALUES('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))),'{idsigpac}')'''
                         try:
@@ -296,15 +342,16 @@ class AgraeToolset():
                             conn.commit()
                             count += 1
                             # print('agregado correctamente')
+                            # QgsMessageLog.logMessage(str(idsigpac))
                         except errors.lookup('23505'):
                             # errors.append(idParcela)
                             _count += 1
                             # print(f'La parcela {feat[0]} ya existe.')
-                            # QMessageBox.about(widget, f"aGrae GIS:",f'La parcela: {feat[0]} ya existe.')
-                            conn.rollback()
+                            QMessageBox.about(widget, f"aGrae GIS:",f'La parcela: {feat[0]} ya existe.')
+                            # conn.rollback()
 
                     QMessageBox.about(widget, f"aGrae GIS:",
-                                        f"Se agregaron {count} parcelas correctamente.\nErronas = {_count}")
+                                        f"Se agregaron {count} parcelas correctamente.\nErroneas = {_count}")
                 else: 
                     pass
 
@@ -317,7 +364,7 @@ class AgraeToolset():
             except Exception as ex:
                 # print(ex)
                 QMessageBox.about(widget, f"aGrae GIS", f"No se pudo almacenar el registro {ex}")
-                conn.rollback()
+                # conn.rollback()
     def renameParcela(self,widget): 
         lyr = QgsProject.instance().mapLayersByName('aGrae Parcelas')[0]
         nombreParcelario = str(widget.lineEdit_2.text())
@@ -517,7 +564,7 @@ class AgraeToolset():
                 nombreLote = widget.tableWidget.item(row, 1)
                 nombreParcela = widget.tableWidget.item(row, 2)
                 fecha = widget.tableWidget.item(row, 3)
-                exp = f''' "idlotecampania" = {idlote.text()} and "lote" ilike '%{nombreLote.text()}%' and "parcela" ilike'%{nombreParcela.text()}%' and "fechasiembra" = '{fecha.text()}' '''
+                exp = f''' "idlotecampania" = {idlote.text()} and "lote" ilike '%{nombreLote.text()}%' and "parcela" ilike'%{nombreParcela.text()}%' '''
                 uri = QgsDataSourceUri()
                 uri.setConnection(dns['host'], dns['port'],
                                   dns['dbname'], dns['user'], dns['password'])
@@ -558,6 +605,7 @@ class AgraeToolset():
         except Exception: 
             pass
     def crearSegmento(self,widget,table):
+        #! UPLOAD CEAP
         lyr = self.iface.activeLayer()
         srid = lyr.crs().authid()[5:]
         features = lyr.getFeatures()
@@ -570,7 +618,8 @@ class AgraeToolset():
                     cursor = conn.cursor()
                     for row , f in (zip(range(nRow), features)):
                         segm = f[0]               
-                        geometria = f.geometry() .asWkt()                                        
+                        geometria = f.geometry() .asWkt()
+                        ceap = f['ceap']                                     
                         sql = f""" insert into segmento(segmento,geometria)
                                             values
                                             ({segm},
@@ -1326,7 +1375,7 @@ class PanelRender():
     def savePanel(self):
         
         self.panelUno()
-        self.panelHuellaCarbono(self.dataHuellaCarbono)
+        # self.panelHuellaCarbono(self.dataHuellaCarbono)
         self.panelDos(self.i,self._pesos,self._precios)
         filename = QFileDialog.getExistingDirectory(
             None, "Seleccionar directorio de Paneles:")
