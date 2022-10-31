@@ -1964,7 +1964,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
 
         self.regexFormula = QRegExpValidator(QRegExp(r'(\d{2}\-\d{2}\-\d{2})'))
         self.line_formula_1.setValidator(self.regexFormula)
-        # self.line_formula_1.setInputMask(("dd-"*3)[:-1]) #! AGREGAR MASCARA AL INGRESAR LA FORMULA TODO: 
+        self.line_formula_1.setInputMask(("99-"*3)[:-1]) #! AGREGAR MASCARA AL INGRESAR LA FORMULA TODO: 
         self.line_formula_1.textChanged.connect(self.fert)
         self.line_formula_2.setValidator(self.regexFormula)
         self.line_formula_2.textChanged.connect(self.fert)
@@ -2541,10 +2541,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
 
         conn = self.utils.Conn() 
         data = self.dataExtraccion
-        
-        
-
-   
+        # print(data)
         with conn: 
             try:
                 cursor = conn.cursor() 
@@ -2553,17 +2550,16 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
                 where idlotecampania = {}'''.format(self.idlotecampania)
                 cursor.execute(sql)
                 data = cursor.fetchall() 
-                # print(data)
+                print('PRECALCULO HC',data)
                 npk = [str(e[0]) for e in data]
                 lista = [e.split('-') for e in npk]
                 n = int(lista[0][0])
                 p = int(lista[0][1])
                 k = int(lista[0][2])
-                # print(n,p,k)
+                print(n,p,k)
                 #! CALCULO HUELLA CARBONO FERTILIZACION TRADICIONAL
-
                 huella_carbono_fp = round((n * 4.9500) + (p * 0.7333) + (k * 0.5500))
-                # print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
+                print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
             except ValueError as ve:
                 QgsMessageLog.logMessage(f'{ve}', 'aGrae GIS', level=1)
                 # QMessageBox.about(self, f"aGrae GIS:",f"No Existen datos de Fertilizacion Tradicional")
@@ -2578,12 +2574,11 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
             
             
             #! CALCULO HUELLA CARBONO FERTILIZACION INTRAPARCELARIA
-
             sql = ''' select (necesidad_n+(-1*necesidad_nf)) n,  (necesidad_p+(-1*necesidad_pf)),  (necesidad_k+(-1*necesidad_kf)) k, area_has
             from unidades where idlotecampania = {}'''.format(self.idlotecampania)
             cursor.execute(sql)
             data = cursor.fetchall() 
-            # print(data)
+            print('DEBUG',data)
             area = [float(e[3]) for e in data]
             n = [int(e[0]) for e in data]
             p = [int(e[1]) for e in data]
@@ -2593,11 +2588,11 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
             n_ponderado_ip = self.sumaPonderada(n, area)
             p_ponderado_ip = self.sumaPonderada(p, area)
             k_ponderado_ip  = self.sumaPonderada(k, area)
-            # print(n_ponderado_ip, p_ponderado_ip, k_ponderado_ip)
+            print(n_ponderado_ip, p_ponderado_ip, k_ponderado_ip)
 
             huella_carbono_fv = round((n_ponderado_ip * 4.9500) + (p_ponderado_ip * 0.7333) + (k_ponderado_ip * 0.5500))
 
-            # print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
+            print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
 
             #! REDUCCION HUELLA DE CARBONO: 
             try: 
@@ -2618,12 +2613,12 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
                 self.lbl_hc_percent.setText('Reducción: {}%'.format(_percent))
 
                 self.dataHuellaCarbono = {
-                'percent': _percent,
-                'chc': chc,
-                'biomasa': ccc,
-                'cosecha': x1,
-                'residuo': x2,
-                'fertilizacion': _reduccion } 
+                'percent': 0,
+                'chc': 0,
+                'biomasa': 0,
+                'cosecha': 0,
+                'residuo': 0,
+                'fertilizacion': 0 } 
 
                 # print(self.dataHuellaCarbono)
             except Exception as ex:
@@ -2677,8 +2672,41 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
+        self.UIclear()
+        
         event.accept()
-
+    def UIclear(self): 
+        self.line_buscar.clear() 
+        self.line_lote_nombre.clear() 
+        self.label_2.clear()
+        self.label_3.clear()
+        self.ln_produccion.clear()
+        self.cmb_regimen.setCurrentIndex(0)
+        self.cmb_moneda.setCurrentIndex(0)
+        self.check_dateSiembra.setChecked(False)
+        self.check_dateCosecha.setChecked(False)
+        self.groupBox.setChecked(False)
+        self.line_formula_fert_1.clear()
+        self.line_precio_fert_1.clear()
+        self.line_calculado_fert_1.clear()
+        self.cmb_ajustar_fert_1.setCurrentIndex(0)
+        self.line_aplicado_fert_1.clear()
+        self.line_formula_fert_2.clear()
+        self.line_precio_fert_2.clear()
+        self.line_calculado_fert_2.clear()
+        self.cmb_ajustar_fert_2.setCurrentIndex(0)
+        self.line_aplicado_fert_2.clear()
+        self.line_formula_fert_3.clear()
+        self.line_precio_fert_3.clear()
+        self.line_calculado_fert_3.clear()
+        self.cmb_ajustar_fert_3.setCurrentIndex(0)
+        self.line_aplicado_fert_3.clear()
+        self.line_formula_fert_4.clear()
+        self.line_precio_fert_4.clear()
+        self.line_calculado_fert_4.clear()
+        self.cmb_ajustar_fert_4.setCurrentIndex(0)
+        self.line_aplicado_fert_4.clear()
+        
     def UIcomponents(self):
         self.tabWidget.setTabText(0,'Busqueda de Lotes')
         self.tabWidget.setTabText(1,'Gestionar Campañas')
@@ -2688,7 +2716,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         
         # columna geometria loteparcela
         self.tableWidget.setColumnHidden(6, True)
-        self.tableWidget.setColumnHidden(0, True)
+        # self.tableWidget.setColumnHidden(0, True)
 
         self.sinceDate.dateChanged.connect(self.sinceDateChange)
         self.line_buscar.setClearButtonEnabled(True)
@@ -2704,6 +2732,12 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         self.btn_add_layer_2.setIcon(QIcon(icons_path['add_group_layers']))
         self.btn_add_layer_2.setToolTip('Añadir grupo de parcelas')
         self.btn_add_layer_2.clicked.connect(self.cargarLoteData)
+        
+        self.btn_campania.setIconSize(QtCore.QSize(20, 20))
+        self.btn_campania.setIcon(QIcon(icons_path['load_data']))
+        self.btn_campania.setToolTip('Añadir grupo de parcelas')
+        self.btn_campania.clicked.connect(self.getDataCampania)
+        
 
         self.btn_reload.setIcon(QIcon(icons_path['reload_data']))
         self.btn_reload.setIconSize(QtCore.QSize(20, 20))
@@ -2764,7 +2798,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         self.check_dateSiembra.stateChanged.connect(lambda s,sd = self.lote_dateSiembra : self.DateActivated(s,sd))
         self.check_dateCosecha.stateChanged.connect(lambda s,sd = self.lote_dateCosecha : self.DateActivated(s,sd))
 
-        
+        row = self.tableWidget.currentRow()
 
 
         pass
@@ -3037,6 +3071,22 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
                         QgsMessageLog.logMessage(f'No se pudo almacenar el ajuste, seleccione un elemento', 'aGrae GIS', level=1)
                 if self.line_aplicado_fert_1.text() != self.dataCampania['fertilizantefondoaplicado']:
                     sql = sql + f'''\nfertilizantefondoaplicado = {float(self.line_aplicado_fert_1.text())},'''
+                #* DATOS FERTILIZACION COB1
+                if self.date_fert_2.date() != self.dataCampania['fechafertilizacioncbo1']: 
+                    sql = sql + f'''\nfechafertilizacioncbo1 = '{self.date_fert_2.date().toString('yyyy.MM.dd')}','''
+                if  self.line_formula_fert_2.text() != self.dataCampania['fertilizantecob1formula']:
+                    sql = sql + f'''\nfertilizantecob1formula = '{self.line_formula_fert_2.text() }','''
+                if  self.line_precio_fert_2.text() != self.dataCampania['fertilizantecob1precio']:
+                    sql = sql + f'''\nfertilizantecob1precio = {float(self.line_precio_fert_2.text())},'''
+                if self.line_calculado_fert_2.text() != self.dataCampania['fertilizantecob1calculado']:
+                    sql = sql + f'''\nfertilizantecob1calculado = {float(self.line_calculado_fert_2.text())},'''
+                if self.cmb_ajustar_fert_2.currentText() != self.dataCampania['fertilizantecob1ajustado']:
+                    if self.cmb_ajustar_fert_2.currentIndex() != 0:
+                        sql = sql + f'''\nfertilizantecob1ajustado = '{self.cmb_ajustar_fert_2.currentText()}','''
+                    else:
+                        QgsMessageLog.logMessage(f'No se pudo almacenar el ajuste, seleccione un elemento', 'aGrae GIS', level=1)
+                if self.line_aplicado_fert_2.text() != self.dataCampania['fertilizantecob1aplicado']:
+                    sql = sql + f'''\nfertilizantecob1aplicado = {float(self.line_aplicado_fert_2.text())},'''
                         
                     
                     
@@ -3195,6 +3245,27 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         self.date_fert_4.setMaximumDate(d2)
         pass
     
+    def getDataCampania(self):
+        """getDataCampania Getter datacampania with select idlotecampania
+        """
+        row = self.tableWidget.currentRow()
+        idlotecampania = self.tableWidget.item(row, 0).text()       
+        sqlQuery = f"""
+                select cmp.*,lc.idlote, l.lote  nombre_lote,ex.nombre explotacion_nombre, cult.nombre cultivo_nombre from campania cmp
+                    left join lotecampania lc on cmp.idcampania = lc.idcampania
+                    left join lotes l on lc.idlote = l.idlote
+                    left join explotacion ex on cmp.idexplotacion = ex.idexplotacion 
+                    left join cultivo cult on cmp.idcultivo = cult.idcultivo
+                where l.idlotecampania = {idlotecampania} """
+        with self.conn:
+            cursor = self.conn.cursor(cursor_factory = extras.RealDictCursor)
+            cursor.execute(sqlQuery)
+            data = cursor.fetchone()
+            self.UIclear()
+            self.populateCampaniaData(data)
+            self.tabWidget.setCurrentIndex(1)
+            
+    
     #* DIALOGS 
     def loteDialog(self):
         dialog = loteFindDialog()
@@ -3203,6 +3274,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         dialog.pushButton_2.setEnabled(False)
         dialog.pushButton_3.setEnabled(False)
         dialog.getNombreLote.connect(self.populateLote)
+        self.UIclear()
         dialog.actualizar.connect(self.populateCampaniaData)
         dialog.exec_()
 
@@ -3237,31 +3309,36 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         
         if data['fertilizantefondoformula'] != None:
             self.groupBox.setChecked(True)
-            try:                 
+            try:
+                #TODO AGREGAR FECHAS A TODAS
                 self.line_formula_fert_1.setText(data['fertilizantefondoformula'])
                 self.line_precio_fert_1.setText(str(data['fertilizantefondoprecio']))
-                #TODO self.line_calculado_fert_1.setText(str(data['fertilizantefondocalculado']))
+                self.line_calculado_fert_1.setText(str(data['fertilizantefondocalculado'])) #TODO 
                 self.cmb_ajustar_fert_1.setCurrentText(data['fertilizantefondoajustado'])
                 self.line_aplicado_fert_1.setText(str(data['fertilizantefondoaplicado']))
+                self.tabWidget_3.setCurrentIndex(0)
                 
                 if data['fertilizantecob1formula'] != None:
                     self.line_formula_fert_2.setText(data['fertilizantecob1formula'])
                     self.line_precio_fert_2.setText(str(data['fertilizantecob1precio']))
-                    #TODO self.line_calculado_fert_2.setText(str(data['fertilizantecob1calculado']))
+                    self.line_calculado_fert_2.setText(str(data['fertilizantecob1calculado'])) #TODO 
                     self.cmb_ajustar_fert_2.setCurrentText(data['fertilizantecob1ajustado'])
                     self.line_aplicado_fert_2.setText(str(data['fertilizantecob1aplicado']))
+                    self.tabWidget_3.setCurrentIndex(1)
                 if data['fertilizantecob2formula'] != None:
                     self.line_formula_fert_3.setText(data['fertilizantecob2formula'])
                     self.line_precio_fert_3.setText(str(data['fertilizantecob2precio']))
-                    #TODO self.line_calculado_fert_3.setText(str(data['fertilizantecob2calculado']))
+                    self.line_calculado_fert_3.setText(str(data['fertilizantecob2calculado'])) #TODO 
                     self.cmb_ajustar_fert_3.setCurrentText(data['fertilizantecob2ajustado'])
                     self.line_aplicado_fert_3.setText(str(data['fertilizantecob2aplicado']))
+                    self.tabWidget_3.setCurrentIndex(2)
                 if data['fertilizantecob3formula'] != None:
                     self.line_formula_fert_3.setText(data['fertilizantecob3formula'])
                     self.line_precio_fert_3.setText(str(data['fertilizantecob3precio']))
-                    #TODO self.line_calculado_fert_3.setText(str(data['fertilizantecob3calculado']))
+                    self.line_calculado_fert_3.setText(str(data['fertilizantecob3calculado'])) #TODO 
                     self.cmb_ajustar_fert_3.setCurrentText(data['fertilizantecob3ajustado'])
                     self.line_aplicado_fert_3.setText(str(data['fertilizantecob3aplicado']))
+                    self.tabWidget_3.setCurrentIndex(3)
                     
                 
             except Exception as ex: 

@@ -620,9 +620,9 @@ class AgraeToolset():
                         segm = f[0]               
                         geometria = f.geometry() .asWkt()
                         ceap = f['ceap']                                     
-                        sql = f""" insert into segmento(segmento,geometria)
+                        sql = f""" insert into segmento(segmento,ceap,geometria)
                                             values
-                                            ({segm},
+                                            ({segm},{ceap},
                                             st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))"""                   
                         cursor.execute(sql)
                         conn.commit()                            
@@ -1165,6 +1165,7 @@ class PanelRender():
         h = 307
 
         datos = self.dataHuellaCarbono
+        print(datos)
 
 
         img = Image.open(self.path['base2'])
@@ -1376,6 +1377,7 @@ class PanelRender():
         
         self.panelUno()
         # self.panelHuellaCarbono(self.dataHuellaCarbono)
+        print(self.i,self._pesos,self._precios)
         self.panelDos(self.i,self._pesos,self._precios)
         filename = QFileDialog.getExistingDirectory(
             None, "Seleccionar directorio de Paneles:")
