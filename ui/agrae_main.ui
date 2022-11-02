@@ -343,7 +343,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>Agregar Lotes</string>
+        <string>Visualizar Lotes</string>
        </property>
       </widget>
       <widget class="QPushButton" name="btn_add_parcelas">
@@ -369,13 +369,10 @@
         </rect>
        </property>
        <property name="text">
-        <string>Agregar Segmentos</string>
+        <string>Visualizar Segmentos</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_2">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
+      <widget class="QPushButton" name="btn_add_ambientes">
        <property name="geometry">
         <rect>
          <x>410</x>
@@ -385,13 +382,10 @@
         </rect>
        </property>
        <property name="text">
-        <string>Generar Compositor</string>
+        <string>Visualizar Ambientes</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_5">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
+      <widget class="QPushButton" name="btn_add_unidades">
        <property name="geometry">
         <rect>
          <x>530</x>
@@ -401,7 +395,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>AGRICULTORES</string>
+        <string>Visualizar Unidades</string>
        </property>
       </widget>
      </widget>

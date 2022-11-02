@@ -710,6 +710,7 @@ class AgraeToolset():
 
         layer = QgsVectorLayer(uri.uri(False), f'{nombre}', f'{ogr}')
         QgsProject.instance().addMapLayer(layer)
+    
     def retUri(self,sql,geom,id, exp=None, table=None):
         dns = self.dns
         uri = QgsDataSourceUri()

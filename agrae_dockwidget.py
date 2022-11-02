@@ -763,12 +763,14 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         
         self.pushButton_3.clicked.connect(self.crearAmbientes)
         self.pushButton_4.clicked.connect(self.segmentoDialog)
-        self.pushButton_5.clicked.connect(self.agricultoresDialog)
+        # self.pushButton_5.clicked.connect(self.agricultoresDialog)
         self.btn_find_segmento.clicked.connect(self.buscarSegmento)
 
         self.btn_add_lotes.clicked.connect(self.addLotesMap)
         self.btn_add_parcelas.clicked.connect(self.addParcelasMap)
         self.btn_add_segmentos.clicked.connect(self.addSegmentosMap)
+        self.btn_add_ambientes.clicked.connect(self.addAmbientesMap)
+        self.btn_add_unidades.clicked.connect(self.addUnidadesMap)
         self.btn_cod_segmento.setIcon(QIcon(icons_path['pen-to-square']))
         self.btn_cod_segmento.setIconSize(QtCore.QSize(20, 20))
         self.btn_cod_segmento.setToolTip('Asignar Codigo a segmento')
@@ -1457,17 +1459,21 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         parcela = self.tableWidget.item(row, 2).text()
         cultivo = self.tableWidget.item(row, 5).text()
 
-        sql = '''select row_number() OVER (ORDER BY (st_dump(geometria)).geom) as id,idlotecampania, lote,uf, uf_etiqueta , 
-        fertilizantefondoformula as aplicacion1formula , 
-        fertilizantefondocalculado as aplicacion1dosis, 
-        fertilizantecob1formula as aplicacion2formula , 
-        fertilizantecob1calculado as aplicacion2dosis,
-        fertilizantecob2formula as aplicacion3formula , 
-        fertilizantecob2calculado as aplicacion3dosis,
-        fertilizantecob3formula as aplicacion4formula , 
-        fertilizantecob3calculado as aplicacion4dosis,
-        (st_dump(geometria)).geom as geometria
-        from unidades u where idlotecampania = {}'''.format(idlotecampania)
+        sql = ''' select row_number() OVER (ORDER BY (st_dump(geometria)).geom) as id, 
+        u.idlotecampania, u.lote,u.prod_esperada, u.prod_ponderada, u.uf,u.uf_etiqueta,
+        u.fertilizantefondoformula as aplicacion1formula,
+        u.fertilizantefondocalculado as aplicacion1dosis,
+        u.fertilizantecob1formula as aplicacion2formula,
+        u.fertilizantecob1calculado as aplicacion2dosis,
+        u.fertilizantecob2formula as aplicacion3formula,
+        u.fertilizantecob2calculado as aplicacion3dosis,
+        u.fertilizantecob3formula as aplicacion4formula,
+        u.fertilizantecob3calculado as aplicacion4dosis,
+        round(cast(st_area(st_transform(((st_dump(u.geometria)).geom),25830))/10000 as numeric),4) area_has,
+        (st_dump(u.geometria)).geom as geometria
+        from unidades u
+        where u.idlotecampania = {}'''.format(idlotecampania)
+
         try:
             uriUnidades = QgsDataSourceUri() 
             uriUnidades.setConnection(dns['host'], dns['port'], dns['dbname'], dns['user'], dns['password'])
@@ -1487,7 +1493,6 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                     _options.driverName = 'ESRI Shapefile'
                     _options.fileEncoding = 'utf-8'
                     _options.overrideGeometryType = QgsWkbTypes.Polygon
-                    # _options.symbologyExport = QgsVectorFileWriter.SymbolLayerSymbology
                     QgsVectorFileWriter.writeAsVectorFormat(lyrUnidades,_OUTPUT_PATH,_options)
                     confirm = QMessageBox.question(self, 'aGrae GIS', "Archivo Exportado Exitosamente.\nDesea agregar la capa al mapa?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                     
@@ -1502,11 +1507,11 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                         lyrUnidades.importNamedStyle(styledoc)                   
                         QgsProject.instance().addMapLayer(lyrUnidades)
                         # CAMBIAR EL ESTILO DE LA CAPA A;ADIDA AL MAPA
-                        # INTRO PARA BUSCAR
+
                         
                         
             else: 
-                # print('Capa no Valida')
+                QgsMessageLog.logMessage(f'La capa no es valida', 'aGrae GIS', level=1)
                 pass
         except Exception as ex:
             QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
@@ -1519,6 +1524,11 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     def addSegmentosMap(self): 
         self.tools.addMapLayer('segmentos','aGrae Segmentos',id='id')
+    def addAmbientesMap(self):
+        self.tools.addMapLayer('ambientes','aGrae Ambientes',id='id')
+    def addUnidadesMap(self): 
+        self.tools.addMapLayer('unidades','aGrae Unidades',id='id') #TODO
+        pass
     def addParcelasMap(self):
         sql = f'select * from parcela'
         nombre = 'aGrae Parcelas'
@@ -2437,7 +2447,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
             pass
         
     def panel(self): 
-        # self.huellaCarbono()
+        self.huellaCarbono()
         npk = [self.n_ponderado,self.p_ponderado, self.k_ponderado]
         render = PanelRender(self.lote, self.parcela, self.cultivo, self.prod_ponderado, self.area, npk,self.i,self._pesos,self._precios,self._pesos_aplicados,formulas=self.formulas,dataHuellaCarbono=self.dataHuellaCarbono,preciosTon=self._precio_ton,moneda=self.moneda)
         # print(self._pesos_aplicados, self._precios)
@@ -2525,7 +2535,8 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
         with self.conn: 
             cursor = self.conn.cursor()
             try:
-                for q in sql:                
+                for q in sql:
+                    print(q)          
                     cursor.execute(q)
                     self.conn.commit()
                     
@@ -2550,13 +2561,13 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
                 where idlotecampania = {}'''.format(self.idlotecampania)
                 cursor.execute(sql)
                 data = cursor.fetchall() 
-                print('PRECALCULO HC',data)
+                # print('PRECALCULO HC',data)
                 npk = [str(e[0]) for e in data]
                 lista = [e.split('-') for e in npk]
                 n = int(lista[0][0])
                 p = int(lista[0][1])
                 k = int(lista[0][2])
-                print(n,p,k)
+                # print(n,p,k)
                 #! CALCULO HUELLA CARBONO FERTILIZACION TRADICIONAL
                 huella_carbono_fp = round((n * 4.9500) + (p * 0.7333) + (k * 0.5500))
                 print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
@@ -2613,11 +2624,11 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
                 self.lbl_hc_percent.setText('Reducción: {}%'.format(_percent))
 
                 self.dataHuellaCarbono = {
-                'percent': 0,
-                'chc': 0,
+                'percent': _percent,
+                'chc': chc,
                 'biomasa': 0,
-                'cosecha': 0,
-                'residuo': 0,
+                'cosecha': ccc,
+                'residuo': chc,
                 'fertilizacion': 0 } 
 
                 # print(self.dataHuellaCarbono)
