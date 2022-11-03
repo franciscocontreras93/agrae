@@ -450,7 +450,8 @@ class agraeSegmentoDialog(QtWidgets.QDialog, _agraeSegmentoDialog):
 
     def export(self):
         table = self.tableWidget
-        self.tools.crearSegmento(self, table) 
+        self.tools.crearSegmento(self, table)
+        
         
 
 class agraeParametrosDialog(QtWidgets.QDialog, _agraeParametrosDialog): 

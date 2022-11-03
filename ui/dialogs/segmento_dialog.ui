@@ -41,7 +41,7 @@
     </rect>
    </property>
    <property name="title">
-    <string>Exportar Segmentos a la Base de Datos</string>
+    <string>Cargar Segmentos a la Base de Datos</string>
    </property>
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">

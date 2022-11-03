@@ -588,7 +588,8 @@ class AgraeToolset():
     def dataSegmento(self,table):
         try: 
             lyr = self.iface.activeLayer()
-            features = lyr.getFeatures()
+            if len(lyr.selectedFeatures()) > 0: features = lyr.selectedFeatures() 
+            else: features = lyr.getFeatures()
             columns = [fld.name() for fld in lyr.fields()]
             data = ([f[col] for col in columns] for f in features)
             df = pd.DataFrame.from_records(data=data, columns=columns)
@@ -605,13 +606,11 @@ class AgraeToolset():
         except Exception: 
             pass
     def crearSegmento(self,widget,table):
-        #! UPLOAD CEAP
         lyr = self.iface.activeLayer()
         srid = lyr.crs().authid()[5:]
-        features = lyr.getFeatures()
-
+        if len(lyr.selectedFeatures()) > 0: features = lyr.selectedFeatures() 
+        else: features = lyr.getFeatures()
         nRow = table.rowCount() 
-        nColumn = table.columnCount()
         try:
             with self.conn as conn:
                 try: 
@@ -624,11 +623,11 @@ class AgraeToolset():
                                             values
                                             ({segm},{ceap},
                                             st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))"""                   
-                        cursor.execute(sql)
-                        conn.commit()                            
                         # print(sql)
-
-                    QMessageBox.about(widget, 'aGrae GIS', 'Segmento Cargado Correctamente \na la base de datos')
+                        cursor.execute(sql)
+                        
+                    conn.commit() 
+                    QMessageBox.about(widget, 'aGrae GIS', 'Segmentos Cargados Correctamente \na la base de datos')
                 finally: 
                     conn.close()
         except Exception as ex: 
@@ -1377,7 +1376,7 @@ class PanelRender():
     def savePanel(self):
         
         self.panelUno()
-        # self.panelHuellaCarbono(self.dataHuellaCarbono)
+        self.panelHuellaCarbono(self.dataHuellaCarbono)
         print(self.i,self._pesos,self._precios)
         self.panelDos(self.i,self._pesos,self._precios)
         filename = QFileDialog.getExistingDirectory(
