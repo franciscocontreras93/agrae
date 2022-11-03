@@ -567,8 +567,21 @@ class agrae:
                 except:           
                     self.iface.messageBar().pushMessage(
                         'aGraes GIS', 'Conexion a base de Datos Fallida', level=1, duration=3)
-               
-
+        def getPanelsDirectory():
+            try: 
+                filename = self.utils.saveDirectory()
+                self.configDialog.panel_path.setText(filename)
+                # self.configDialog.panel_path.setEditable(False)
+                self.configDialog.pushButton_2.setEnabled(True)
+                print(filename)
+            except Exception as ex:
+                print(ex)
+                pass
+        def saveSettings(): 
+            self.utils.savePanelFolder(self.configDialog.panel_path.text())
+            self.configDialog.pushButton_2.setEnabled(False)
+                  
+        
 
 
         if not self.pluginIsActive:
@@ -581,6 +594,8 @@ class agrae:
 
                 self.configDialog.test_btn.clicked.connect(dbTestConn)
                 self.configDialog.pushButton.clicked.connect(saveConn)
+                self.configDialog.pushButton_2.clicked.connect(saveSettings)
+                self.configDialog.pushButton_3.clicked.connect(getPanelsDirectory)
             
             self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
             self.configDialog.show()

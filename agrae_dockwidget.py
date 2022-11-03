@@ -567,26 +567,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             QMessageBox.about(self, 'aGrae GIS', f'Ocurrio un Error. ')
             # self.conn.rollback()
         
-        try: 
-            with self.conn: 
-                cursor = self.conn.cursor() 
-                sql = ''' insert into necesidades(idlotecampania,uf,necesidad_n,necesidad_p,necesidad_k,necesidad_nf,necesidad_pf,necesidad_kf)
-                select ls.idlotecampania,
-                s.segmento + amb.ambiente AS uf,
-                round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
-                round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
-                round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k,
-                round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
-                round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
-                round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k
-                FROM lotes ls
-                left JOIN segmentos S ON s.idlotecampania = ls.idlotecampania 
-                JOIN ambientes amb ON amb.idlotecampania = ls.idlotecampania 
-                where ls.idlotecampania = (select lp.idlotecampania from loteparcela lp order by lp.idloteparcela desc limit 1) '''
-                cursor.execute(sql)
-                self.conn.commit()
-        except Exception as ex: 
-            QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
+        
 
     def dropRelation(self): 
         lyr = iface.activeLayer()
@@ -1593,41 +1574,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                         QMessageBox.about(self, 'aGrae GIS','El analisis: {} con codigo: {} ya existe en la base de datos.\nComprueba la informacion'.format(row['id'],row['COD']))
                         self.conn.rollback()
                         pass 
-                # print('EJECUTANDO SENTENCIA NECESIDADES')
-                cursor = self.conn.cursor() 
-                sql = ''' 
-                insert into necesidades(idlotecampania,uf,necesidad_n,necesidad_p,necesidad_k,necesidad_nf,necesidad_pf,necesidad_kf)
-                select ls.idlotecampania,
-                s.segmento + amb.ambiente AS uf,
-                round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
-                round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
-                round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k,
-                round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
-                round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
-                round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k
-                FROM lotes ls
-                left JOIN segmentos S ON s.idlotecampania = ls.idlotecampania 
-                JOIN ambientes amb ON amb.idlotecampania = ls.idlotecampania 
-                where ls.idlotecampania = (select lp.idlotecampania from loteparcela lp order by lp.idloteparcela desc limit 1) '''
-                cursor.execute(sql)
-                self.conn.commit()
-                # print('FINALIZADO SENTENCIA NECESIDADES')      
-                _SQL_UPDATE = '''update necesidades 
-                        set 
-                        necesidad_n = sq.necesidad_n,
-                        necesidad_p =	sq.necesidad_p,
-                        necesidad_k = 	sq.necesidad_k
-                        from (select ls.idlotecampania,
-                        s.segmento + amb.ambiente AS uf,
-                        round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
-                        round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
-                        round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k
-                        FROM lotes ls
-                        left JOIN segmentos S ON s.idlotecampania = ls.idlotecampania 
-                        JOIN ambientes amb ON amb.idlotecampania = ls.idlotecampania) as sq
-                        where necesidades.idlotecampania = sq.idlotecampania and necesidades.uf = sq.uf;
-                        '''
-                cursor.execute(_SQL_UPDATE)
+                
                 self.an_save_bd.setEnabled(False)
                 QMessageBox.about(self, f"aGrae GIS:",f"Analitica almacenada correctamente")
                 self.conn.commit()       
@@ -2177,7 +2124,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
                 precio = precio.text()
                 data = self.dataExtraccion
                 # print(precio)
-                print(self.dataExtraccion)
+                # print(self.dataExtraccion)
                 area = [float(e[5]) for e in data]
                 npk = [str(e[4]) for e in data]
                 lista = [e.split(' / ') for e in npk ]
@@ -2526,7 +2473,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
             cursor = self.conn.cursor()
             try:
                 for q in sql:
-                    print(q)          
+                    # print(q)          
                     cursor.execute(q)
                     self.conn.commit()
                     
@@ -2975,25 +2922,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
                                     # print(_sqlRel)
                                     cursor.execute(_sqlRel)
                                     conn.commit()
-                                    # print('EJECUTANDO SENTENCIA NECESIDADES')
-                                    
-                                sqlNecesidades = ''' 
-                                insert into necesidades(idlotecampania,uf,necesidad_n,necesidad_p,necesidad_k,necesidad_nf,necesidad_pf,necesidad_kf)
-                                select ls.idlotecampania,
-                                s.segmento + amb.ambiente AS uf,
-                                round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
-                                round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
-                                round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k,
-                                round((amb.extraccioncosechan + amb.extraccionresiduon)*(1+s.n_inc))   necesidad_n,
-                                round((amb.extraccioncosechap + amb.extraccionresiduop)*(1+s.p_inc)) necesidad_p,
-                                round((amb.extraccioncosechak + amb.extraccionresiduok)*(1+s.k_inc)) necesidad_k
-                                FROM lotes ls
-                                left JOIN segmentos S ON s.idlotecampania = ls.idlotecampania 
-                                JOIN ambientes amb ON amb.idlotecampania = ls.idlotecampania 
-                                where ls.idlotecampania = (select lp.idlotecampania from loteparcela lp order by lp.idloteparcela desc limit 1) '''
-                                cursor.execute(sqlNecesidades)
-                                conn.commit()
-                                # print('FINALIZADO SENTENCIA NECESIDADES')
+    
                                 QMessageBox.about(self, f"aGrae GIS:",f"Parcelas Asociadas correctamente")
                             except Exception as ex: 
                                 QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)

@@ -96,6 +96,14 @@ class AgraeUtils():
         
         except: 
             print('ERROR')
+    def savePanelFolder(self,path):
+        try: 
+            self.settings = QSettings('agrae', 'dbConnection')
+            self.settings.setValue('paneles_path',path)
+        except Exception as ex:
+            print(ex)
+            
+        
 
     def dbTestConnection(self,dbname,dbuser,dbpass,dbhost,dbport):     
         conn = DbConnection.connection(dbname, dbuser, dbpass, dbhost, dbport)
@@ -190,6 +198,10 @@ class AgraeUtils():
         else:
             return False
 
+    def saveDirectory(self): 
+        filename = QFileDialog.getExistingDirectory(
+            None, "Seleccionar directorio de Paneles:")
+        return filename
     def msgBar(self,text:str,level:int,duration:int): 
         self.iface.messageBar().pushMessage('aGraes GIS', '{}'.format(text), level=level, duration=duration)
         
@@ -228,7 +240,7 @@ class AgraeToolset():
             lyr = self.iface.activeLayer()
             srid = lyr.crs().authid()[5:]
             features = lyr.selectedFeatures()
-            print(features)
+            # print(features)
             
             with self.conn as conn:
                 try:
@@ -251,7 +263,7 @@ class AgraeToolset():
                             # print(f'{oa}-{amb}-{ndvimax}-{atlas}')
                             cursor.execute(sql)
                             conn.commit()
-                            print(f[0])
+                            # print(f[0])
                             
                         QMessageBox.about(widget, 'aGrae GIS', 'Ambiente Cargado Correctamente \na la base de datos')
                     else:
@@ -640,7 +652,7 @@ class AgraeToolset():
         idsegmento = widget.tableWidget_2.item(row, 0).text()
         idlotecampania = widget.tableWidget_2.item(row, 1).text()
         analisis = widget.tableWidget_2.item(row, 7).text()
-        print(idsegmento, idlotecampania, analisis)
+        # print(idsegmento, idlotecampania, analisis)
         cursor = self.conn.cursor()
         sql = f''' insert into segmentoanalisis (idsegmento,idlotecampania,idanalisis)
                 select {idsegmento},{idlotecampania} , qan.idanalisis 
@@ -648,7 +660,7 @@ class AgraeToolset():
         try:
             cursor.execute(sql)
             self.conn.commit()
-            print('relacionado correctamente')
+            # print('relacionado correctamente')
         except errors.lookup('23505'):
             print('Segmento ya pertenece al lote')
             self.conn.rollback()
@@ -778,7 +790,7 @@ class AgraeToolset():
                 if regimen != 0:
                     cursor = conn.cursor()
                     cursor.execute(_sql_verify)
-                    print(cursor.fetchall())
+                    # print(cursor.fetchall())
                     cursor.execute(sql)
                     conn.commit()
                     cursor.execute(sql2)
@@ -879,12 +891,12 @@ class AgraeToolset():
             table.setEditTriggers(QAbstractItemView.AllEditTriggers)
             variable = True
             button.setEnabled(True)
-            print('editando')
+            # print('editando')
         else:
             table.setEditTriggers(QAbstractItemView.NoEditTriggers)
             variable = False
             button.setEnabled(False)
-            print('nada')
+            # print('nada')
 
 
 class AgraeAnalitic(): 
@@ -1165,7 +1177,7 @@ class PanelRender():
         h = 307
 
         datos = self.dataHuellaCarbono
-        print(datos)
+        # print(datos)
 
 
         img = Image.open(self.path['base2'])
@@ -1374,13 +1386,12 @@ class PanelRender():
         self.img.show()
 
     def savePanel(self):
-        
+        s = QSettings('agrae','dbConnection')
         self.panelUno()
         self.panelHuellaCarbono(self.dataHuellaCarbono)
-        print(self.i,self._pesos,self._precios)
+        # print(self.i,self._pesos,self._precios)
         self.panelDos(self.i,self._pesos,self._precios)
-        filename = QFileDialog.getExistingDirectory(
-            None, "Seleccionar directorio de Paneles:")
+        filename = s.value('paneles_path')
         self.panelTres()
         self.p1.save(f'{filename}\\Panel00{self.lote}.png')
         self.p2.save(f'{filename}\\Panel02{self.lote}.png')
