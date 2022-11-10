@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>600</height>
+    <height>625</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,13 +19,13 @@
   <property name="minimumSize">
    <size>
     <width>800</width>
-    <height>600</height>
+    <height>625</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>800</width>
-    <height>600</height>
+    <height>625</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -35,9 +35,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>10</y>
+     <y>40</y>
      <width>781</width>
-     <height>581</height>
+     <height>571</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -56,7 +56,7 @@
        <x>10</x>
        <y>10</y>
        <width>751</width>
-       <height>531</height>
+       <height>521</height>
       </rect>
      </property>
      <property name="styleSheet">
@@ -154,12 +154,25 @@
         <x>710</x>
         <y>80</y>
         <width>34</width>
-        <height>221</height>
+        <height>261</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="gridLayout_4" rowstretch="0,0,0,0" columnstretch="2">
-       <item row="0" column="0">
-        <widget class="QPushButton" name="btn_add_layer">
+      <layout class="QGridLayout" name="gridLayout_4" rowstretch="0,0,0,0,0" columnstretch="2">
+       <item row="1" column="0">
+        <widget class="QPushButton" name="btn_export_layer">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="toolTip">
+          <string>Añadir Lote al Mapa</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QPushButton" name="btn_chart">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -184,8 +197,8 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
-        <widget class="QPushButton" name="btn_chart">
+       <item row="0" column="0">
+        <widget class="QPushButton" name="btn_add_layer">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -197,8 +210,8 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QPushButton" name="btn_export_layer">
+       <item row="4" column="0">
+        <widget class="QPushButton" name="btn_report">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -261,7 +274,17 @@
       </column>
       <column>
        <property name="text">
+        <string>Id. Explotacion</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
         <string>Lote</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Explotacion</string>
        </property>
       </column>
       <column>

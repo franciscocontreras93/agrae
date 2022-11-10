@@ -2,7 +2,7 @@ import os, sys, re
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QThread, QAbstractTableModel
-from PyQt5.QtGui import QGuiApplication
+from PyQt5.QtGui import QGuiApplication,QIcon
 from qgis.PyQt.QtCore import QSettings
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
@@ -96,12 +96,20 @@ class AgraeUtils():
         
         except: 
             print('ERROR')
-    def savePanelFolder(self,path):
+    def settingPath(self,setting,path):
+        """settingPath Configurar ruta de almacenamiento de fichers
+
+        _extended_summary_
+
+        :param _type_ setting: Nombre del parametro
+        :param _type_ path: Path
+        """        
         try: 
             self.settings = QSettings('agrae', 'dbConnection')
-            self.settings.setValue('paneles_path',path)
+            self.settings.setValue(setting,path)
         except Exception as ex:
             print(ex)
+            
             
         
 
@@ -178,13 +186,87 @@ class AgraeUtils():
             'upload-to-db': os.path.join(os.path.dirname(__file__), r'ui\icons\upload-db.svg'),
             'chart': os.path.join(os.path.dirname(__file__), r'ui\icons\chart-bar-solid.svg'),
             'settings': os.path.join(os.path.dirname(__file__), r'ui\icons\gear-solid.svg'),
+            'report-pdf': os.path.join(os.path.dirname(__file__), r'ui\icons\file-pdf-regular.svg'),
+            'next': os.path.join(os.path.dirname(__file__), r'ui\icons\angle-right-solid.svg'),
+            'prev': os.path.join(os.path.dirname(__file__), r'ui\icons\angle-left-solid.svg'),
+            'atlas': os.path.join(os.path.dirname(__file__), r'ui\icons\map-solid.svg'),
+            'print': os.path.join(os.path.dirname(__file__), r'ui\icons\print-solid.svg'),
             'lgnd1': os.path.join(os.path.dirname(__file__), r'ui\img\lgnd1.svg'),
             'p1': os.path.join(os.path.dirname(__file__), r'ui\img\p1.svg'),
-            'co2': os.path.join(os.path.dirname(__file__), r'ui\img\co2.svg'),
+            'co2': os.path.join(os.path.dirname(__file__), r'ui\img\co2.svg')
         }
 
         return icons_path
+    
+    def add_action(
+        self,
+        icon_path,
+        text,
+        callback,
+        toolbar,
+        enabled_flag=True,
+        add_to_toolbar=True,
+        status_tip=None,
+        whats_this=None,
+        parent=None):
+        """Add a toolbar icon to the toolbar.
 
+        :param icon_path: Path to the icon for this action. Can be a resource
+            path (e.g. ':/plugins/foo/bar.png') or a normal file system path.
+        :type icon_path: str
+
+        :param text: Text that should be shown in menu items for this action.
+        :type text: str
+
+        :param callback: Function to be called when the action is triggered.
+        :type callback: function
+
+        :param enabled_flag: A flag indicating if the action should be enabled
+            by default. Defaults to True.
+        :type enabled_flag: bool
+
+        :param add_to_menu: Flag indicating whether the action should also
+            be added to the menu. Defaults to True.
+        :type add_to_menu: bool
+
+        :param add_to_toolbar: Flag indicating whether the action should also
+            be added to the toolbar. Defaults to True.
+        :type add_to_toolbar: bool
+
+        :param status_tip: Optional text to show in a popup when mouse pointer
+            hovers over the action.
+        :type status_tip: str
+
+        :param parent: Parent widget for the new action. Defaults None.
+        :type parent: QWidget
+
+        :param whats_this: Optional text to show in the status bar when the
+            mouse pointer hovers over the action.
+
+        :returns: The action that was created. Note that the action is also
+            added to self.actions list.
+        :rtype: QAction
+        """
+
+        icon = QIcon(icon_path)
+        action = QAction(icon, text, parent)
+        action.triggered.connect(callback)
+        action.setEnabled(enabled_flag)
+
+        if status_tip is not None:
+            action.setStatusTip(status_tip)
+
+        if whats_this is not None:
+            action.setWhatsThis(whats_this)
+
+        if add_to_toolbar:
+            toolbar.addAction(action)
+
+        
+
+        # self.actions.append(action)
+
+        return action
     def saveFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -248,10 +330,10 @@ class AgraeToolset():
                     if len(features) > 0: 
                         for f in features:
                             # print('test')
-                            oa = f[0]
-                            amb = f[1]
-                            ndvimax = f[2]
-                            atlas = f[3]
+                            oa = f['obj_amb']
+                            amb = f['ambiente']
+                            ndvimax = f['ndvimax']
+                            atlas = f['atlas']
                             geometria = f.geometry().asWkt()
                             sql = f''' insert into ambiente(obj_amb,ambiente,ndvimax,atlas,geometria)
                                     values
@@ -271,7 +353,7 @@ class AgraeToolset():
                             widget, 'aGrae GIS', 'Debe Seleccionar al menos un ambiente')
 
                 except Exception as ex:
-                    # print(ex)
+                    print(ex)
                     conn.rollback()
                     pass
         except: 
@@ -453,7 +535,7 @@ class AgraeToolset():
         with self.conn as conn:
             try:
                 if nombre == '' and status == False:
-                    sqlQuery = f'''select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
+                    sqlQuery = f'''select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela,coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     from lotecampania lc
                     join loteparcela lp on lp.idlotecampania = lc.idlotecampania
                     join lotes ls on lc.idlotecampania = ls.idlotecampania
@@ -461,7 +543,8 @@ class AgraeToolset():
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
+                    left join explotacion ex on ex.idexplotacion = ca.idexplotacion 
+                    group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
                     order by ca.fechasiembra desc'''
                     widget.btn_add_layer.setEnabled(False)
                     try:
@@ -471,7 +554,7 @@ class AgraeToolset():
                     
 
                 elif nombre != '' and status == False:
-                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
+                    sqlQuery = f"""select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela, coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha, cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     from lotecampania lc
                     join loteparcela lp on lp.idlotecampania = lc.idlotecampania
                     join lotes ls on lc.idlotecampania = ls.idlotecampania
@@ -479,9 +562,10 @@ class AgraeToolset():
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
-                    where l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
-                    order by ca.fechasiembra desc                        
+                    left join explotacion ex on ex.idexplotacion = ca.idexplotacion 
+                    where l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' or ex.nombre ilike '%{nombre}%'
+                    group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
+                    order by ca.fechasiembra desc;                        
                     """
                     widget.btn_reload.setEnabled(True)
                     try:
@@ -490,7 +574,7 @@ class AgraeToolset():
                         pass
 
                 elif nombre == '' and status == True:
-                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
+                    sqlQuery = f"""select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela,coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha, cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     from lotecampania lc
                     join loteparcela lp on lp.idlotecampania = lc.idlotecampania
                     join lotes ls on lc.idlotecampania = ls.idlotecampania
@@ -498,9 +582,11 @@ class AgraeToolset():
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
-                    where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
-                    order by ca.fechasiembra desc"""
+                    left join explotacion ex on ex.idexplotacion = ca.idexplotacion
+                    where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}' 
+                    group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
+                    order by ca.fechasiembra desc
+                    """
                     widget.btn_reload.setEnabled(True)
                     try:
                         widget.btn_chart.setEnabled(True)
@@ -508,7 +594,7 @@ class AgraeToolset():
                         pass
 
                 elif nombre != '' and status == True:
-                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
+                    sqlQuery = f"""select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela,coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha, cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     from lotecampania lc
                     join loteparcela lp on lp.idlotecampania = lc.idlotecampania
                     join lotes ls on lc.idlotecampania = ls.idlotecampania
@@ -516,10 +602,12 @@ class AgraeToolset():
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
+                    left join explotacion ex on ex.idexplotacion = ca.idexplotacion
                     where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
                     or l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
-                    order by ca.fechasiembra desc"""
+                    group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
+                    order by ca.fechasiembra desc 
+                    """
                     widget.btn_reload.setEnabled(True)
                     try:
                         widget.btn_chart.setEnabled(True)
@@ -873,6 +961,7 @@ class AgraeToolset():
                 cursor = self.conn.cursor()
                 cursor.execute(sql)
                 data = cursor.fetchall()
+                print(data)
                 a = len(data)
                 b = len(data[0])
                 i = 1

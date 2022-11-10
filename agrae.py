@@ -24,7 +24,7 @@
 from PyQt5.QtWidgets import QMessageBox
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant, QDate
 from qgis.PyQt.QtGui import QIcon, QColor, QFont 
-from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
+from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem, QComboBox
 from qgis.core import *
 import pip
 import random
@@ -116,6 +116,8 @@ class agrae:
         # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'agrae')
         self.toolbar.setObjectName(u'agrae')
+        
+        
         self.queryCapaLotes = ''
 
         #print "** INITIALIZING agrae"
@@ -298,6 +300,8 @@ class agrae:
             add_to_toolbar=False,
             callback=self.runConfig,
             parent=self.iface.mainWindow())
+        self.toolbar.addSeparator()
+        
 
         
 
@@ -567,21 +571,34 @@ class agrae:
                 except:           
                     self.iface.messageBar().pushMessage(
                         'aGraes GIS', 'Conexion a base de Datos Fallida', level=1, duration=3)
-        def getPanelsDirectory():
+        def getPanelsDirectory(line):
             try: 
                 filename = self.utils.saveDirectory()
-                self.configDialog.panel_path.setText(filename)
-                # self.configDialog.panel_path.setEditable(False)
-                self.configDialog.pushButton_2.setEnabled(True)
-                print(filename)
+                line.setText(filename)
             except Exception as ex:
                 print(ex)
                 pass
         def saveSettings(): 
-            self.utils.savePanelFolder(self.configDialog.panel_path.text())
+            paneles_path = self.configDialog.panel_path.text()
+            uf_path = self.configDialog.uf_path.text()
+            reporte_path = self.configDialog.reporte_path.text()
+            
+            self.utils.settingPath('paneles_path',paneles_path)
+            self.utils.settingPath('ufs_path',uf_path)
+            self.utils.settingPath('reporte_path',reporte_path)
             self.configDialog.pushButton_2.setEnabled(False)
                   
-        
+        def readSettings(): 
+            s = QSettings('agrae', 'dbConnection')
+
+            self.configDialog.panel_path.setText(str(s.value('paneles_path')))
+            self.configDialog.uf_path.setText(str(s.value('ufs_path')))
+            self.configDialog.reporte_path.setText(str(s.value('reporte_path')))
+            self.configDialog.host.setText(str(s.value('dbhost')))
+            self.configDialog.dbname.setText(str(s.value('dbname')))
+            self.configDialog.user.setText(str(s.value('dbuser')))
+            self.configDialog.password.setText(str(s.value('dbpass')))
+            self.configDialog.port.setText(str(s.value('dbport')))
 
 
         if not self.pluginIsActive:
@@ -591,11 +608,13 @@ class agrae:
                 self.configDialog = agraeConfigWidget()
                 # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
                 
-
+                readSettings()
                 self.configDialog.test_btn.clicked.connect(dbTestConn)
                 self.configDialog.pushButton.clicked.connect(saveConn)
                 self.configDialog.pushButton_2.clicked.connect(saveSettings)
-                self.configDialog.pushButton_3.clicked.connect(getPanelsDirectory)
+                self.configDialog.pushButton_3.clicked.connect(lambda: getPanelsDirectory(self.configDialog.panel_path))
+                self.configDialog.pushButton_4.clicked.connect(lambda: getPanelsDirectory(self.configDialog.uf_path))
+                self.configDialog.pushButton_5.clicked.connect(lambda: getPanelsDirectory(self.configDialog.reporte_path))
             
             self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
             self.configDialog.show()

@@ -33,6 +33,11 @@
         <file>ui\icons\upload-db.svg</file>
         <file>ui\icons\gear-solid.svg</file>
         <file>ui\icons\chart-bar-solid.svg</file>
+        <file>ui\icons\file-pdf-regular.svg</file>
+        <file>ui\icons\angle-right-solid.svg</file>
+        <file>ui\icons\angle-left-solid.svg</file>
+        <file>ui\icons\map-solid.svg</file>
+        <file>ui\icons\print-solid.svg</file>
         <file>ui\img\lgnd1.svg</file>
         <file>ui\img\p1.svg</file>
         <file>ui\img\co2.svg</file>

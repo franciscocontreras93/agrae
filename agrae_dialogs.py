@@ -1863,6 +1863,7 @@ class agraeParametrosDialog(QtWidgets.QDialog, _agraeParametrosDialog):
 class personaDialog(QtWidgets.QDialog,agraePersonaDialog): 
     closingPlugin = pyqtSignal()
     dniSignal = pyqtSignal(str)
+    idDistribuidor = pyqtSignal(int)
     def __init__(self,parent=None):
         super(personaDialog, self).__init__(parent)
         uic.loadUi(os.path.join(os.path.dirname(__file__),'ui/dialogs/personas_dialog.ui'),self)
@@ -1887,7 +1888,8 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
         self.close()
 
     def UIComponents(self):
-        #* UI 
+        #* UI
+        self.setWindowTitle('Registro aGrae')
         icons_path = self.utils.iconsPath()
         self.setWindowIcon(QIcon(icons_path['users']))
         self.tabWidget.setCurrentIndex(0)
@@ -1895,8 +1897,15 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
         self.pushButton.setIcon(QIcon(icons_path['share']))
         self.pushButton_2.setIconSize(QtCore.QSize(20, 20))
         self.pushButton_2.setIcon(QIcon(icons_path['user-check']))
+        self.pushButton_2.clicked.connect(self.crearPersona)
+        
         self.tabWidget.setTabIcon(0, QIcon(icons_path['search_icon_path']))
         self.tabWidget.setTabIcon(1, QIcon(icons_path['pen-to-square']))
+        self.tabWidget.setTabIcon(2, QIcon(icons_path['search_icon_path']))
+        self.tabWidget.setTabIcon(3, QIcon(icons_path['pen-to-square']))
+        
+        
+        self.date_inicio.setDate(QDate.currentDate())
 
 
 
@@ -1905,19 +1914,36 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
         #* ACTIONS
         line_buscar_action = self.lineEdit.addAction(
             QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
-        line_buscar_action.triggered.connect(self.buscar)
+        line_buscar_action.triggered.connect(lambda: self.buscar(1))
         self.lineEdit.textChanged.connect(self.buscarPersona)
+        
+        line_buscar_d_action = self.lineEdit_2.addAction(
+            QIcon(icons_path['search_icon_path']), self.lineEdit_2.TrailingPosition)
+        line_buscar_d_action.triggered.connect(lambda: self.buscar(2))
+        self.lineEdit_2.returnPressed.connect(lambda: self.buscar(2))
+        # self.pushButton_3.clicked.connect(self.buscarDistribuidor)
 
-        self.pushButton_2.clicked.connect(self.crearPersona)
-
+        
+        self.pushButton_5.setIconSize(QtCore.QSize(20, 20))
+        self.pushButton_5.setIcon(QIcon(icons_path['save']))
+        self.pushButton_5.clicked.connect(self.crearDistribuidor)
+        
+        self.tableWidget.setColumnHidden(0,True)
+        self.tableWidget_2.setColumnHidden(0,True)
 
         #* SIGNALS
         self.tableWidget.doubleClicked.connect(self.doubleClick)
     
-    def buscar(self):
-        filtro = self.lineEdit.text()
-        # print(filtro)
-        self.buscarPersona(filtro)
+    def buscar(self,action:int):
+        if action == 1:
+            filtro = self.lineEdit.text()
+            # print(filtro)
+            self.buscarPersona(filtro)
+        if action == 2: 
+            filtro = self.lineEdit_2.text()
+            print(filtro)
+            self.buscarDistribuidor(param=filtro)
+            
     def buscarPersona(self,param:str=None): 
         if param == None or len(self.lineEdit.text()) == 0:
             sql = ''' select * from persona p   '''
@@ -1936,7 +1962,30 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
                 pass
             except Exception as ex:
                 print(ex)
-
+    def buscarDistribuidor(self,param=''):
+        if param == '':
+            sql = ''' select d.iddistribuidor, d.cif,d.nombre,d.personacontacto,d.telefono,d.email,d.direccionfiscal,d.direccionenvio,d.fechainicio from distribuidor d   '''
+            try:
+                self.tools.populateTable(sql, self.tableWidget_2)
+            except IndexError as ie:
+                pass
+            except Exception as ex:
+                print(ex)
+        else:
+            sql = ''' select d.iddistribuidor, d.cif,d.nombre,d.personacontacto,d.telefono,d.email,d.direccionfiscal,d.direccionenvio,d.fechainicio 
+            from distribuidor d 
+            where d.cif ilike  '%{}%' 
+            or d.nombre ilike '%{}%' 
+            or d.personacontacto ilike '%{}%' 
+            or d.direccionfiscal ilike '%{}%' '''.format(param, param, param,param)
+            try:
+                # print(sql)
+                self.tools.populateTable(sql, self.tableWidget_2)
+            except IndexError as ie:
+                # print(ie)
+                pass
+            except Exception as ex:
+                print(ex)
     def crearPersona(self): 
         with self.conn.cursor() as cursor: 
             try: 
@@ -1961,6 +2010,38 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
                 self.ln_direccion.clear()
                 self.ln_telefono.clear()
                 self.ln_email.clear()
+                
+
+            except Exception as ex: 
+                print(ex)
+    def crearDistribuidor(self): 
+        with self.conn.cursor() as cursor: 
+            try: 
+                CIF = self.ln_cif.text()
+                NOMBRE = self.ln_distNombre.text()
+                CONTACTO = self.ln_contacto.text()
+                ICONO = self.ln_icono.text()
+                DIRECCIONFISCAL = self.ln_direccionFiscal.text()
+                DIRECCIOENVIO = self.ln_direccionEnvio.text()
+                TELEFONO = self.ln_distTelefono.text()
+                EMAIL = self.ln_distEmail.text()
+                FECHAINICIO = self.date_inicio.date().toString("dd/MM/yyyy")
+                sql = ''' insert into distribuidor(cif,personacontacto,icono,telefono,email,fechainicio,direccionfiscal,direccionenvio,nombre) 
+                values('{}','{}','{}','{}','{}','{}','{}','{}','{}') '''.format(CIF.upper(),CONTACTO.upper(),ICONO.upper(),TELEFONO.upper(),EMAIL.upper(),FECHAINICIO,DIRECCIONFISCAL,DIRECCIOENVIO,NOMBRE.upper())
+                
+                cursor.execute(sql)
+                self.conn.commit()
+                QMessageBox.about(self, "", "Datos Guardados Correctamente")
+                # print(sql)
+                self.ln_cif.clear()
+                self.ln_distNombre.clear()
+                self.ln_contacto.clear()
+                self.ln_icono.clear()
+                self.ln_direccionFiscal.clear()
+                self.ln_direccionEnvio.clear()
+                self.ln_distTelefono.clear()
+                self.ln_distEmail.clear()
+                self.date_inicio.setDate(QDate.currentDate())
                 
 
             except Exception as ex: 
