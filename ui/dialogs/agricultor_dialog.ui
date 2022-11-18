@@ -136,7 +136,12 @@
         </column>
         <column>
          <property name="text">
-          <string>Direccion</string>
+          <string>Explotacion</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Distribuidor</string>
          </property>
         </column>
        </widget>
@@ -164,9 +169,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>60</y>
+        <y>100</y>
         <width>381</width>
-        <height>101</height>
+        <height>61</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
@@ -195,7 +200,7 @@
        <item row="0" column="2">
         <widget class="QLineEdit" name="ln_dist">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="minimumSize">
           <size>
@@ -247,19 +252,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QLabel" name="label_5">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>30</y>
-        <width>81</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Explotacion:</string>
-      </property>
-     </widget>
      <widget class="QLabel" name="label_7">
       <property name="geometry">
        <rect>
@@ -300,6 +292,78 @@
         <widget class="QPushButton" name="pushButton_3">
          <property name="text">
           <string/>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="gridLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>381</width>
+        <height>72</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="1" column="1">
+        <widget class="QLabel" name="lbl_exp_nombre">
+         <property name="text">
+          <string>Nombre Exp.</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_6">
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Distribuidor:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_5">
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Explotacion:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLabel" name="ln_dist_nombre">
+         <property name="text">
+          <string>Nombre Dist.</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_10">
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Nombres.</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLabel" name="lbl_persona_nombre">
+         <property name="text">
+          <string>Nombre Persona.</string>
          </property>
         </widget>
        </item>

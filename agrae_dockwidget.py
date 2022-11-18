@@ -1637,20 +1637,21 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         """        
         s = QSettings('agrae','dbConnection')
         path = s.value('reporte_path')
-        project = QgsProject.instance()
-        manager = project.layoutManager()
-        layoutName='Prescripcion'
-        layout = manager.layoutByName(layoutName)
-        atlas = layout.atlas()
-        atlas.beginRender()
+     
+        self.atlas.beginRender()
         settings = QgsLayoutExporter.PdfExportSettings()
         settings.appendGeoreference = False
         settings.simplifyGeometries = True
-        name = atlas.currentFilename().replace(' ','_')
-        name = name + '_' + QDateTime.currentDateTime().toString('yyyyMMddHHmmss')+".pdf"
-        exporter = QgsLayoutExporter(atlas.layout())
-        exporter.exportToPdf(path+r'\\'+name,settings)
-        atlas.endRender()
+        
+        exporter = QgsLayoutExporter(self.atlas.layout())
+        
+        for i in range(0,self.atlas.count()):
+            self.atlas.seekTo(i)
+            name = self.atlas.currentFilename().replace(' ','_')
+            name = name + '_' + QDateTime.currentDateTime().toString('yyyyMMddHHmmss')+".pdf"
+            exporter.exportToPdf(path+r'\\'+name,settings)
+            self.atlas.next()
+        self.atlas.endRender()
         iface.messageBar().pushMessage('Reporte generado correctamente: <a href="{}">{}</a>'.format(path+r'\\'+name,name), 3, 5)
        
 
@@ -1930,7 +1931,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             cursor = self.conn.cursor()
             cursor.execute(sql)
             data = cursor.fetchall()
-            # print(data)
+            print(data)
             # self.dataSignal.emit(data)
 
         

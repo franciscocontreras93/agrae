@@ -330,22 +330,23 @@ class AgraeToolset():
                     if len(features) > 0: 
                         for f in features:
                             # print('test')
-                            oa = f['obj_amb']
-                            amb = f['ambiente']
+                            # oa = f['obj_amb']
+                            if f['ambiente']: 
+                                amb = f['ambiente'] 
+                            else:
+                                amb = f['amb'] 
+                                
                             ndvimax = f['ndvimax']
-                            atlas = f['atlas']
                             geometria = f.geometry().asWkt()
-                            sql = f''' insert into ambiente(obj_amb,ambiente,ndvimax,atlas,geometria)
-                                    values
-                                    ({oa},
+                            sql = f''' insert into ambiente(ambiente,ndvimax,geometria)
+                                    values(
                                     {amb},
                                     {ndvimax},
-                                    '{atlas}',
                                     st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))'''
                             # print(f'{oa}-{amb}-{ndvimax}-{atlas}')
                             cursor.execute(sql)
-                            conn.commit()
-                            # print(f[0])
+                            
+                        conn.commit()
                             
                         QMessageBox.about(widget, 'aGrae GIS', 'Ambiente Cargado Correctamente \na la base de datos')
                     else:
@@ -353,7 +354,7 @@ class AgraeToolset():
                             widget, 'aGrae GIS', 'Debe Seleccionar al menos un ambiente')
 
                 except Exception as ex:
-                    print(ex)
+                    QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
                     conn.rollback()
                     pass
         except: 
@@ -683,7 +684,7 @@ class AgraeToolset():
                     QMessageBox.about(widget, "aGrae GIS:", "Capa invalida.")
             
             except Exception as ex:
-                # print(ex)
+                QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
                 QMessageBox.about(widget, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
     def dataSegmento(self,table):
         try: 
@@ -716,22 +717,23 @@ class AgraeToolset():
                 try: 
                     cursor = conn.cursor()
                     for row , f in (zip(range(nRow), features)):
-                        segm = f[0]               
+    
+                        segm = f['segm']            
                         geometria = f.geometry() .asWkt()
-                        ceap = f['ceap']                                     
-                        sql = f""" insert into segmento(segmento,ceap,geometria)
+                        sql = f""" insert into segmento(segmento,geometria)
                                             values
-                                            ({segm},{ceap},
+                                            ({segm},
                                             st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))"""                   
                         # print(sql)
                         cursor.execute(sql)
                         
                     conn.commit() 
                     QMessageBox.about(widget, 'aGrae GIS', 'Segmentos Cargados Correctamente \na la base de datos')
-                finally: 
-                    conn.close()
+                except Exception as ex:
+                    QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
         except Exception as ex: 
-            # print(ex)
+            QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
+            conn.rollback()
             pass
     
     def asignarCodigoSegmento(self,widget):

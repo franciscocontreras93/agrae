@@ -25,7 +25,7 @@ agraeCeapDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/
 
 class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
     closingPlugin = pyqtSignal()
-    getIdExp = pyqtSignal(int)
+    getIdExp = pyqtSignal(list)
     expName = pyqtSignal(str)
 
     def __init__(self, parent=None):
@@ -51,8 +51,10 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
             row = self.tableWidget.currentRow()        
             idExp = int(self.tableWidget.item(row, 0).text())
             _expName = str(self.tableWidget.item(row,1).text())
-            self.getIdExp.emit(idExp)
+            data = [idExp,_expName]
+            self.getIdExp.emit(data)
             self.expName.emit(_expName)
+            
             self.close()
             
         except AttributeError as ae: 
@@ -1862,8 +1864,8 @@ class agraeParametrosDialog(QtWidgets.QDialog, _agraeParametrosDialog):
 
 class personaDialog(QtWidgets.QDialog,agraePersonaDialog): 
     closingPlugin = pyqtSignal()
-    dniSignal = pyqtSignal(str)
-    idDistribuidor = pyqtSignal(int)
+    dniSignal = pyqtSignal(list)
+    idDistribuidor = pyqtSignal(list)
     def __init__(self,parent=None):
         super(personaDialog, self).__init__(parent)
         uic.loadUi(os.path.join(os.path.dirname(__file__),'ui/dialogs/personas_dialog.ui'),self)
@@ -1871,6 +1873,7 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
         self.utils = AgraeUtils()
         self.conn = self.utils.Conn()
         self.buscarPersona()
+        self.buscarDistribuidor()
 
         self.UIComponents()
 
@@ -1879,12 +1882,21 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
         self.closingPlugin.emit()
         event.accept()
 
-    def doubleClick(self,e): 
+    def doubleClickPersona(self,e): 
         row = e.row() 
         dni = str(self.tableWidget.item(row,1).text())
-        # print(dni)
-        self.dniSignal.emit(dni)
+        nombres = str(self.tableWidget.item(row,2).text()) + ' ' + str(self.tableWidget.item(row,3).text())
+        data = [dni,nombres]
+        self.dniSignal.emit(data)
 
+        self.close()
+        
+    def doubleClickDistribuidor(self,e): 
+        row  = e.row() 
+        id = self.tableWidget_2.item(row,0).text()
+        nombre = self.tableWidget_2.item(row,2).text()
+        data = [id,nombre]
+        self.idDistribuidor.emit(data)
         self.close()
 
     def UIComponents(self):
@@ -1932,7 +1944,8 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
         self.tableWidget_2.setColumnHidden(0,True)
 
         #* SIGNALS
-        self.tableWidget.doubleClicked.connect(self.doubleClick)
+        self.tableWidget.doubleClicked.connect(self.doubleClickPersona)
+        self.tableWidget_2.doubleClicked.connect(self.doubleClickDistribuidor)
     
     def buscar(self,action:int):
         if action == 1:
@@ -2074,9 +2087,11 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
 
         self.lineEdit.textChanged.connect(self.buscarAgricultor)
         line_dni_action = self.ln_dni.addAction(QIcon(icons_path['search_icon_path']), self.ln_dni.TrailingPosition)
-        line_dni_action.triggered.connect(self.personasDialog)
+        line_dni_action.triggered.connect(lambda: self.personasDialog(0))
         line_exp_action = self.ln_exp.addAction(QIcon(icons_path['search_icon_path']), self.ln_exp.TrailingPosition)
         line_exp_action.triggered.connect(self.expDialog)
+        line_dist_action = self.ln_dist.addAction(QIcon(icons_path['search_icon_path']), self.ln_dist.TrailingPosition)
+        line_dist_action.triggered.connect(lambda: self.personasDialog(2))
         line_cultivo_action = self.ln_cultivo.addAction(QIcon(icons_path['search_icon_path']), self.ln_cultivo.TrailingPosition)
         line_cultivo_action.triggered.connect(self.cultivoDialog)
 
@@ -2086,17 +2101,30 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
         self.pushButton_4.setIconSize(QtCore.QSize(20, 20))
         self.pushButton_4.setIcon(QIcon(icons_path['user-check']))
         self.pushButton_4.clicked.connect(self.saveCultivoAgricultor)
+        
+        self.tableWidget.setColumnHidden(0,True)
         self.tableWidget.doubleClicked.connect(self.select)
+        
         self.tabWidget.setTabIcon(0, QIcon(icons_path['search_icon_path']))
         self.tabWidget.setTabIcon(1, QIcon(icons_path['pen-to-square']))
         self.tabWidget.setTabIcon(2, QIcon(icons_path['farmer']))
         pass
     #! METODOS DE AGRICULTOR
     #* DIALOGS
-    def personasDialog(self):
+    def personasDialog(self,idx:int):
+        """personasDialog 
+
+
+        :param int idx: must be 0 or 2
+        """        
         dialog = personaDialog()
         dialog.setModal(True)
+        
+        dialog.tabWidget.setCurrentIndex(idx)
+        
+            
         dialog.dniSignal.connect(self.popDni)
+        dialog.idDistribuidor.connect(self.popDist)
         dialog.exec()
 
     def expDialog(self): 
@@ -2104,7 +2132,6 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
         dialog.setModal(True)
         dialog.loadData()
         dialog.getIdExp.connect(self.popExp)
-        dialog.expName.connect(self.nameExp)
         dialog.exec_()
     
     def cultivoDialog(self):
@@ -2117,9 +2144,10 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
     #* METODOS
     def buscarAgricultor(self,param:str=None): 
         if param == None or len(self.lineEdit.text()) == 0: 
-            sql = ''' select a.idagricultor ,p.dni, a.nombre, e.nombre explotacion from agricultor a 
+            sql = ''' select a.idagricultor ,p.dni, a.nombre, e.nombre explotacion, d.nombre as distribuidor from agricultor a 
             join explotacion e on a.idexplotacion = e.idexplotacion 
-            join persona p on p.idpersona = a.idpersona    '''
+            join persona p on p.idpersona = a.idpersona
+            join distribuidor d on d.iddistribuidor = a.iddistribuidor     '''
             try:
                 self.tools.populateTable(sql, self.tableWidget)
             except IndexError as ie: 
@@ -2127,10 +2155,11 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
             except Exception as ex:
                 print(ex)
         else: 
-            sql = ''' select a.idagricultor ,p.dni, a.nombre, e.nombre explotacion from agricultor a 
+            sql = ''' select a.idagricultor ,p.dni, a.nombre, e.nombre explotacion, d.nombre as distribuidor from agricultor a 
             join explotacion e on a.idexplotacion = e.idexplotacion 
-            join persona p on p.idpersona = a.idpersona  
-            where p.dni = '{}' or a.nombre ilike '%{}%' or e.nombre ilike '%{}%' '''.format(param,param,param)
+            join persona p on p.idpersona = a.idpersona
+            join distribuidor d on d.iddistribuidor = a.iddistribuidor   
+            where p.dni = '{}' or a.nombre ilike '%{}%' or e.nombre ilike '%{}%' or d.nombre ilike '%{}%' '''.format(param,param,param,param)
             try: 
                 # print(param)
                 self.tools.populateTable(sql, self.tableWidget)
@@ -2144,14 +2173,20 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
         filtro = self.lineEdit.text()
         print(filtro)
         self.buscarAgricultor(filtro)
-    def popDni(self,dni:str):
+    def popDni(self,data):
         # print(dni)
-        self.ln_dni.setText(dni)
-    def popExp(self,exp):
-        id = str(exp)
-        self.ln_exp.setText(id)
-    def nameExp(self,name:str):
-        self.label_7.setText(name)
+        self.ln_dni.setText(str(data[0]))
+        self.lbl_persona_nombre.setText(str(data[1]))
+    
+    def popExp(self,data):
+        self.ln_exp.setText(str(data[0]))
+        self.lbl_exp_nombre.setText(str(data[1]))
+        
+        
+    def popDist(self,data):
+        self.ln_dist.setText(str(data[0]))
+        self.ln_dist_nombre.setText(str(data[1]))
+    
 
     def popIdCultivo(self,id):
         self.ln_cultivo.setText(str(id))
@@ -2171,12 +2206,13 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
     def saveAgricultor(self):
         idExplotacion = self.ln_exp.text()
         dni = self.ln_dni.text()
+        idDist = self.ln_dist.text()
         with self.conn.cursor() as cursor: 
             try: 
-                sql = ''' insert into agricultor(idpersona,idexplotacion,nombre)
-                    select p.idpersona, {}, p.nombre ||' '|| p.apellidos 
+                sql = ''' insert into agricultor(idpersona,idexplotacion,iddistribuidor,nombre)
+                    select p.idpersona, {}, {}, p.nombre ||' '|| p.apellidos 
                     from persona p
-                    where p.dni = '{}' '''.format(idExplotacion,dni) 
+                    where p.dni = '{}' '''.format(idExplotacion,idDist,dni) 
                 cursor.execute(sql)
                 self.conn.commit()
                 QMessageBox.about(self, "", "Datos Guardados Correctamente")
