@@ -706,18 +706,17 @@ class AgraeToolset():
                     table.setItem(r,c,item)
         except Exception: 
             pass
-    def crearSegmento(self,widget,table):
+    def crearSegmento(self,widget):
+        # ! cambio nuevo pc 
         lyr = self.iface.activeLayer()
         srid = lyr.crs().authid()[5:]
         if len(lyr.selectedFeatures()) > 0: features = lyr.selectedFeatures() 
         else: features = lyr.getFeatures()
-        nRow = table.rowCount() 
         try:
             with self.conn as conn:
                 try: 
                     cursor = conn.cursor()
-                    for row , f in (zip(range(nRow), features)):
-    
+                    for f in features :
                         segm = f['segm']            
                         geometria = f.geometry() .asWkt()
                         sql = f""" insert into segmento(segmento,geometria)

@@ -770,7 +770,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.line_find_segmento.setCompleter(completerSegmento)
         
         self.pushButton_3.clicked.connect(self.crearAmbientes)
-        self.pushButton_4.clicked.connect(self.segmentoDialog)
+        self.pushButton_4.clicked.connect(self.crearSegmentos)
         # self.pushButton_5.clicked.connect(self.agricultoresDialog)
         self.btn_find_segmento.clicked.connect(self.buscarSegmento)
 
@@ -1271,7 +1271,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tools.crearAmbientes(self)
 
     def crearSegmentos(self):
-        self.tools.crearSegmentos(self)
+        self.tools.crearSegmento(self)
 
     def cargarParcela(self):
         idsigpac = self.lbl_id_parcela.text()
