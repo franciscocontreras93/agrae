@@ -714,7 +714,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget_2.horizontalHeader().setStretchLastSection(True)
         self.tableWidget_2.setColumnHidden(0, True)
         self.tableWidget_2.setColumnHidden(1, True)
-        self.tableWidget_2.setColumnHidden(3, True)
+        self.tableWidget_2.setColumnHidden(4, True)
 
         delegate = ReadOnlyDelegate(self.tableWidget_2)
         self.tableWidget_2.setItemDelegateForColumn(0, delegate)
@@ -725,6 +725,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget_2.setItemDelegateForColumn(5, delegate)
         self.tableWidget_2.setItemDelegateForColumn(6, delegate)
         self.tableWidget_2.setItemDelegateForColumn(7, delegate)
+        self.tableWidget_2.setItemDelegateForColumn(8, delegate)
 
         self.line_buscar.setClearButtonEnabled(True)
         self.line_buscar.returnPressed.connect(self.buscarLotes)
@@ -767,12 +768,16 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         # self.prov_combo.currentTextChanged.connect(self.indexProvUpdate)
         self.setStyleSheet(self.style)
         self.line_buscar.setCompleter(completerParcela)
+        
         self.line_find_segmento.setCompleter(completerSegmento)
+        self.line_find_segmento.returnPressed.connect(self.buscarSegmento)
+        line_find_segmento_action = self.line_find_segmento.addAction(
+                    QIcon(icons_path['search_icon_path']), self.line_find_segmento.TrailingPosition)
+        line_find_segmento_action.triggered.connect(self.buscarSegmento)
         
         self.pushButton_3.clicked.connect(self.crearAmbientes)
         self.pushButton_4.clicked.connect(self.crearSegmentos)
         # self.pushButton_5.clicked.connect(self.agricultoresDialog)
-        self.btn_find_segmento.clicked.connect(self.buscarSegmento)
 
         self.btn_add_lotes.clicked.connect(self.addLotesMap)
         self.btn_add_parcelas.clicked.connect(self.addParcelasMap)
@@ -896,14 +901,12 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         return data
     def dataAutoSegmento(self): 
         cursor = self.conn.cursor()
-        sql = '''select distinct unnest(array[s.cod_control, l.nombre, a.cod_analisis]) lista from segmento s
-            join lote l on s.idlote = l.idlote 
+        sql = '''select distinct unnest(array[s.cod_control, l.lote,l.exp_nombre]) lista from segmentos s
+            join lotes l on s.idlotecampania = l.idlotecampania
             left join segmentoanalisis sa on s.idsegmento = sa.idsegmento
-            left join analisis a on a.idanalisis = sa.idanalisis
             order by lista '''
-        # cursor.execute(sql)
-        # data = cursor.fetchall()
-        data = []
+        cursor.execute(sql)
+        data = cursor.fetchall()
         return data
     def actualizarParcela(self):
         idParcela = self.lbl_id_parcela.text()
@@ -1319,17 +1322,16 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         row = self.tableWidget_2.currentRow()
         idsegmento = self.tableWidget_2.item(row,0).text()
         idlotecampania = self.tableWidget_2.item(row,1).text()
-        codigo = self.tableWidget_2.item(row,8).text()
-        regimen = self.tableWidget_2.item(row,3).text()
+        codigo = self.tableWidget_2.item(row,9).text()
+        regimen = self.tableWidget_2.item(row,4).text()
 
         idx = self.tableWidget_2.selectionModel().selectedRows()
         if len(idx) > 0:
             for i in sorted(idx):
                     idsegmento = self.tableWidget_2.item(i.row(), 0).text()
                     idlotecampania = self.tableWidget_2.item(i.row(), 1).text()
-                    codigo = self.tableWidget_2.item(i.row(),8).text()
-                    regimen = self.tableWidget_2.item(i.row(),3).text()        
-                    sql = "insert into segmentoanalisis (idsegmento,idlotecampania,codigo,regimen) values ({},{},'{}',{})".format(idsegmento,idlotecampania,codigo,regimen)
+                    codigo = self.tableWidget_2.item(i.row(),8).text()      
+                    sql = "insert into segmentoanalisis (idsegmento,idlotecampania,codigo) values ({},{},'{}')".format(idsegmento,idlotecampania,codigo)
                     with self.conn as conn: 
                         try: 
                             cursor = conn.cursor()
@@ -1345,7 +1347,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     
     def crearReporte(self):
-        #! NO ESTA FUNCIONANDO EL CODIGO 
+        #! NO ESTA FUNCIONANDO EL CEAP NI EL REGIMEN
         # print('Crear Reporte')
         idx = self.tableWidget_2.selectionModel().selectedRows()
         header = []
@@ -1366,7 +1368,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                         # print(idsegmento,idlotecampania)
 
                         with self.conn:
-                            select = "select idsegmentoanalisis, codigo, regimen from segmentoanalisis where idsegmento = {} and idlotecampania = {}".format(
+                            select = "select idsegmentoanalisis, cod_muestra , regimen, ceap from segmentos where idsegmento = {} and idlotecampania = {}".format(
                                 idsegmento, idlotecampania)
                             cursor = self.conn.cursor() 
                             cursor.execute(select)
@@ -2951,7 +2953,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
     def crearCampania(self):
         # self.tools.crearCampania(self)
         lote = str(self.line_lote_nombre.text()).upper()
-        idexp = self.idExp
+        idexp = self.idExp[0]
         idcult = self.idCultivo
         regimen = int(self.cmb_regimen.currentIndex())
         produccion = float(self.ln_produccion.text())

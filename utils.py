@@ -130,13 +130,14 @@ class AgraeUtils():
 
     def segmentosQueryTable(self, param=''):
         if param != '': 
-            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote,sg.regimen,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_muestra from segmentos sg 
-            where sg.cod_control ilike '%{param}%'
+            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote, sg.exp_nombre,sg.regimen,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_muestra from segmentos sg 
+            where sg.lote ilike '%{param}%'
             or sg.cod_muestra ilike '%{param}%' 
+            or sg.exp_nombre ilike '%{param}%'
             '''
             return sql
         else: 
-            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote,sg.regimen,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_muestra from segmentos sg 
+            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote, sg.exp_nombre,sg.regimen,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_muestra from segmentos sg 
             '''
             return sql
     def sqlLoteParcela(self,idlote, nombre, fecha): 

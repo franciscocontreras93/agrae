@@ -151,9 +151,9 @@
      <widget class="QWidget" name="gridLayoutWidget_4">
       <property name="geometry">
        <rect>
-        <x>710</x>
+        <x>700</x>
         <y>80</y>
-        <width>34</width>
+        <width>43</width>
         <height>261</height>
        </rect>
       </property>
@@ -230,7 +230,7 @@
        <rect>
         <x>10</x>
         <y>80</y>
-        <width>691</width>
+        <width>681</width>
         <height>341</height>
        </rect>
       </property>
@@ -455,11 +455,11 @@
         <height>41</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="gridLayout_11" columnstretch="0,0,0,0">
-       <item row="0" column="3">
-        <widget class="QPushButton" name="btn_find_segmento">
+      <layout class="QGridLayout" name="gridLayout_11" columnstretch="0,0,0">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_43">
          <property name="text">
-          <string>Buscar</string>
+          <string>Buscar Segmento</string>
          </property>
         </widget>
        </item>
@@ -467,13 +467,6 @@
         <widget class="QLineEdit" name="line_find_segmento">
          <property name="inputMethodHints">
           <set>Qt::ImhUppercaseOnly</set>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_43">
-         <property name="text">
-          <string>Buscar Segmento</string>
          </property>
         </widget>
        </item>
@@ -544,6 +537,11 @@
          </column>
          <column>
           <property name="text">
+           <string>Explotacion</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
            <string>Regimen</string>
           </property>
          </column>
@@ -581,7 +579,7 @@
        <rect>
         <x>700</x>
         <y>80</y>
-        <width>34</width>
+        <width>43</width>
         <height>341</height>
        </rect>
       </property>
@@ -707,7 +705,7 @@
       <rect>
        <x>720</x>
        <y>50</y>
-       <width>34</width>
+       <width>43</width>
        <height>171</height>
       </rect>
      </property>
@@ -789,10 +787,10 @@
      <property name="alternatingRowColors">
       <bool>true</bool>
      </property>
-     <attribute name="horizontalHeaderDefaultSectionSize">
+     <attribute name="horizontalHeaderMinimumSectionSize">
       <number>86</number>
      </attribute>
-     <attribute name="horizontalHeaderMinimumSectionSize">
+     <attribute name="horizontalHeaderDefaultSectionSize">
       <number>86</number>
      </attribute>
      <attribute name="verticalHeaderVisible">
