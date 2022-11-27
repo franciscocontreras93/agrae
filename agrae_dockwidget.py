@@ -1330,7 +1330,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             for i in sorted(idx):
                     idsegmento = self.tableWidget_2.item(i.row(), 0).text()
                     idlotecampania = self.tableWidget_2.item(i.row(), 1).text()
-                    codigo = self.tableWidget_2.item(i.row(),8).text()      
+                    codigo = self.tableWidget_2.item(i.row(),9).text()      
                     sql = "insert into segmentoanalisis (idsegmento,idlotecampania,codigo) values ({},{},'{}')".format(idsegmento,idlotecampania,codigo)
                     with self.conn as conn: 
                         try: 
@@ -1686,7 +1686,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             df = df.astype(object).replace(np.nan, '')
             try: 
                 columns = [c for c in df.columns]
-                data = [[row['id'],row['COD'],row['N'],row['P'],row['K'],row['pH'],row['CE'],row['CARBON'], row['ceap'],row['CALIZA'],row['CA'],row['MG'],row['NA'],row['ORGANI']] for index,row in df.iterrows()]
+                data = [[row['id'],row['COD'],row['N'],row['P'],row['K'],row['PH'],row['CE'],row['CARBON'], row['ceap'],row['CALIZA'],row['CA'],row['MG'],row['NA'],row['ORGANI']] for index,row in df.iterrows()]
                 a = len(data)
                 b = len(data[0])
                 i = 1
@@ -1724,7 +1724,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             try:                
                 for index, row in df1.iterrows():
                     try: 
-                        _SQL = f'''INSERT INTO analisis.analitica (idsegmentoanalisis,ceap,ph,ce,carbon,caliza,ca,mg,k,na,n,p,organi,al,b,fe,mn,cu,zn,s,mo,arcilla,limo,arena,ni,co,ti,"as",pb,cr,metodo) VALUES ({row['id']},{row['ceap']},{row['pH']},{row['CE']},{row['CARBON']},{row['CALIZA']},{row['CA']},{row['MG']},{row['K']},{row['NA']},{row['N']},{row['P']},{row['ORGANI']},{row['AL']},{row['B']},{row['FE']},{row['MN']},{row['CU']},{row['ZN']},{row['S']},{row['MO']},{row['ARCILLA']},{row['LIMO']},{row['ARENA']},{row['NI']},{row['CO']},{row['TI']},{row['AS']},{row['PB']},{row['CR']},{row['METODO_P']}); '''
+                        _SQL = f'''INSERT INTO analisis.analitica (idsegmentoanalisis,ceap,ph,ce,carbon,caliza,ca,mg,k,na,n,p,organi,al,b,fe,mn,cu,zn,s,mo,arcilla,limo,arena,ni,co,ti,"as",pb,cr,metodo) VALUES ({row['id']},{row['ceap']},{row['PH']},{row['CE']},{row['CARBON']},{row['CALIZA']},{row['CA']},{row['MG']},{row['K']},{row['NA']},{row['N']},{row['P']},{row['ORGANI']},{row['AL']},{row['B']},{row['FE']},{row['MN']},{row['CU']},{row['ZN']},{row['S']},{row['MO']},{row['ARCILLA']},{row['LIMO']},{row['ARENA']},{row['NI']},{row['CO']},{row['TI']},{row['AS']},{row['PB']},{row['CR']},{row['METODO_P']}); '''
 
                         # print(_SQL)   
                         cursor.execute(_SQL)
@@ -1736,10 +1736,35 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 
                 self.an_save_bd.setEnabled(False)
                 QMessageBox.about(self, f"aGrae GIS:",f"Analitica almacenada correctamente")
-                self.conn.commit()       
+                
+                print('ACTUALIZANDO NECESIDADES INICIALES')
+                cursor.execute('refresh materialized view analisis.necesidades_iniciales')
+                self.conn.commit()
+                print('FINALIZADO NECESIDADES INICIALES')  
+                print('ACTUALIZANDO NECESIDADES 1')
+                cursor.execute('refresh materialized view analisis.necesidades_a01')
+                self.conn.commit()
+                print('FINALIZADO NECESIDADES 1')  
+                print('ACTUALIZANDO NECESIDADES 2')
+                cursor.execute('refresh materialized view analisis.necesidades_a02')
+                self.conn.commit()
+                print('FINALIZADO NECESIDADES 2')  
+                print('ACTUALIZANDO NECESIDADES 3')
+                cursor.execute('refresh materialized view analisis.necesidades_a03')
+                self.conn.commit()
+                print('FINALIZADO NECESIDADES 3')  
+                print('ACTUALIZANDO NECESIDADES FINALES')
+                cursor.execute('refresh materialized view analisis.necesidades_a04')
+                self.conn.commit()
+                print('FINALIZADO NECESIDADES FINALES')  
+                print('ACTUALIZANDO UNIDADES FERTILIZANTES')
+                cursor.execute('refresh materialized view public.unidades')
+                self.conn.commit()
+                print('FINALIZADO UNIDADES FERTILIZANTES')  
                 self.close()          
             except Exception as ex:
                 QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
+            
 
 
     def openFileDialog(self): 
@@ -2504,13 +2529,14 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
         txt = '''<html><head/><body><p align="center">Se han calculado 1 combinaciones de <br/>fertilizantes para ajustar las<br/>necesidades del cultivo. De ellas se ha<br/>seleccionado la combinacion mas<br/>economica.<br/>Los fertilizantes que<br/>se han Analizado son:</p>'''
         data = self.dataAuto
         # print(data)
+        # print(data)
         if data[0] != None or data[1] != None or data[2] != None :
             f1 = str(data[0])
             txt = txt + '''<p align="center"><span style=" font-weight:600;">APORTE 1 {} </span>  </p>'''.format(f1)   
             self.line_formula_1.setText(data[0])
             self.line_precio_1.setText(str(int(round(data[1]))))
             self.combo_ajuste_1.setCurrentText(str(data[2]).upper())
-            self.line_cantidad_1.setText(str(float(data[3])))
+            # self.line_cantidad_1.setText(str(float(data[3])))
             time.sleep(1)
             # print(data[0])
         if data[4] != None and data[5] != None and data[6] != None :
@@ -2519,7 +2545,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
             self.line_formula_2.setText(data[4])
             self.line_precio_2.setText(str(int(round(data[5]))))
             self.combo_ajuste_2.setCurrentText(str(data[6]).upper())
-            self.line_cantidad_2.setText(str(float(data[7])))
+            # self.line_cantidad_2.setText(str(float(data[7])))
             time.sleep(1)
             # print(data[2])
         if data[8] != None and data[9] != None and data[10] != None:
@@ -2528,7 +2554,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
             self.line_formula_3.setText(data[8])
             self.line_precio_3.setText(str(int(round(data[9]))))
             self.combo_ajuste_3.setCurrentText(str(data[10]).upper())
-            self.line_cantidad_3.setText(str(float(data[11])))
+            # self.line_cantidad_3.setText(str(float(data[11])))
             time.sleep(1)
         if data[12] != None and data[13] != None and data[14] != None :
             f4 = str(data[12])
@@ -2536,7 +2562,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
             self.line_formula_4.setText(data[13])
             self.line_precio_4.setText(str(int(round(data[13]))))
             self.combo_ajuste_4.setCurrentText(str(data[14]).upper())
-            self.line_cantidad_4.setText(str(float(data[15])))
+            # self.line_cantidad_4.setText(str(float(data[15])))
             time.sleep(1)
         self.combo_status.setCurrentText(str(data[16]))
         txt = txt + '''</body></html>'''
@@ -2667,13 +2693,13 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
                 # print(n,p,k)
                 #! CALCULO HUELLA CARBONO FERTILIZACION TRADICIONAL
                 huella_carbono_fp = round((n * 4.9500) + (p * 0.7333) + (k * 0.5500))
-                # print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
+                print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
             except ValueError as ve:
                 QgsMessageLog.logMessage(f'{ve}', 'aGrae GIS', level=1)
                 # QMessageBox.about(self, f"aGrae GIS:",f"No Existen datos de Fertilizacion Tradicional")
                 self.btn_panel.setEnabled(False)
             except Exception as ex: 
-                QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
+                QgsMessageLog.logMessage(f'Exception {ex}', 'aGrae GIS', level=1)
 
 
 
@@ -2700,13 +2726,13 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
 
             huella_carbono_fv = round((n_ponderado_ip * 4.9500) + (p_ponderado_ip * 0.7333) + (k_ponderado_ip * 0.5500))
 
-            # print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
+            print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
 
             #! REDUCCION HUELLA DE CARBONO: 
             try: 
                 _reduccion = -huella_carbono_fp+huella_carbono_fv
                 _percent = round((+_reduccion/huella_carbono_fp)*100)
-                # print('**** REDUCCION HUELLA DE CARBONO: {} KgCO2eq/ha o un {} % ****'.format(_reduccion,_percent))
+                print('**** REDUCCION HUELLA DE CARBONO: {} KgCO2eq/ha o un {} % ****'.format(_reduccion,_percent))
 
 
                 #! CAPTURA DE CARBONO EN CULTIVO
@@ -2716,7 +2742,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
                 ccc =  x1+x2
                 chc = -1*(-ccc+_reduccion)
                 # print(self.prod, self.ccosecha )
-                # print('**** HUELLA DE CARBONO: {} KgCO2eq/ha ****'.format(ccc))
+                print('**** HUELLA DE CARBONO: {} KgCO2eq/ha ****'.format(ccc)) 
                 self.lbl_hc_cantidad.setText('{:,} KgCO2/ha'.format(chc))
                 self.lbl_hc_percent.setText('Reducción: {}%'.format(_percent))
 
@@ -2896,10 +2922,10 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
 
 
         #* signals 
-        self.line_lote_nombre.returnPressed.connect(self.campaniaValidator)
-        self.line_lote_nombre.textChanged.connect(self.campaniaValidator)
-        self.cmb_moneda.currentIndexChanged.connect(self.campaniaValidator)
-        self.cmb_regimen.currentIndexChanged.connect(self.campaniaValidator)
+        # self.line_lote_nombre.returnPressed.connect(self.campaniaValidator)
+        # self.line_lote_nombre.textChanged.connect(self.campaniaValidator)
+        # self.cmb_moneda.currentIndexChanged.connect(self.campaniaValidator)
+        # self.cmb_regimen.currentIndexChanged.connect(self.campaniaValidator)
         
         self.lote_dateSiembra.dateChanged.connect(self.siembraDateChange)
         self.lote_dateCosecha.dateChanged.connect(self.cosechaDateChange)
@@ -3283,8 +3309,9 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
 
     #* VALIDATORS AND SLOTS
     def campaniaValidator(self,e):
-        dateSiembra = self.lote_dateSiembra.date().toString('yyyy.MM.dd')
-        dateCosecha = self.lote_dateCosecha.date().toString('yyyy.MM.dd')
+        #TODO
+        # dateSiembra = self.lote_dateSiembra.date().toString('yyyy.MM.dd')
+        # dateCosecha = self.lote_dateCosecha.date().toString('yyyy.MM.dd')
         
         # if self.cmb_regimen.currentIndex() != 0 and self.cmb_moneda.currentIndex() != 0 and len(self.line_lote_nombre.text()) != 0: 
         #     if dateCosecha != dateSiembra and len(self.ln_produccion.text()) > 0 and len(self.line_lote_idexp.text()) > 0 and len(self.line_lote_idcultivo.text()) > 0:
@@ -3298,7 +3325,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         # elif self.cmb_regimen.currentIndex() == 0 or self.cmb_moneda.currentIndex() == 0: 
         #     # print('no valido',e)
         #     # self.btn_crear_campania.setEnabled(False)
-        #     pass
+        pass
 
     def DateActivated(self,status,dateWidget):
         if dateWidget.isEnabled(): 

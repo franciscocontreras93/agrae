@@ -2145,9 +2145,9 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
     def buscarAgricultor(self,param:str=None): 
         if param == None or len(self.lineEdit.text()) == 0: 
             sql = ''' select a.idagricultor ,p.dni, a.nombre, e.nombre explotacion, d.nombre as distribuidor from agricultor a 
-            join explotacion e on a.idexplotacion = e.idexplotacion 
-            join persona p on p.idpersona = a.idpersona
-            join distribuidor d on d.iddistribuidor = a.iddistribuidor     '''
+            left join explotacion e on a.idexplotacion = e.idexplotacion 
+            left join persona p on p.idpersona = a.idpersona
+            left join distribuidor d on d.iddistribuidor = a.iddistribuidor     '''
             try:
                 self.tools.populateTable(sql, self.tableWidget)
             except IndexError as ie: 
@@ -2156,9 +2156,9 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
                 print(ex)
         else: 
             sql = ''' select a.idagricultor ,p.dni, a.nombre, e.nombre explotacion, d.nombre as distribuidor from agricultor a 
-            join explotacion e on a.idexplotacion = e.idexplotacion 
-            join persona p on p.idpersona = a.idpersona
-            join distribuidor d on d.iddistribuidor = a.iddistribuidor   
+            left join explotacion e on a.idexplotacion = e.idexplotacion 
+            left join persona p on p.idpersona = a.idpersona
+            left join distribuidor d on d.iddistribuidor = a.iddistribuidor   
             where p.dni = '{}' or a.nombre ilike '%{}%' or e.nombre ilike '%{}%' or d.nombre ilike '%{}%' '''.format(param,param,param,param)
             try: 
                 # print(param)
@@ -2171,7 +2171,7 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
 
     def buscar(self):
         filtro = self.lineEdit.text()
-        print(filtro)
+        # print(filtro)
         self.buscarAgricultor(filtro)
     def popDni(self,data):
         # print(dni)
@@ -2207,6 +2207,8 @@ class agricultorDialog(QtWidgets.QDialog,agraeAgricultorDialog):
         idExplotacion = self.ln_exp.text()
         dni = self.ln_dni.text()
         idDist = self.ln_dist.text()
+
+
         with self.conn.cursor() as cursor: 
             try: 
                 sql = ''' insert into agricultor(idpersona,idexplotacion,iddistribuidor,nombre)
