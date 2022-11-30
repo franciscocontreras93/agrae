@@ -685,10 +685,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tabWidget.setCurrentIndex(0)
 
 
-        dataParcela = self.dataAutoLote()
-        listaParcela = [e[0] for e in dataParcela]
+        dataLotes = self.dataAutoLote()
+        listaParcela = [str(e[0]).upper() for e in dataLotes]
         # print(listaParcela)
-        completerParcela = QCompleter(listaParcela)
+        completerParcela = QCompleter([str(e[0]).upper() for e in dataLotes])
         completerParcela.setCaseSensitivity(False)
 
         dataSegmento = self.dataAutoSegmento()
@@ -709,7 +709,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget.setColumnHidden(12, True)  # columna C cosecha
         self.tableWidget.setColumnHidden(13, True)  # columna C Residuo
 
-        self.tableWidget.doubleClicked.connect(self.doubleClick)
+        self.tableWidget.doubleClicked.connect(self.openAnaliticaDialog)
 
         self.tableWidget_2.horizontalHeader().setStretchLastSection(True)
         self.tableWidget_2.setColumnHidden(0, True)
@@ -732,6 +732,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         line_buscar_action = self.line_buscar.addAction(
                     QIcon(icons_path['search_icon_path']), self.line_buscar.TrailingPosition)
         line_buscar_action.triggered.connect(self.buscarLotes)
+
+
+        self.combo_cultivos.currentTextChanged.connect(self.filtrarCultivo) #* FILTRAR CULTIVOS
         
 
         self.btn_add_layer.setIcon(QIcon(icons_path['add_layer_to_map']))
@@ -830,9 +833,16 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         self.seg_combo.currentIndexChanged.connect(self.onChangeComboSemento)
 
-    def doubleClick(self,e):
+
+
+    def openAnaliticaDialog(self,e):
         row = e.row()
         self.analiticaDialog(row)
+    
+    def filtrarCultivo(self,e):
+        if self.check_cultivos.isChecked(): 
+            # print(e)
+            self.tools.filtrarCultivo(self,str(e),self.sinceDateStatus)
 
     def initToolbar(self):
         icons_path = self.utils.iconsPath()
@@ -889,7 +899,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     def dataAutoLote(self): 
         cursor = self.conn.cursor()
-        sql = '''select distinct unnest(array[l.nombre, p.nombre, c.nombre, ex.nombre]) from lote l
+        sql = '''select distinct unnest(array[l.nombre, p.nombre, ex.nombre]) from lote l
         left join lotecampania lc on lc.idlote = l.idlote
         left join campania ca on ca.idcampania = lc.idcampania 
         left join explotacion ex on ca.idexplotacion = ca.idexplotacion 
@@ -1423,7 +1433,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     def reloadLotes(self):
         self.tools.buscarLotes(self, False)
-        self.btn_reload.setEnabled(False)
+        # self.btn_reload.setEnabled(False)
 
     def cargarLote(self,exp):
         dns = self.dns
@@ -1737,30 +1747,30 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 self.an_save_bd.setEnabled(False)
                 QMessageBox.about(self, f"aGrae GIS:",f"Analitica almacenada correctamente")
                 
-                print('ACTUALIZANDO NECESIDADES INICIALES')
+                # print('ACTUALIZANDO NECESIDADES INICIALES')
                 cursor.execute('refresh materialized view analisis.necesidades_iniciales')
                 self.conn.commit()
-                print('FINALIZADO NECESIDADES INICIALES')  
-                print('ACTUALIZANDO NECESIDADES 1')
+                # print('FINALIZADO NECESIDADES INICIALES')  
+                # print('ACTUALIZANDO NECESIDADES 1')
                 cursor.execute('refresh materialized view analisis.necesidades_a01')
                 self.conn.commit()
-                print('FINALIZADO NECESIDADES 1')  
-                print('ACTUALIZANDO NECESIDADES 2')
+                # print('FINALIZADO NECESIDADES 1')  
+                # print('ACTUALIZANDO NECESIDADES 2')
                 cursor.execute('refresh materialized view analisis.necesidades_a02')
                 self.conn.commit()
-                print('FINALIZADO NECESIDADES 2')  
-                print('ACTUALIZANDO NECESIDADES 3')
+                # print('FINALIZADO NECESIDADES 2')  
+                # print('ACTUALIZANDO NECESIDADES 3')
                 cursor.execute('refresh materialized view analisis.necesidades_a03')
                 self.conn.commit()
-                print('FINALIZADO NECESIDADES 3')  
-                print('ACTUALIZANDO NECESIDADES FINALES')
+                # print('FINALIZADO NECESIDADES 3')  
+                # print('ACTUALIZANDO NECESIDADES FINALES')
                 cursor.execute('refresh materialized view analisis.necesidades_a04')
                 self.conn.commit()
-                print('FINALIZADO NECESIDADES FINALES')  
-                print('ACTUALIZANDO UNIDADES FERTILIZANTES')
+                # print('FINALIZADO NECESIDADES FINALES')  
+                # print('ACTUALIZANDO UNIDADES FERTILIZANTES')
                 cursor.execute('refresh materialized view public.unidades')
                 self.conn.commit()
-                print('FINALIZADO UNIDADES FERTILIZANTES')  
+                # print('FINALIZADO UNIDADES FERTILIZANTES')  
                 self.close()          
             except Exception as ex:
                 QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
@@ -2693,7 +2703,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
                 # print(n,p,k)
                 #! CALCULO HUELLA CARBONO FERTILIZACION TRADICIONAL
                 huella_carbono_fp = round((n * 4.9500) + (p * 0.7333) + (k * 0.5500))
-                print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
+                # print('**** FERTILIZACION TRADICIONAL:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fp))
             except ValueError as ve:
                 QgsMessageLog.logMessage(f'{ve}', 'aGrae GIS', level=1)
                 # QMessageBox.about(self, f"aGrae GIS:",f"No Existen datos de Fertilizacion Tradicional")
@@ -2726,13 +2736,13 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
 
             huella_carbono_fv = round((n_ponderado_ip * 4.9500) + (p_ponderado_ip * 0.7333) + (k_ponderado_ip * 0.5500))
 
-            print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
+            # print('**** FERTILIZACION VARIABLE:\nCAPTURA HUELLA DE CARBONO: {}  KgCO2eq/ha ****'.format(huella_carbono_fv))
 
             #! REDUCCION HUELLA DE CARBONO: 
             try: 
                 _reduccion = -huella_carbono_fp+huella_carbono_fv
                 _percent = round((+_reduccion/huella_carbono_fp)*100)
-                print('**** REDUCCION HUELLA DE CARBONO: {} KgCO2eq/ha o un {} % ****'.format(_reduccion,_percent))
+                # print('**** REDUCCION HUELLA DE CARBONO: {} KgCO2eq/ha o un {} % ****'.format(_reduccion,_percent))
 
 
                 #! CAPTURA DE CARBONO EN CULTIVO
@@ -2742,7 +2752,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
                 ccc =  x1+x2
                 chc = -1*(-ccc+_reduccion)
                 # print(self.prod, self.ccosecha )
-                print('**** HUELLA DE CARBONO: {} KgCO2eq/ha ****'.format(ccc)) 
+                # print('**** HUELLA DE CARBONO: {} KgCO2eq/ha ****'.format(ccc)) 
                 self.lbl_hc_cantidad.setText('{:,} KgCO2/ha'.format(chc))
                 self.lbl_hc_percent.setText('Reducción: {}%'.format(_percent))
 
@@ -3214,7 +3224,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
                     cursor = self.conn.cursor() 
                     cursor.execute(sql)
                     self.conn.commit()
-                    print(sql)
+                    # print(sql)
                     QMessageBox.about(self, f"aGrae GIS:",f"Campaña Actualizada Correctamente")
                 
             except Exception as ex: 
@@ -3467,7 +3477,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
        
         
         
-        print(self.idLote, self.idCampania,self.idExp,self.idCultivo,data['unidadesprecio'])
+        # print(self.idLote, self.idCampania,self.idExp,self.idCultivo,data['unidadesprecio'])
         
 
     def expDialog(self):

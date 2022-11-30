@@ -533,6 +533,8 @@ class AgraeToolset():
         untilDate = widget.untilDate.date().toString('yyyy-MM-dd')
 
         sqlQuery = ''
+        
+        
          
         with self.conn as conn:
             try:
@@ -547,7 +549,7 @@ class AgraeToolset():
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
                     left join explotacion ex on ex.idexplotacion = ca.idexplotacion 
                     group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
-                    order by ca.fechasiembra desc'''
+                    order by ex.nombre, cu.nombre, ca.fechasiembra desc'''
                     widget.btn_add_layer.setEnabled(False)
                     try:
                         widget.btn_chart.setEnabled(True)
@@ -565,9 +567,9 @@ class AgraeToolset():
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
                     left join explotacion ex on ex.idexplotacion = ca.idexplotacion 
-                    where l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' or ex.nombre ilike '%{nombre}%'
+                    where l.nombre ilike '%{nombre}%' or ex.nombre ilike '%{nombre}%'
                     group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
-                    order by ca.fechasiembra desc;                        
+                    order by ex.nombre, cu.nombre, ca.fechasiembra desc;                        
                     """
                     widget.btn_reload.setEnabled(True)
                     try:
@@ -587,7 +589,7 @@ class AgraeToolset():
                     left join explotacion ex on ex.idexplotacion = ca.idexplotacion
                     where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}' 
                     group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
-                    order by ca.fechasiembra desc
+                    order ex.nombre, by cu.nombre, ca.fechasiembra desc
                     """
                     widget.btn_reload.setEnabled(True)
                     try:
@@ -606,20 +608,20 @@ class AgraeToolset():
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
                     left join explotacion ex on ex.idexplotacion = ca.idexplotacion
                     where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
-                    or l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
+                    or l.nombre ilike '%{nombre}%' or ex.nombre ilike '%{nombre}%' 
                     group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
-                    order by ca.fechasiembra desc 
+                    order by ex.nombre,cu.nombre, ca.fechasiembra desc 
                     """
                     widget.btn_reload.setEnabled(True)
-                    try:
-                        widget.btn_chart.setEnabled(True)
-                    except:
-                        pass
+                
+                
 
 
                 cursor = conn.cursor()
+                # print(sqlQuery)
                 cursor.execute(sqlQuery)
                 data = cursor.fetchall()
+                # print(data)
                 if len(data) == 0:
                     QMessageBox.about(
                         widget, "aGrae GIS:", "No existen registros con los parametros de busqueda")
@@ -630,6 +632,16 @@ class AgraeToolset():
                     widget.sinceDateStatus = False
                     widget.untilDate.setEnabled(False)
                     self.queryCapaLotes = sqlQuery
+                    try:
+                        widget.combo_cultivos.clear()
+                        cultivos = list(set([i[7] for i in data]))
+                        # print(cultivos)
+                        widget.combo_cultivos.addItems(cultivos)
+                        widget.check_cultivos.setEnabled(True)
+                        widget.combo_cultivos.setEnabled(True)
+                    except Exception as ex: 
+                        QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
+                        pass
                     a = len(data)
                     b = len(data[0])
                     i = 1
@@ -642,11 +654,69 @@ class AgraeToolset():
                         for i in range(b):
                             item = QTableWidgetItem(str(data[j][i]))
                             widget.tableWidget.setItem(j,i,item)
-                        obj = widget.tableWidget.item(j,1).text()
+                        # obj = widget.tableWidget.item(j,1).text()
             except Exception as ex:
                 # print(ex)
                 print(ex)
-                QMessageBox.about(widget, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")  
+                QMessageBox.about(widget, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")
+
+    def filtrarCultivo(self,widget,cultivo:str,status:bool):
+        nombre = widget.line_buscar.text()
+        sinceDate = widget.sinceDate.date().toString('yyyy-MM-dd')
+        untilDate = widget.untilDate.date().toString('yyyy-MM-dd')
+        # print(cultivo)
+        if status == False:
+            sqlQuery = f"""select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela, coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha, cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
+                        from lotecampania lc
+                        join loteparcela lp on lp.idlotecampania = lc.idlotecampania
+                        join lotes ls on lc.idlotecampania = ls.idlotecampania
+                        left join lote l on l.idlote = lc.idlote
+                        left join parcela p on p.idparcela = lp.idparcela 
+                        left join campania ca on ca.idcampania = lc.idcampania 
+                        left join cultivo cu on cu.idcultivo = ca.idcultivo 
+                        left join explotacion ex on ex.idexplotacion = ca.idexplotacion 
+                        where l.nombre ilike '%{nombre}%' or ex.nombre ilike '%{nombre}%' and cu.nombre ilike '{cultivo}'
+                        group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
+                        order by ex.nombre, cu.nombre, ca.fechasiembra desc;                        
+                        """
+        else: 
+                sqlQuery = f"""select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela,coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha, cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
+                from lotecampania lc
+                join loteparcela lp on lp.idlotecampania = lc.idlotecampania
+                join lotes ls on lc.idlotecampania = ls.idlotecampania
+                left join lote l on l.idlote = lc.idlote
+                left join parcela p on p.idparcela = lp.idparcela 
+                left join campania ca on ca.idcampania = lc.idcampania 
+                left join cultivo cu on cu.idcultivo = ca.idcultivo 
+                left join explotacion ex on ex.idexplotacion = ca.idexplotacion
+                where  l.nombre ilike '%{nombre}%' or ex.nombre ilike '%{nombre}%' and ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}' and cu.nombre ilike '{cultivo}'
+                group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
+                order by ex.nombre, cu.nombre, ca.fechasiembra desc 
+                """
+        try: 
+            with self.conn as conn: 
+                cursor  = self.conn.cursor() 
+                cursor.execute(sqlQuery)
+                data = cursor.fetchall() 
+                # print(data)
+                a = len(data)
+                b = len(data[0])
+                i = 1
+                j = 1
+            
+            
+                widget.tableWidget.setRowCount(a)
+                widget.tableWidget.setColumnCount(b)
+                for j in range(a):
+                    for i in range(b):
+                        item = QTableWidgetItem(str(data[j][i]))
+                        widget.tableWidget.setItem(j,i,item)
+                    # obj = widget.tableWidget.item(j,1).text()
+
+        except Exception as ex : print(ex)
+
+
+
             
     def cargarLote(self,widget):
         selected = widget.tableWidget.selectionModel().selectedRows()

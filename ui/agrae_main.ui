@@ -44,7 +44,7 @@
     <string notr="true"/>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="lotes_tab">
     <attribute name="title">
@@ -63,7 +63,7 @@
       <string notr="true"/>
      </property>
      <property name="title">
-      <string>Busqueda de Lotes y Parcelas</string>
+      <string>Busqueda de Explotaciones o Lotes</string>
      </property>
      <widget class="QWidget" name="gridLayoutWidget">
       <property name="geometry">
@@ -74,22 +74,28 @@
         <height>41</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0,0,0">
+      <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0,0,0,0,0">
        <item row="0" column="4">
-        <widget class="QLabel" name="label_45">
-         <property name="text">
-          <string>Hasta:</string>
+        <widget class="QDateEdit" name="sinceDate">
+         <property name="dateTime">
+          <datetime>
+           <hour>0</hour>
+           <minute>0</minute>
+           <second>0</second>
+           <year>2022</year>
+           <month>1</month>
+           <day>1</day>
+          </datetime>
+         </property>
+         <property name="displayFormat">
+          <string>yyyy-MM-dd</string>
+         </property>
+         <property name="calendarPopup">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
-       <item row="0" column="2">
-        <widget class="QLabel" name="label_44">
-         <property name="text">
-          <string>Desde:</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="5">
+       <item row="0" column="6">
         <widget class="QDateEdit" name="untilDate">
          <property name="enabled">
           <bool>false</bool>
@@ -112,37 +118,63 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
-        <widget class="QLineEdit" name="line_buscar">
-         <property name="inputMethodHints">
-          <set>Qt::ImhUppercaseOnly</set>
+       <item row="0" column="3">
+        <widget class="QLabel" name="label_44">
+         <property name="text">
+          <string>Desde:</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="3">
-        <widget class="QDateEdit" name="sinceDate">
-         <property name="dateTime">
-          <datetime>
-           <hour>0</hour>
-           <minute>0</minute>
-           <second>0</second>
-           <year>2022</year>
-           <month>1</month>
-           <day>1</day>
-          </datetime>
+       <item row="0" column="1">
+        <widget class="QCheckBox" name="check_cultivos">
+         <property name="enabled">
+          <bool>false</bool>
          </property>
-         <property name="displayFormat">
-          <string>yyyy-MM-dd</string>
+         <property name="text">
+          <string>Filtrar Cultivo</string>
          </property>
-         <property name="calendarPopup">
-          <bool>true</bool>
+        </widget>
+       </item>
+       <item row="0" column="5">
+        <widget class="QLabel" name="label_45">
+         <property name="text">
+          <string>Hasta:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QComboBox" name="combo_cultivos">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>120</width>
+           <height>0</height>
+          </size>
          </property>
         </widget>
        </item>
        <item row="0" column="0">
-        <widget class="QLabel" name="label">
+        <widget class="QLineEdit" name="line_buscar">
+         <property name="inputMethodHints">
+          <set>Qt::ImhUppercaseOnly</set>
+         </property>
+         <property name="placeholderText">
+          <string>Nombre Lote o Explotacion...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="7">
+        <widget class="QPushButton" name="btn_reload">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="toolTip">
+          <string>Añadir Lote al Mapa</string>
+         </property>
          <property name="text">
-          <string>Buscar Lote o Parcela</string>
+          <string/>
          </property>
         </widget>
        </item>
@@ -173,19 +205,6 @@
        </item>
        <item row="3" column="0">
         <widget class="QPushButton" name="btn_chart">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="toolTip">
-          <string>Añadir Lote al Mapa</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QPushButton" name="btn_reload">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -455,7 +474,7 @@
         <height>41</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="gridLayout_11" columnstretch="0,0,0">
+      <layout class="QGridLayout" name="gridLayout_11" columnstretch="0,0">
        <item row="0" column="0">
         <widget class="QLabel" name="label_43">
          <property name="text">
