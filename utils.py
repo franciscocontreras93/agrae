@@ -1027,6 +1027,39 @@ class AgraeToolset():
                 table.setItem(r, c, item)
 
 
+    def actualizarNecesidades(self):
+        conn = connect(dbname=self.dns['dbname'], user=self.dns['user'],
+                       password=self.dns['password'], host=self.dns['host'], port=self.dns['port'])
+        with conn: 
+            cursor = conn.cursor() 
+            try:
+                # print('ACTUALIZANDO NECESIDADES INICIALES')
+                cursor.execute('refresh materialized view analisis.necesidades_iniciales')
+                self.conn.commit()
+                # print('FINALIZADO NECESIDADES INICIALES')  
+                # print('ACTUALIZANDO NECESIDADES 1')
+                cursor.execute('refresh materialized view analisis.necesidades_a01')
+                self.conn.commit()
+                # print('FINALIZADO NECESIDADES 1')  
+                # print('ACTUALIZANDO NECESIDADES 2')
+                cursor.execute('refresh materialized view analisis.necesidades_a02')
+                self.conn.commit()
+                # print('FINALIZADO NECESIDADES 2')  
+                # print('ACTUALIZANDO NECESIDADES 3')
+                cursor.execute('refresh materialized view analisis.necesidades_a03')
+                self.conn.commit()
+                # print('FINALIZADO NECESIDADES 3')  
+                # print('ACTUALIZANDO NECESIDADES FINALES')
+                cursor.execute('refresh materialized view analisis.necesidades_a04')
+                self.conn.commit()
+                # print('FINALIZADO NECESIDADES FINALES')  
+                # print('ACTUALIZANDO UNIDADES FERTILIZANTES')
+                cursor.execute('refresh materialized view public.unidades')
+                self.conn.commit()
+                # print('FINALIZADO UNIDADES FERTILIZANTES') 
+            except Exception as ex: 
+                print(ex)
+
     def populateTable(self,sql,widget, action=False):
         
         with self.conn:
@@ -1131,7 +1164,8 @@ class TableModel(QtCore.QAbstractTableModel):
 
         if role == Qt.DisplayRole:
             value = self._data.iloc[index.row(), index.column()]
-            if value != NULL:
+            if value != NULL and value != 0:
+                # print(value)
                 return str(value)
             else:
                 return int(0)
@@ -1564,4 +1598,78 @@ class PanelRender():
         
 
 
+
+class AppDemo(QtWidgets.QWidget): 
+    def __init__(self) -> None:
+        super().__init__()
+        
+        self.s = QSettings('agrae', 'dbConnection')
+        self.dns = {
+            'dbname': self.s.value('dbname'),
+            'user': self.s.value('dbuser'),
+            'password': self.s.value('dbpass'),
+            'host': self.s.value('dbhost'),
+            'port': self.s.value('dbport')
+        }
+
+        self.setMinimumWidth(600)
+        self.layout = QtWidgets.QVBoxLayout() 
+        n = 6
+        self.progressBar =  QtWidgets.QProgressBar() 
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(n)
+        self.progressBar.setRange(0,n)
+        self.button = QtWidgets.QPushButton('Run')
+        self.button.clicked.connect(self.run)
+
+    def run(self):
+        conn = connect(dbname=self.dns['dbname'], user=self.dns['user'],
+                    password=self.dns['password'], host=self.dns['host'], port=self.dns['port'])
+        with conn: 
+            cursor = conn.cursor() 
+            i = 0
+            try:
+                # print('ACTUALIZANDO NECESIDADES INICIALES')
+                cursor.execute('refresh materialized view analisis.necesidades_iniciales')
+                self.conn.commit()
+                self.progressBar.setValue(i+1)
+                i += 1
+                # print('FINALIZADO NECESIDADES INICIALES')  
+                # print('ACTUALIZANDO NECESIDADES 1')
+                cursor.execute('refresh materialized view analisis.necesidades_a01')
+                self.conn.commit()
+                self.progressBar.setValue(i+1)
+                i += 1
+                # print('FINALIZADO NECESIDADES 1')  
+                # print('ACTUALIZANDO NECESIDADES 2')
+                cursor.execute('refresh materialized view analisis.necesidades_a02')
+                self.conn.commit()
+                self.progressBar.setValue(i+1)
+                i += 1
+                # print('FINALIZADO NECESIDADES 2')  
+                # print('ACTUALIZANDO NECESIDADES 3')
+                cursor.execute('refresh materialized view analisis.necesidades_a03')
+                self.conn.commit()
+                self.progressBar.setValue(i+1)
+                i += 1
+                # print('FINALIZADO NECESIDADES 3')  
+                # print('ACTUALIZANDO NECESIDADES FINALES')
+                cursor.execute('refresh materialized view analisis.necesidades_a04')
+                self.conn.commit()
+                self.progressBar.setValue(i+1)
+                i += 1
+                # print('FINALIZADO NECESIDADES FINALES')  
+                # print('ACTUALIZANDO UNIDADES FERTILIZANTES')
+                cursor.execute('refresh materialized view public.unidades')
+                self.conn.commit()
+                self.progressBar.setValue(i+1)
+                i += 1
+                # print('FINALIZADO UNIDADES FERTILIZANTES') 
+            except Exception as ex: 
+                print(ex)
+
+
+
+
+    
 

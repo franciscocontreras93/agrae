@@ -38,7 +38,7 @@ from qgis.core import *
 from qgis.utils import iface
 from qgis.PyQt.QtXml import QDomDocument
 from .agrae_dialogs import expFindDialog, agraeSegmentoDialog, agraeParametrosDialog, cultivoFindDialog, agricultorDialog
-from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic, TableModel, PanelRender
+from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic, TableModel, PanelRender, AppDemo
 
 from .resources import *
 
@@ -531,33 +531,35 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
                     if idLote == None:
                         QMessageBox.about(self, 'aGrae GIS', f'El Lote no tiene una campaña asociada') 
                     else: 
-                        
+                        QMessageBox.about(self, 'aGrae GIS', f'Asignando parcelas al Lote, este proceso puede demorar un momento.')
                         sql = f''' insert into loteparcela(idparcela,idlotecampania) 
                                 values({idParcela},{idLote}) '''                    
                         cursor.execute(sql)
                         # print(f'Se creo la Relacion {idParcela,idLote}')
                         self.conn.commit()
                         # self.pushButton_2.setEnabled(False)
+                        
                 except errors.lookup('23505'):
-                    # error.append(idParcela)
-                    # # print(f'La parcela {f[1]} ya existe pertenece a un lote.')
-                    # QMessageBox.about(self, 'aGrae GIS',
-                    #                 f'La parcela {f[1]} ya existe pertenece a un lote.')
+                    error.append(idParcela)
+                    print(f'La parcela {f[1]} ya existe pertenece a un lote.')
+                    QMessageBox.about(self, 'aGrae GIS',
+                                    f'La parcela {f[1]} ya existe pertenece a un lote.')
                     self.conn.rollback()
-
                 
 
-            # print('EJECUTANDO SENTENCIA NECESIDADES')
-            cursor = self.conn.cursor() 
-            # print('FINALIZADO SENTENCIA NECESIDADES')
-            lyr.removeSelection()
+            
+                
+
+            
             if len(error) == 0:
+                self.tools.actualizarNecesidades()
                 QMessageBox.about(self, 'aGrae GIS', f'Se creo la Relacion sin errores ') 
-            elif len(error) >0 and len(error) <len(features): 
-                # QMessageBox.about(self, 'aGrae GIS', f' Las siguientes parcelas no se pudieron relacionar \n ({error})')
+            elif len(error) >0 and len(error) <len(features):
+                self.tools.actualizarNecesidades()
+                QMessageBox.about(self, 'aGrae GIS', f' Las siguientes parcelas no se pudieron relacionar \n ({error})')
                 pass
             elif len(error) == len(features): 
-                # QMessageBox.about(self, 'aGrae GIS', f'No se pudieron relacionar las Parcelas seleccionadas.')
+                QMessageBox.about(self, 'aGrae GIS', f'No se pudieron relacionar las Parcelas seleccionadas.')
                 pass
 
                 
@@ -570,46 +572,29 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         
 
     def dropRelation(self): 
-        lyr = iface.activeLayer()
-        features = lyr.selectedFeatures()
         row = self.tableWidget.currentRow()
         idLote = self.tableWidget.item(row, 0).text()
-        cursor = self.conn.cursor()
-        
-        try:
-            for f in features:
-                idParcela = f[1]
+        with self.conn as conn: 
+            cursor = conn.cursor() 
+            try:
                 confirm = QMessageBox.question(
-                    self, 'aGrae GIS', f"Seguro quiere quitar la parcela {f[11]} del lote:\n{self.tableWidget.item(row, 1).text()}-{self.tableWidget.item(row,5).text()}\nCampaña: {self.tableWidget.item(row, 3).text()}", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    self, 'aGrae GIS', f"Seguro quiere eliminar el lote:\n{self.tableWidget.item(row, 1).text()}-{self.tableWidget.item(row,5).text()}\nCampaña: {self.tableWidget.item(row, 3).text()}", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if confirm == QMessageBox.Yes:
-                    sqlCheck = f'select * from loteparcela where idparcela = {idParcela} and idlotecampania = {idLote}'
-                    cursor.execute(sqlCheck)
-                    data = cursor.fetchall()
-                    if len(data) < 1:
-                        # print('No existe la relacion entre la parcela y el lote seleccionado')
-                        self.conn.rollback()
-                    else:
-                        _confirm = QMessageBox.question(
-                            self, 'aGrae GIS', f"Datos Correctos. Desea Continuar?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-                        if _confirm == QMessageBox.Yes: 
-                            sql = f'''
-                            begin;
+                    sqlCheck = f'delete from loteparcela where idlotecampania = {idLote}'
+                    try: 
+                        cursor.execute(sqlCheck)
+                        conn.commit()
+                    except Exception as ex:
+                        QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
+                        conn.rollback()
+            except Exception as ex:  
+                QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
 
-                            delete from loteparcela where idparcela = {idParcela} and idlotecampania = {idLote};
 
-                            delete from necesidades where idlotecampania = {idLote};
-
-                            commit;'''
-                            cursor.execute(sql)
-                            self.conn.commit()
-                        else: 
-                            self.conn.rollback()
+        
                             
 
         
-        except Exception as ex:
-            QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
-            pass
     
     def crearLote(self):
         try:
@@ -887,6 +872,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             parent=self)
         
         self.comboAtlas.currentIndexChanged.connect(self.seekAtlasFeature) 
+    
     
         
  
@@ -1747,35 +1733,11 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 self.an_save_bd.setEnabled(False)
                 QMessageBox.about(self, f"aGrae GIS:",f"Analitica almacenada correctamente")
                 
-                # print('ACTUALIZANDO NECESIDADES INICIALES')
-                cursor.execute('refresh materialized view analisis.necesidades_iniciales')
-                self.conn.commit()
-                # print('FINALIZADO NECESIDADES INICIALES')  
-                # print('ACTUALIZANDO NECESIDADES 1')
-                cursor.execute('refresh materialized view analisis.necesidades_a01')
-                self.conn.commit()
-                # print('FINALIZADO NECESIDADES 1')  
-                # print('ACTUALIZANDO NECESIDADES 2')
-                cursor.execute('refresh materialized view analisis.necesidades_a02')
-                self.conn.commit()
-                # print('FINALIZADO NECESIDADES 2')  
-                # print('ACTUALIZANDO NECESIDADES 3')
-                cursor.execute('refresh materialized view analisis.necesidades_a03')
-                self.conn.commit()
-                # print('FINALIZADO NECESIDADES 3')  
-                # print('ACTUALIZANDO NECESIDADES FINALES')
-                cursor.execute('refresh materialized view analisis.necesidades_a04')
-                self.conn.commit()
-                # print('FINALIZADO NECESIDADES FINALES')  
-                # print('ACTUALIZANDO UNIDADES FERTILIZANTES')
-                cursor.execute('refresh materialized view public.unidades')
-                self.conn.commit()
-                # print('FINALIZADO UNIDADES FERTILIZANTES')  
-                self.close()          
+                self.tools.actualizarNecesidades()
+                # self.close()          
             except Exception as ex:
                 QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
             
-
 
     def openFileDialog(self): 
         options = QFileDialog.Options()
@@ -1954,10 +1916,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         u.extraccioncosechak) cos_npk,
         (u.extraccionresiduon || ' / ' ||
         u.extraccionresiduop || ' / ' ||
-        u.extraccioncosechak) res_npk,
-        (u.necesidad_n || ' / ' ||
-        u.necesidad_p || ' / ' ||
-        u.necesidad_k) aportes_npk,
+        u.extraccionresiduok) res_npk,
+        (u.totaln || ' / ' ||
+        u.totalp || ' / ' ||
+        u.totalk) aportes_npk,
         round(cast(u.area_has as numeric),2) area
         from unidades u
         join lotes ls on ls.idlotecampania = u.idlotecampania
@@ -1968,16 +1930,18 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             cursor = self.conn.cursor()
             cursor.execute(sql)
             data = cursor.fetchall()
-            print(data)
+            # print(data)
             # self.dataSignal.emit(data)
 
         
         
-        ufs = ['UF1', 'UF2', 'UF3','UF6','UF9']
+        ufs = ['UF1', 'UF2', 'UF3','UF5','UF6','UF9']
         for e in ufs: 
             data2 = self.checkData(data, e)
             # print(data2) 
         data = sorted(data2)
+        print('function getDataExtracciones: ')
+        print(type(data),data)
         return data
 
     def checkData(self,data,uf):
@@ -1994,7 +1958,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 break
             else:
                 break
+        # print('function checkData: ')
         # print(data)
+
         return data
 
 
@@ -2209,7 +2175,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
         
         df = pd.DataFrame.from_records(data=datagen, columns=cols)        
         df_sorted = df.sort_values(by=0).round({'area_has':2})
-        # print(df_sorted) #! debug
+        print(df_sorted) #! debug
         model = TableModel(df_sorted)
         self.tableView.setModel(model)
         self.tableView.setColumnWidth(0,35)
@@ -3538,23 +3504,24 @@ class MplCanvas(FigureCanvasQTAgg):
             colors = []
             for i in suelo:
                 if i == 'Muy Alto':
-                    colors.append('#7702E5')
+                    colors.append('#995AE2')
                     values.append(5)
                 elif i == 'Alto':
-                    colors.append('#0293E5')
+                    colors.append('#5AB8E2')
                     values.append(4)
                 elif i == 'Medio':
-                    colors.append('#06E502')
+                    colors.append('#5EE25A')
                     values.append(3)
                 elif i == 'Normal':
-                    colors.append('#06E502')
+                    colors.append('#5EE25A')
                     values.append(3)
                 
                 elif i == 'Bajo':
-                    colors.append('#FF9633')
+                    colors.append('#FFAB66')
                     values.append(2)
                 elif i == 'Muy Bajo':
-                    colors.append('#FF3333')
+                    colors.append('#FF6666')
+                    # colors.append('#FF3333')
                     values.append(1)
                 else:
                     values.append(0)
