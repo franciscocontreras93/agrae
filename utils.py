@@ -188,6 +188,7 @@ class AgraeUtils():
             'chart': os.path.join(os.path.dirname(__file__), r'ui\icons\chart-bar-solid.svg'),
             'settings': os.path.join(os.path.dirname(__file__), r'ui\icons\gear-solid.svg'),
             'report-pdf': os.path.join(os.path.dirname(__file__), r'ui\icons\file-pdf-regular.svg'),
+            'trash': os.path.join(os.path.dirname(__file__), r'ui\icons\trash-solid.svg'),
             'next': os.path.join(os.path.dirname(__file__), r'ui\icons\angle-right-solid.svg'),
             'prev': os.path.join(os.path.dirname(__file__), r'ui\icons\angle-left-solid.svg'),
             'atlas': os.path.join(os.path.dirname(__file__), r'ui\icons\map-solid.svg'),
@@ -736,7 +737,7 @@ class AgraeToolset():
                 nombreLote = widget.tableWidget.item(row, 1)
                 nombreParcela = widget.tableWidget.item(row, 2)
                 fecha = widget.tableWidget.item(row, 3)
-                exp = f''' "idlotecampania" = {idlote.text()} and "lote" ilike '%{nombreLote.text()}%' and "parcela" ilike'%{nombreParcela.text()}%' '''
+                exp = f''' "idlotecampania" = {idlote.text()} '''
                 uri = QgsDataSourceUri()
                 uri.setConnection(dns['host'], dns['port'],
                                   dns['dbname'], dns['user'], dns['password'])
@@ -778,7 +779,6 @@ class AgraeToolset():
         except Exception: 
             pass
     def crearSegmento(self,widget):
-        # ! cambio nuevo pc 
         lyr = self.iface.activeLayer()
         srid = lyr.crs().authid()[5:]
         if len(lyr.selectedFeatures()) > 0: features = lyr.selectedFeatures() 
@@ -894,6 +894,7 @@ class AgraeToolset():
 
 
         return uri
+    
     def crearCampania(self,widget):
         lote = str(widget.line_lote_nombre.text()).upper()
         idexp = widget.line_lote_idexp.text()
@@ -1033,7 +1034,7 @@ class AgraeToolset():
         with conn: 
             cursor = conn.cursor() 
             try:
-                # print('ACTUALIZANDO NECESIDADES INICIALES')
+                QgsMessageLog.logMessage(f'Calculando Necesidades...', 'aGrae GIS', level=0)
                 cursor.execute('refresh materialized view analisis.necesidades_iniciales')
                 self.conn.commit()
                 # print('FINALIZADO NECESIDADES INICIALES')  
@@ -1053,12 +1054,12 @@ class AgraeToolset():
                 cursor.execute('refresh materialized view analisis.necesidades_a04')
                 self.conn.commit()
                 # print('FINALIZADO NECESIDADES FINALES')  
-                # print('ACTUALIZANDO UNIDADES FERTILIZANTES')
+                QgsMessageLog.logMessage(f'Actualizando mapa de Unidades...', 'aGrae GIS', level=0)
                 cursor.execute('refresh materialized view public.unidades')
                 self.conn.commit()
-                # print('FINALIZADO UNIDADES FERTILIZANTES') 
+                QgsMessageLog.logMessage(f'Actualizacion correcta', 'aGrae GIS', level=3)
             except Exception as ex: 
-                print(ex)
+                QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
 
     def populateTable(self,sql,widget, action=False):
         

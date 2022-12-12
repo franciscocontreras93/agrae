@@ -114,8 +114,8 @@ class agrae:
         self.actions = []
         self.menu = self.tr(u'&aGrae GIS')
         # TODO: We are going to let the user set this up in a future iteration
-        self.toolbar = self.iface.addToolBar(u'agrae')
-        self.toolbar.setObjectName(u'agrae')
+        self.toolbar = self.iface.addToolBar(u'aGrae GIS')
+        self.toolbar.setObjectName(u'aGrae GIS')
         
         
         self.queryCapaLotes = ''
@@ -258,12 +258,12 @@ class agrae:
             callback=self.filtrarParcelas,
             parent=self.iface.mainWindow())
         recintos_icon_path = self.icons_path['layer_upload']
-        self.add_action(
-            recintos_icon_path,
-            text=self.tr(u'Cargar Recintos'),
-            status_tip=self.tr(u'Cargar Recintos'),
-            callback=self.uploadRecintos,
-            parent=self.iface.mainWindow())
+        # self.add_action(
+        #     recintos_icon_path,
+        #     text=self.tr(u'Cargar Recintos'),
+        #     status_tip=self.tr(u'Cargar Recintos'),
+        #     callback=self.uploadRecintos,
+        #     parent=self.iface.mainWindow())
         rel_icon_path = self.icons_path['create_rel']
         self.add_action(
             rel_icon_path,
@@ -324,7 +324,7 @@ class agrae:
     def onCloseLoteDialog(self):
         self.loteFindDialog.closingPlugin.disconnect(self.onCloseLoteDialog)
         self.pluginIsActive = False
-        self.loteFindDialog.btn_cargar_lote.setEnabled(True)
+        # self.loteFindDialog.btn_cargar_lote.setEnabled(True)
 
     def onCloseLoteFilterDialog(self):
         self.loteFilterDialog.closingPlugin.disconnect(self.onCloseLoteFilterDialog)
@@ -861,7 +861,7 @@ class agrae:
 
                 self.loteFindDialog = loteFindDialog()
                 self.loteFindDialog.setWindowTitle('Agrupar Parcelas')
-                self.loteFindDialog.btn_cargar_lote.setEnabled(False)
+                # self.loteFindDialog.btn_cargar_lote.setEnabled(False)
                 self.loteFindDialog.loadData()
                 self.iface.actionSelect().trigger()
 
@@ -871,7 +871,7 @@ class agrae:
             self.loteFindDialog.show()
 
     def uploadRecintos(self):
-        print('Cargar Recintos a BD')
+        # print('Cargar Recintos a BD')
         self.tools.crearParcela()
 
     def filtrarLotes(self): 

@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>650</width>
-    <height>300</height>
+    <width>750</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>650</width>
-    <height>300</height>
+    <width>750</width>
+    <height>500</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>650</width>
-    <height>300</height>
+    <width>750</width>
+    <height>500</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -30,8 +30,8 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>631</width>
-     <height>281</height>
+     <width>731</width>
+     <height>481</height>
     </rect>
    </property>
    <property name="title">
@@ -74,8 +74,8 @@
      <rect>
       <x>10</x>
       <y>70</y>
-      <width>561</width>
-      <height>201</height>
+      <width>661</width>
+      <height>401</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -135,9 +135,9 @@
    <widget class="QWidget" name="verticalLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>580</x>
+      <x>680</x>
       <y>70</y>
-      <width>34</width>
+      <width>43</width>
       <height>201</height>
      </rect>
     </property>
@@ -172,22 +172,6 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_cargar_lote">
-       <property name="toolTip">
-        <string>Seleccionar Lote</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="autoDefault">
-        <bool>false</bool>
-       </property>
-       <property name="flat">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QPushButton" name="btn_cargar_camp">
        <property name="toolTip">
         <string>Seleccionar Campaña</string>
@@ -210,6 +194,22 @@
        </property>
        <property name="toolTip">
         <string>Añadir Lote al Mapa</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+       <property name="flat">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_delete_lote">
+       <property name="toolTip">
+        <string>Seleccionar Lote</string>
        </property>
        <property name="text">
         <string/>

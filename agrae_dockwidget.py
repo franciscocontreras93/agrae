@@ -324,8 +324,9 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         self.lineEdit.setClearButtonEnabled(True)
         line_buscar_action = self.lineEdit.addAction(
             QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
-        line_buscar_action.triggered.connect(self.buscar)
-        self.lineEdit.returnPressed.connect(self.buscar)
+        # line_buscar_action.triggered.connect(self.buscar)
+        # self.lineEdit.returnPressed.connect(self.buscar)
+        self.lineEdit.textChanged.connect(self.buscar)
 
         self.line_lote_nombre.setClearButtonEnabled(True)
         line_crear_action = self.line_lote_nombre.addAction(
@@ -335,11 +336,13 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         # self.lineEdit_2.textChanged.connect(self.setButtonEnabled)
         
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
+
+        self.tableWidget.doubleClicked.connect(self.cargarLote)
         # self.tableWidget.setColumnHidden(0,True)
         
-        self.btn_cargar_lote.setIconSize(QtCore.QSize(20, 20))
-        self.btn_cargar_lote.setIcon(QIcon(icons_path['share']))        
-        self.btn_cargar_lote.clicked.connect(self.cargarLote)
+        self.btn_delete_lote.setIconSize(QtCore.QSize(20, 20))
+        self.btn_delete_lote.setIcon(QIcon(icons_path['trash']))        
+        self.btn_delete_lote.clicked.connect(self.deleteLote)
         
         self.btn_cargar_camp.setIconSize(QtCore.QSize(20, 20))
         self.btn_cargar_camp.setIcon(QIcon(icons_path['load_data']))        
@@ -362,12 +365,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         self.btn_reload.clicked.connect(self.lotesReload)
 
 
-        data = self.data()
-        try:
-            lista = [e[1] for e in data]
-        except:
-            lista = []
-        completer = QCompleter(lista)
+        completer = QCompleter([str(e[0]).upper() for e in self.dataAuto()])
         completer.setCaseSensitivity(False)
         self.lineEdit.setCompleter(completer)
 
@@ -384,7 +382,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             left join campania ca on ca.idcampania = lc.idcampania
             left join explotacion ex on ca.idexplotacion = ex.idexplotacion 
             left join cultivo cu on cu.idcultivo = ca.idcultivo 
-            order by ca.fechasiembra asc"""
+            order by ex.nombre, cu.nombre, ca.fechasiembra asc"""
             cursor.execute(sql)
             data = cursor.fetchall()
             self.btn_reload.setEnabled(False)
@@ -400,13 +398,16 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             left join campania ca on ca.idcampania = lc.idcampania
             left join explotacion ex on ca.idexplotacion = ex.idexplotacion 
             left join cultivo cu on cu.idcultivo = ca.idcultivo 
-            where l.nombre ilike '%{filtro}%'
+            where l.nombre ilike '%{filtro}%' or ex.nombre ilike '%{filtro}%'
             or cu.nombre ilike '%{filtro}%' 
-            order by ca.fechasiembra asc"""
+            order by ex.nombre, cu.nombre, ca.fechasiembra asc"""
             self.btn_reload.setEnabled(True)
             cursor.execute(sql)
             data = cursor.fetchall()
+            # print(data)
         if len(data) >= 1:
+            
+            self.populate(data)
             return data
         elif len(data) == 0:
             data = [0, 0]
@@ -428,6 +429,18 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             QMessageBox.about(self, "Error:", "No Existen Registros")
             QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
 
+    def dataAuto(self):
+        cursor = self.conn.cursor()
+        sql = '''select distinct unnest(array[l.nombre, p.nombre, ex.nombre]) from lote l
+        left join lotecampania lc on lc.idlote = l.idlote
+        left join campania ca on ca.idcampania = lc.idcampania 
+        left join explotacion ex on ca.idexplotacion = ca.idexplotacion 
+        left join loteparcela lp on lc.idlotecampania = lp.idlotecampania 
+        left join parcela p on lp.idparcela = p.idparcela'''
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        return data
+
     def loadData(self,param=None):
         
 
@@ -448,15 +461,12 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
     def lotesReload(self): 
         self.buscar(True)
 
-    def buscar(self, reload=False):
-
-        filtro = self.lineEdit.text()
-        if reload != False:
-            filtro = None
-
-        self.loadData(filtro)
-        
+    def buscar(self,e):
+        if e != '':
+            self.data(e)
         pass
+        
+        
     
     def cargarLote(self):
         row = self.tableWidget.currentRow()
@@ -466,6 +476,51 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             self.close()
         except Exception as e:
             pass
+
+    def deleteLote(self): 
+        # print('delete')\
+
+        idx = self.tableWidget.selectionModel().selectedRows() 
+        if len(idx) > 0: 
+            for i in sorted(idx):
+                idlotecampania =  self.tableWidget.item(i.row(), 0).text()
+                nombreLote = self.tableWidget.item(i.row(), 1).text()
+                cultivo = self.tableWidget.item(i.row(), 6).text()
+                fechaSiembra = self.tableWidget.item(i.row(), 4).text()
+                print(idlotecampania)
+                confirm = QMessageBox.question(
+                    self, 'aGrae GIS', f"Seguro quiere eliminar el lote:\n{nombreLote}-{cultivo}\nCampaña: {fechaSiembra}", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+                if confirm == QMessageBox.Yes: 
+                    with self.conn: 
+                        try: 
+                            cursor = self.conn.cursor() 
+                            cursor.execute(f''' DELETE FROM public.lote WHERE nombre = '{nombreLote}' ''')
+                            # print(sql)
+                            self.conn.commit()
+                            self.loadData()
+                        
+                        except errors.lookup('23503'): 
+                            self.conn.rollback()
+                            confirm = QMessageBox.question(
+                            self, 'aGrae GIS', 
+                            f"El lote: {nombreLote} tiene una campaña registrada:\n{cultivo}\nCampaña: {fechaSiembra}\n desea Eliminar la campaña?", 
+                            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                            if confirm == QMessageBox.Yes:
+                                cursor.execute(f'select idlote from lotecampania where idlotecampania = {idlotecampania}')
+                                idlote = cursor.fetchone() 
+                                cursor.execute(f'DELETE FROM public.lotecampania where idlotecampania = {idlotecampania}')
+                                self.conn.commit()
+                                cursor.execute(f'DELETE FROM public.lote WHERE idlote = {idlote[0]}')
+                                self.conn.commit()
+                                self.loadData()
+
+
+
+
+                        except Exception as ex:
+                            self.conn.rollback()
+                            print(ex)
 
 
     def cargarCampania(self):
@@ -522,6 +577,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
         error = [] 
                    
         try:
+            QMessageBox.about(self, 'aGrae GIS', f'Asignando parcelas al Lote, este proceso puede demorar un momento.')
             for f in features: 
                 cursor = self.conn.cursor()
                 idParcela = f[1]
@@ -531,7 +587,6 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
                     if idLote == None:
                         QMessageBox.about(self, 'aGrae GIS', f'El Lote no tiene una campaña asociada') 
                     else: 
-                        QMessageBox.about(self, 'aGrae GIS', f'Asignando parcelas al Lote, este proceso puede demorar un momento.')
                         sql = f''' insert into loteparcela(idparcela,idlotecampania) 
                                 values({idParcela},{idLote}) '''                    
                         cursor.execute(sql)
@@ -578,12 +633,13 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             cursor = conn.cursor() 
             try:
                 confirm = QMessageBox.question(
-                    self, 'aGrae GIS', f"Seguro quiere eliminar el lote:\n{self.tableWidget.item(row, 1).text()}-{self.tableWidget.item(row,5).text()}\nCampaña: {self.tableWidget.item(row, 3).text()}", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    self, 'aGrae GIS', f"Seguro quiere eliminar el lote:\n{self.tableWidget.item(row, 1).text()}-{self.tableWidget.item(row,6).text()}\nCampaña: {self.tableWidget.item(row, 4).text()}", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if confirm == QMessageBox.Yes:
                     sqlCheck = f'delete from loteparcela where idlotecampania = {idLote}'
                     try: 
                         cursor.execute(sqlCheck)
                         conn.commit()
+                        self.loadData()
                     except Exception as ex:
                         QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
                         conn.rollback()
@@ -673,8 +729,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         dataLotes = self.dataAutoLote()
         listaParcela = [str(e[0]).upper() for e in dataLotes]
         # print(listaParcela)
-        completerParcela = QCompleter([str(e[0]).upper() for e in dataLotes])
-        completerParcela.setCaseSensitivity(False)
+        completerLote = QCompleter([str(e[0]).upper() for e in dataLotes])
+        completerLote.setCaseSensitivity(False)
 
         dataSegmento = self.dataAutoSegmento()
         listaSegmento = [e[0] for e in dataSegmento]
@@ -755,7 +811,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         # self.prov_combo.currentTextChanged.connect(self.indexProvUpdate)
         self.setStyleSheet(self.style)
-        self.line_buscar.setCompleter(completerParcela)
+        self.line_buscar.setCompleter(completerLote)
         
         self.line_find_segmento.setCompleter(completerSegmento)
         self.line_find_segmento.returnPressed.connect(self.buscarSegmento)
@@ -763,6 +819,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                     QIcon(icons_path['search_icon_path']), self.line_find_segmento.TrailingPosition)
         line_find_segmento_action.triggered.connect(self.buscarSegmento)
         
+        self.pushButton.clicked.connect(self.crearParcela)
         self.pushButton_3.clicked.connect(self.crearAmbientes)
         self.pushButton_4.clicked.connect(self.crearSegmentos)
         # self.pushButton_5.clicked.connect(self.agricultoresDialog)
@@ -977,20 +1034,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         else:
             pass  
     def crearParcela(self):
-        self.tools.crearParcela(self)
-    def crearCampania(self):
-        try: 
-            self.tools.crearCampania(self)
-            # self.btn_crear_campania.setEnabled(False)
-            self.btn_crear_lote.setEnabled(True)
-            self.line_lote_nombre.setReadOnly(False)
-            self.line_lote_nombre.setText('')
-
-        except Exception as ex: 
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
-            pass           
+        self.tools.crearParcela()   
     
     def crearLote(self):
         try: 
@@ -2875,9 +2919,9 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
             QIcon(icons_path['search_icon_path']), self.line_lote_nombre.LeadingPosition)
         line_lote_search.triggered.connect(self.loteDialog)
 
-        self.line_lote_save = self.line_lote_nombre.addAction(
-            QIcon(icons_path['save']), self.line_lote_nombre.TrailingPosition)
-        self.line_lote_save.triggered.connect(self.crearLote)
+        # self.line_lote_save = self.line_lote_nombre.addAction(
+        #     QIcon(icons_path['save']), self.line_lote_nombre.TrailingPosition)
+        # self.line_lote_save.triggered.connect(self.crearLote)
 
 
         self.btn_crear_campania.setIcon(QIcon(icons_path['save']))
@@ -2890,7 +2934,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         self.btn_actualizar.setIconSize(QtCore.QSize(20, 20))
         self.btn_actualizar.setToolTip('Actualizar Campania')
         self.btn_actualizar.clicked.connect(self.actualizarCampania)
-
+        
         self.lote_dateSiembra.setDate(QDate.currentDate())
         self.lote_dateCosecha.setDate(QDate.currentDate())
         self.lote_dateCosecha.setMinimumDate(QDate.currentDate())
@@ -2955,7 +2999,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
     def crearCampania(self):
         # self.tools.crearCampania(self)
         lote = str(self.line_lote_nombre.text()).upper()
-        idexp = self.idExp[0]
+        idexp = self.idExp
         idcult = self.idCultivo
         regimen = int(self.cmb_regimen.currentIndex())
         produccion = float(self.ln_produccion.text())
@@ -3027,7 +3071,11 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
             '''
             # print(sql)
         else:
+            
+
             try:
+                self.crearLote()
+
                 if self.lote_dateSiembra.isEnabled(): 
                    sql = f'''
                 insert into campania(idexplotacion,idcultivo,fechasiembra,regimen,prod_esperada,unidadesprecio)

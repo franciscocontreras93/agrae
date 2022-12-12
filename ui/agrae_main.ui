@@ -44,7 +44,7 @@
     <string notr="true"/>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="lotes_tab">
     <attribute name="title">
@@ -357,88 +357,113 @@
        </property>
       </column>
      </widget>
-     <widget class="QGroupBox" name="groupBox_9">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
+     <widget class="QTabWidget" name="tabWidget_2">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>440</y>
-        <width>731</width>
+        <y>439</y>
+        <width>721</width>
         <height>71</height>
        </rect>
       </property>
-      <property name="title">
-       <string>Herramientas de Acceso Rapido</string>
+      <property name="currentIndex">
+       <number>1</number>
       </property>
-      <widget class="QPushButton" name="btn_add_lotes">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>121</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Visualizar Lotes</string>
-       </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Herramientas de Acceso Rapido</string>
+       </attribute>
+       <widget class="QWidget" name="horizontalLayoutWidget_4">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>691</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QPushButton" name="btn_add_parcelas">
+           <property name="text">
+            <string>Visualizar Parcelas</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_add_segmentos">
+           <property name="text">
+            <string>Visualizar Segmentos</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_add_lotes">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Visualizar Lotes</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_add_ambientes">
+           <property name="text">
+            <string>Visualizar Ambientes</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_add_unidades">
+           <property name="text">
+            <string>Visualizar Unidades</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </widget>
-      <widget class="QPushButton" name="btn_add_parcelas">
-       <property name="geometry">
-        <rect>
-         <x>150</x>
-         <y>30</y>
-         <width>111</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Visualizar Parcelas</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="btn_add_segmentos">
-       <property name="geometry">
-        <rect>
-         <x>280</x>
-         <y>30</y>
-         <width>111</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Visualizar Segmentos</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="btn_add_ambientes">
-       <property name="geometry">
-        <rect>
-         <x>410</x>
-         <y>30</y>
-         <width>111</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Visualizar Ambientes</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="btn_add_unidades">
-       <property name="geometry">
-        <rect>
-         <x>530</x>
-         <y>30</y>
-         <width>111</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Visualizar Unidades</string>
-       </property>
+      <widget class="QWidget" name="tab_3">
+       <attribute name="title">
+        <string>Herramientas de Gestion de Datos</string>
+       </attribute>
+       <widget class="QWidget" name="horizontalLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>681</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QPushButton" name="pushButton">
+           <property name="text">
+            <string>Cargar Recintos</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_3">
+           <property name="text">
+            <string>Cargar Ambientes</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_4">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Cargar Segmentos</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </widget>
     </widget>
@@ -456,7 +481,7 @@
        <x>10</x>
        <y>10</y>
        <width>751</width>
-       <height>431</height>
+       <height>521</height>
       </rect>
      </property>
      <property name="styleSheet">
@@ -497,7 +522,7 @@
         <x>10</x>
         <y>80</y>
         <width>671</width>
-        <height>341</height>
+        <height>431</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_10">
@@ -681,35 +706,6 @@
        </item>
       </layout>
      </widget>
-    </widget>
-    <widget class="QPushButton" name="pushButton_3">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>490</y>
-       <width>101</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Cargar Ambientes</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pushButton_4">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>130</x>
-       <y>490</y>
-       <width>101</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Cargar Segmentos</string>
-     </property>
     </widget>
    </widget>
    <widget class="QWidget" name="tab_6">
