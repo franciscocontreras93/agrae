@@ -35,7 +35,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -289,68 +289,115 @@
     <attribute name="title">
      <string>Gestionar Campaña</string>
     </attribute>
-    <widget class="QWidget" name="verticalLayoutWidget_3">
-     <property name="geometry">
-      <rect>
-       <x>530</x>
-       <y>10</y>
-       <width>43</width>
-       <height>71</height>
-      </rect>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="QPushButton" name="btn_crear_campania">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btn_actualizar">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QWidget" name="gridLayoutWidget_3">
+    <widget class="QTableWidget" name="tableWidget_2">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>10</y>
-       <width>511</width>
+       <y>70</y>
+       <width>491</width>
+       <height>271</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton">
+     <property name="geometry">
+      <rect>
+       <x>510</x>
+       <y>70</y>
+       <width>51</width>
+       <height>28</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Buscar</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_3">
+    <attribute name="title">
+     <string>Página</string>
+    </attribute>
+    <widget class="QWidget" name="horizontalLayoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>150</y>
+       <width>551</width>
        <height>31</height>
       </rect>
      </property>
-     <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,0">
-      <property name="sizeConstraint">
-       <enum>QLayout::SetDefaultConstraint</enum>
-      </property>
-      <item row="0" column="1">
-       <widget class="QLineEdit" name="line_lote_nombre">
-        <property name="clearButtonEnabled">
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QCheckBox" name="check_dateSiembra">
+        <property name="text">
+         <string>Fecha Siembra</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDateEdit" name="lote_dateSiembra">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="dateTime">
+         <datetime>
+          <hour>0</hour>
+          <minute>0</minute>
+          <second>0</second>
+          <year>2022</year>
+          <month>1</month>
+          <day>1</day>
+         </datetime>
+        </property>
+        <property name="minimumDate">
+         <date>
+          <year>1960</year>
+          <month>9</month>
+          <day>14</day>
+         </date>
+        </property>
+        <property name="currentSection">
+         <enum>QDateTimeEdit::DaySection</enum>
+        </property>
+        <property name="calendarPopup">
          <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
-        </property>
+      <item>
+       <widget class="QCheckBox" name="check_dateCosecha">
         <property name="text">
-         <string>Nombre Lote:</string>
+         <string>Fecha Cosecha</string>
         </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDateEdit" name="lote_dateCosecha">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="dateTime">
+         <datetime>
+          <hour>0</hour>
+          <minute>0</minute>
+          <second>0</second>
+          <year>2022</year>
+          <month>1</month>
+          <day>1</day>
+         </datetime>
+        </property>
+        <property name="minimumDate">
+         <date>
+          <year>1960</year>
+          <month>9</month>
+          <day>14</day>
+         </date>
+        </property>
+        <property name="currentSection">
+         <enum>QDateTimeEdit::DaySection</enum>
+        </property>
+        <property name="calendarPopup">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -360,7 +407,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>210</y>
+       <y>200</y>
        <width>551</width>
        <height>141</height>
       </rect>
@@ -1162,113 +1209,17 @@
       </widget>
      </widget>
     </widget>
-    <widget class="QWidget" name="horizontalLayoutWidget">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>150</y>
-       <width>551</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <widget class="QCheckBox" name="check_dateSiembra">
-        <property name="text">
-         <string>Fecha Siembra</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDateEdit" name="lote_dateSiembra">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="dateTime">
-         <datetime>
-          <hour>0</hour>
-          <minute>0</minute>
-          <second>0</second>
-          <year>2022</year>
-          <month>1</month>
-          <day>1</day>
-         </datetime>
-        </property>
-        <property name="minimumDate">
-         <date>
-          <year>1960</year>
-          <month>9</month>
-          <day>14</day>
-         </date>
-        </property>
-        <property name="currentSection">
-         <enum>QDateTimeEdit::DaySection</enum>
-        </property>
-        <property name="calendarPopup">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="check_dateCosecha">
-        <property name="text">
-         <string>Fecha Cosecha</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDateEdit" name="lote_dateCosecha">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="dateTime">
-         <datetime>
-          <hour>0</hour>
-          <minute>0</minute>
-          <second>0</second>
-          <year>2022</year>
-          <month>1</month>
-          <day>1</day>
-         </datetime>
-        </property>
-        <property name="minimumDate">
-         <date>
-          <year>1960</year>
-          <month>9</month>
-          <day>14</day>
-         </date>
-        </property>
-        <property name="currentSection">
-         <enum>QDateTimeEdit::DaySection</enum>
-        </property>
-        <property name="calendarPopup">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
     <widget class="QWidget" name="gridLayoutWidget_2">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>50</y>
+       <y>10</y>
        <width>511</width>
-       <height>95</height>
+       <height>131</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_5">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>Explotacion: </string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
+      <item row="2" column="0">
        <widget class="QLabel" name="label_5">
         <property name="minimumSize">
          <size>
@@ -1290,7 +1241,7 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="5">
+      <item row="3" column="5">
        <widget class="QComboBox" name="cmb_moneda">
         <property name="maximumSize">
          <size>
@@ -1315,7 +1266,24 @@
         </item>
        </widget>
       </item>
-      <item row="2" column="4">
+      <item row="2" column="1" colspan="2">
+       <widget class="QLabel" name="label_3">
+        <property name="font">
+         <font>
+          <pointsize>7</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="4">
        <widget class="QComboBox" name="cmb_regimen">
         <property name="minimumSize">
          <size>
@@ -1351,20 +1319,49 @@
         </item>
        </widget>
       </item>
-      <item row="2" column="0" colspan="4">
-       <widget class="QLineEdit" name="ln_produccion">
+      <item row="1" column="3">
+       <widget class="QPushButton" name="btn_expDialog">
         <property name="maximumSize">
          <size>
-          <width>16777215</width>
+          <width>30</width>
           <height>16777215</height>
          </size>
         </property>
-        <property name="placeholderText">
-         <string>Produccion Esperada</string>
+        <property name="toolTip">
+         <string>Buscar Explotacion</string>
+        </property>
+        <property name="text">
+         <string/>
         </property>
        </widget>
       </item>
-      <item row="0" column="1" colspan="2">
+      <item row="2" column="3">
+       <widget class="QPushButton" name="btn_cultivoDialog">
+        <property name="maximumSize">
+         <size>
+          <width>30</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Buscar Cultivo</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Explotacion: </string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" colspan="2">
        <widget class="QLabel" name="label_2">
         <property name="font">
          <font>
@@ -1381,49 +1378,65 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="3">
-       <widget class="QPushButton" name="btn_expDialog">
+      <item row="3" column="0" colspan="4">
+       <widget class="QLineEdit" name="ln_produccion">
         <property name="maximumSize">
          <size>
-          <width>30</width>
+          <width>16777215</width>
           <height>16777215</height>
          </size>
         </property>
-        <property name="toolTip">
-         <string>Buscar Explotacion</string>
-        </property>
-        <property name="text">
-         <string/>
+        <property name="placeholderText">
+         <string>Produccion Esperada</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1" colspan="2">
-       <widget class="QLabel" name="label_3">
-        <property name="font">
-         <font>
-          <pointsize>7</pointsize>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
-         <string/>
+         <string>Nombre Lote:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
-      <item row="1" column="3">
-       <widget class="QPushButton" name="btn_cultivoDialog">
-        <property name="maximumSize">
-         <size>
-          <width>30</width>
-          <height>16777215</height>
-         </size>
+      <item row="0" column="1" colspan="5">
+       <widget class="QLineEdit" name="line_lote_nombre">
+        <property name="clearButtonEnabled">
+         <bool>true</bool>
         </property>
-        <property name="toolTip">
-         <string>Buscar Cultivo</string>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="verticalLayoutWidget_3">
+     <property name="geometry">
+      <rect>
+       <x>530</x>
+       <y>10</y>
+       <width>43</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QPushButton" name="btn_crear_campania">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_actualizar">
+        <property name="enabled">
+         <bool>true</bool>
         </property>
         <property name="text">
          <string/>

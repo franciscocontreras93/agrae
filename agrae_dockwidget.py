@@ -2956,6 +2956,9 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         row = self.tableWidget.currentRow()
 
 
+        self.pushButton.clicked.connect(self.BuscarCampania)
+
+
         pass
     
     
@@ -3521,18 +3524,39 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
     def popCultivoName(self,value): 
         self.label_3.setText(f'{value}')
 
-
+    def BuscarCampania(self):
+        with self.conn as conn: 
+            sql = ''' select ca.idcampania, ca.idexplotacion, ca.idcultivo , ex.nombre explotacion , cu.nombre cultivo, ca.fechasiembra, ca.fechacosecha from campania ca 
+            join explotacion ex on ex.idexplotacion = ca.idexplotacion
+            join cultivo cu on cu.idcultivo = ca.idcultivo  '''
+            try: 
+                cursor = conn.cursor() 
+                cursor.execute(sql) 
+                data = cursor.fetchall() 
+                
+                a = len(data)
+                print(a)
+                b = len(data[0])
+                i = 1
+                j = 1
+                self.tableWidget_2.setRowCount(a)
+                self.tableWidget_2.setColumnCount(b)
+                for j in range(a):
+                    for i in range(b):
+                        item = QTableWidgetItem(str(data[j][i]))
+                        self.tableWidget_2.setItem(j,i,item)
+            except: 
+                pass
+        pass
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None):
-        # plt.rcParams.update({'font.size': 8})
+
         fig, (self.ax1, self.ax2, self.ax3) = plt.subplots(1, 3)
         fig.patch.set_facecolor('None')
         fig.patch.set_alpha(0)
         super(MplCanvas, self).__init__(fig)
-        # self.plot()
-        # self.data = str(data)
-        # print('plot {}'.format(self.data))
+        
     def close(self): 
         plt.cla()
     def saveImage(self,path):
