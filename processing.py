@@ -1,4 +1,4 @@
-from osgeo import gdal, gdal_array, osr
+from osgeo import gdal
 from qgis import processing
 from qgis.core import *
 
@@ -24,11 +24,11 @@ class agraeVerisAlgorithm():
         ''' TABLE STRUCTURE = [MIN-MAX-VALUE] '''
         try:
             if n_class == 2:
-                j = jenkspy.jenks_breaks(values, nb_class=n_class)
+                j = jenkspy.jenks_breaks(values, nb_class=n_class) #n_classes for v0.3.1
                 table = [j[0], j[1], 1, j[1], j[2], 2]
                 return table, j
             if n_class == 3:
-                j = jenkspy.jenks_breaks(values, nb_class=n_class)
+                j = jenkspy.jenks_breaks(values, nb_class=n_class) #n_classes for v0.3.1
                 table = [j[0], j[1], 1, j[1], j[2], 2, j[2], j[3], 3]
                 return table, j
         except ValueError as err:
@@ -37,6 +37,19 @@ class agraeVerisAlgorithm():
     #        print(f'Unexpected {err}, {type(err)}')
             return(None)
 
+    def quantile(self,values:list, n_class=3) :
+        
+        if n_class == 3:
+            min = np.min(values)
+            q1 = np.percentile(values,25)
+            q2 = np.percentile(values,50)
+            q3 = np.percentile(values,75)
+            max = np.max(values)
+        print(min,q1,q2,q3,max)
+            
+        
+        pass
+    
     def progress_changed(self, progress):
         #print(progress)
         self.bar.setValue(progress)
@@ -102,6 +115,8 @@ class agraeVerisAlgorithm():
         nan_array = array
         nan_array[array == nodata] = np.nan
         array = np.unique(nan_array)
+        # self.quantile(nan_array)
+        # return None
         table, j = self.jenks(array, n_clases)
         alg_params = {'INPUT_RASTER': output['idw'],
                       'RASTER_BAND': 1,

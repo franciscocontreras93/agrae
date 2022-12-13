@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>600</height>
+    <height>625</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,13 +19,13 @@
   <property name="minimumSize">
    <size>
     <width>800</width>
-    <height>600</height>
+    <height>625</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>800</width>
-    <height>600</height>
+    <height>625</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -35,16 +35,16 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>10</y>
+     <y>40</y>
      <width>781</width>
-     <height>581</height>
+     <height>571</height>
     </rect>
    </property>
    <property name="styleSheet">
     <string notr="true"/>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="lotes_tab">
     <attribute name="title">
@@ -56,14 +56,14 @@
        <x>10</x>
        <y>10</y>
        <width>751</width>
-       <height>531</height>
+       <height>521</height>
       </rect>
      </property>
      <property name="styleSheet">
       <string notr="true"/>
      </property>
      <property name="title">
-      <string>Busqueda de Lotes y Parcelas</string>
+      <string>Busqueda de Explotaciones o Lotes</string>
      </property>
      <widget class="QWidget" name="gridLayoutWidget">
       <property name="geometry">
@@ -74,22 +74,28 @@
         <height>41</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0,0,0">
+      <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0,0,0,0,0">
        <item row="0" column="4">
-        <widget class="QLabel" name="label_45">
-         <property name="text">
-          <string>Hasta:</string>
+        <widget class="QDateEdit" name="sinceDate">
+         <property name="dateTime">
+          <datetime>
+           <hour>0</hour>
+           <minute>0</minute>
+           <second>0</second>
+           <year>2022</year>
+           <month>1</month>
+           <day>1</day>
+          </datetime>
+         </property>
+         <property name="displayFormat">
+          <string>yyyy-MM-dd</string>
+         </property>
+         <property name="calendarPopup">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
-       <item row="0" column="2">
-        <widget class="QLabel" name="label_44">
-         <property name="text">
-          <string>Desde:</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="5">
+       <item row="0" column="6">
         <widget class="QDateEdit" name="untilDate">
          <property name="enabled">
           <bool>false</bool>
@@ -112,56 +118,57 @@
          </property>
         </widget>
        </item>
+       <item row="0" column="3">
+        <widget class="QLabel" name="label_44">
+         <property name="text">
+          <string>Desde:</string>
+         </property>
+        </widget>
+       </item>
        <item row="0" column="1">
+        <widget class="QCheckBox" name="check_cultivos">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Filtrar Cultivo</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="5">
+        <widget class="QLabel" name="label_45">
+         <property name="text">
+          <string>Hasta:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QComboBox" name="combo_cultivos">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>120</width>
+           <height>0</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
         <widget class="QLineEdit" name="line_buscar">
          <property name="inputMethodHints">
           <set>Qt::ImhUppercaseOnly</set>
          </property>
-        </widget>
-       </item>
-       <item row="0" column="3">
-        <widget class="QDateEdit" name="sinceDate">
-         <property name="dateTime">
-          <datetime>
-           <hour>0</hour>
-           <minute>0</minute>
-           <second>0</second>
-           <year>2022</year>
-           <month>1</month>
-           <day>1</day>
-          </datetime>
-         </property>
-         <property name="displayFormat">
-          <string>yyyy-MM-dd</string>
-         </property>
-         <property name="calendarPopup">
-          <bool>true</bool>
+         <property name="placeholderText">
+          <string>Nombre Lote o Explotacion...</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Buscar Lote o Parcela</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="gridLayoutWidget_4">
-      <property name="geometry">
-       <rect>
-        <x>710</x>
-        <y>80</y>
-        <width>34</width>
-        <height>221</height>
-       </rect>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_4" rowstretch="0,0,0,0" columnstretch="2">
-       <item row="0" column="0">
-        <widget class="QPushButton" name="btn_add_layer">
+       <item row="0" column="7">
+        <widget class="QPushButton" name="btn_reload">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="toolTip">
           <string>Añadir Lote al Mapa</string>
@@ -171,10 +178,22 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="0">
-        <widget class="QPushButton" name="btn_reload">
+      </layout>
+     </widget>
+     <widget class="QWidget" name="gridLayoutWidget_4">
+      <property name="geometry">
+       <rect>
+        <x>700</x>
+        <y>80</y>
+        <width>43</width>
+        <height>261</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_4" rowstretch="0,0,0,0,0" columnstretch="2">
+       <item row="1" column="0">
+        <widget class="QPushButton" name="btn_export_layer">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="toolTip">
           <string>Añadir Lote al Mapa</string>
@@ -197,8 +216,21 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QPushButton" name="btn_export_layer">
+       <item row="0" column="0">
+        <widget class="QPushButton" name="btn_add_layer">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Añadir Lote al Mapa</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QPushButton" name="btn_report">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -217,7 +249,7 @@
        <rect>
         <x>10</x>
         <y>80</y>
-        <width>691</width>
+        <width>681</width>
         <height>341</height>
        </rect>
       </property>
@@ -261,7 +293,17 @@
       </column>
       <column>
        <property name="text">
+        <string>Id. Explotacion</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
         <string>Lote</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Explotacion</string>
        </property>
       </column>
       <column>
@@ -315,94 +357,113 @@
        </property>
       </column>
      </widget>
-     <widget class="QGroupBox" name="groupBox_9">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
+     <widget class="QTabWidget" name="tabWidget_2">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>440</y>
-        <width>731</width>
+        <y>439</y>
+        <width>721</width>
         <height>71</height>
        </rect>
       </property>
-      <property name="title">
-       <string>Herramientas de Acceso Rapido</string>
+      <property name="currentIndex">
+       <number>1</number>
       </property>
-      <widget class="QPushButton" name="btn_add_lotes">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>121</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Agregar Lotes</string>
-       </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Herramientas de Acceso Rapido</string>
+       </attribute>
+       <widget class="QWidget" name="horizontalLayoutWidget_4">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>691</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QPushButton" name="btn_add_parcelas">
+           <property name="text">
+            <string>Visualizar Parcelas</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_add_segmentos">
+           <property name="text">
+            <string>Visualizar Segmentos</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_add_lotes">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Visualizar Lotes</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_add_ambientes">
+           <property name="text">
+            <string>Visualizar Ambientes</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_add_unidades">
+           <property name="text">
+            <string>Visualizar Unidades</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </widget>
-      <widget class="QPushButton" name="btn_add_parcelas">
-       <property name="geometry">
-        <rect>
-         <x>150</x>
-         <y>30</y>
-         <width>111</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Agregar Parcelas</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="btn_add_segmentos">
-       <property name="geometry">
-        <rect>
-         <x>280</x>
-         <y>30</y>
-         <width>111</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Agregar Segmentos</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_2">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>410</x>
-         <y>30</y>
-         <width>111</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Generar Compositor</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_5">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>530</x>
-         <y>30</y>
-         <width>111</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>AGRICULTORES</string>
-       </property>
+      <widget class="QWidget" name="tab_3">
+       <attribute name="title">
+        <string>Herramientas de Gestion de Datos</string>
+       </attribute>
+       <widget class="QWidget" name="horizontalLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>681</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QPushButton" name="pushButton">
+           <property name="text">
+            <string>Cargar Recintos</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_3">
+           <property name="text">
+            <string>Cargar Ambientes</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_4">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Cargar Segmentos</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </widget>
     </widget>
@@ -420,7 +481,7 @@
        <x>10</x>
        <y>10</y>
        <width>751</width>
-       <height>431</height>
+       <height>521</height>
       </rect>
      </property>
      <property name="styleSheet">
@@ -438,11 +499,11 @@
         <height>41</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="gridLayout_11" columnstretch="0,0,0,0">
-       <item row="0" column="3">
-        <widget class="QPushButton" name="btn_find_segmento">
+      <layout class="QGridLayout" name="gridLayout_11" columnstretch="0,0">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_43">
          <property name="text">
-          <string>Buscar</string>
+          <string>Buscar Segmento</string>
          </property>
         </widget>
        </item>
@@ -450,13 +511,6 @@
         <widget class="QLineEdit" name="line_find_segmento">
          <property name="inputMethodHints">
           <set>Qt::ImhUppercaseOnly</set>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_43">
-         <property name="text">
-          <string>Buscar Segmento</string>
          </property>
         </widget>
        </item>
@@ -468,7 +522,7 @@
         <x>10</x>
         <y>80</y>
         <width>671</width>
-        <height>341</height>
+        <height>431</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_10">
@@ -527,6 +581,11 @@
          </column>
          <column>
           <property name="text">
+           <string>Explotacion</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
            <string>Regimen</string>
           </property>
          </column>
@@ -564,7 +623,7 @@
        <rect>
         <x>700</x>
         <y>80</y>
-        <width>34</width>
+        <width>43</width>
         <height>341</height>
        </rect>
       </property>
@@ -648,35 +707,6 @@
       </layout>
      </widget>
     </widget>
-    <widget class="QPushButton" name="pushButton_3">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>490</y>
-       <width>101</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Cargar Ambientes</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pushButton_4">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>130</x>
-       <y>490</y>
-       <width>101</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Cargar Segmentos</string>
-     </property>
-    </widget>
    </widget>
    <widget class="QWidget" name="tab_6">
     <property name="enabled">
@@ -690,7 +720,7 @@
       <rect>
        <x>720</x>
        <y>50</y>
-       <width>34</width>
+       <width>43</width>
        <height>171</height>
       </rect>
      </property>
@@ -772,10 +802,10 @@
      <property name="alternatingRowColors">
       <bool>true</bool>
      </property>
-     <attribute name="horizontalHeaderDefaultSectionSize">
+     <attribute name="horizontalHeaderMinimumSectionSize">
       <number>86</number>
      </attribute>
-     <attribute name="horizontalHeaderMinimumSectionSize">
+     <attribute name="horizontalHeaderDefaultSectionSize">
       <number>86</number>
      </attribute>
      <attribute name="verticalHeaderVisible">

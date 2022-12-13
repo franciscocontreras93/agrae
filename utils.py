@@ -2,12 +2,12 @@ import os, sys, re
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QThread, QAbstractTableModel
-from PyQt5.QtGui import QGuiApplication
+from PyQt5.QtGui import QGuiApplication,QIcon
 from qgis.PyQt.QtCore import QSettings
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 
-from qgis.gui import QgsMessageBar
+from qgis.gui import QgsMessageBar 
 from qgis.utils import iface
 from qgis.core import *
 
@@ -96,6 +96,22 @@ class AgraeUtils():
         
         except: 
             print('ERROR')
+    def settingPath(self,setting,path):
+        """settingPath Configurar ruta de almacenamiento de fichers
+
+        _extended_summary_
+
+        :param _type_ setting: Nombre del parametro
+        :param _type_ path: Path
+        """        
+        try: 
+            self.settings = QSettings('agrae', 'dbConnection')
+            self.settings.setValue(setting,path)
+        except Exception as ex:
+            print(ex)
+            
+            
+        
 
     def dbTestConnection(self,dbname,dbuser,dbpass,dbhost,dbport):     
         conn = DbConnection.connection(dbname, dbuser, dbpass, dbhost, dbport)
@@ -114,13 +130,14 @@ class AgraeUtils():
 
     def segmentosQueryTable(self, param=''):
         if param != '': 
-            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote,sg.regimen,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_muestra from segmentos sg 
-            where sg.cod_control ilike '%{param}%'
+            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote, sg.exp_nombre,sg.regimen,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_muestra from segmentos sg 
+            where sg.lote ilike '%{param}%'
             or sg.cod_muestra ilike '%{param}%' 
+            or sg.exp_nombre ilike '%{param}%'
             '''
             return sql
         else: 
-            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote,sg.regimen,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_muestra from segmentos sg 
+            sql = f''' select sg.idsegmento,sg.idlotecampania,sg.lote, sg.exp_nombre,sg.regimen,sg.segmento,sg.cod_control,sg.fechasiembra,sg.cultivo,sg.cod_muestra from segmentos sg 
             '''
             return sql
     def sqlLoteParcela(self,idlote, nombre, fecha): 
@@ -170,25 +187,121 @@ class AgraeUtils():
             'upload-to-db': os.path.join(os.path.dirname(__file__), r'ui\icons\upload-db.svg'),
             'chart': os.path.join(os.path.dirname(__file__), r'ui\icons\chart-bar-solid.svg'),
             'settings': os.path.join(os.path.dirname(__file__), r'ui\icons\gear-solid.svg'),
+            'report-pdf': os.path.join(os.path.dirname(__file__), r'ui\icons\file-pdf-regular.svg'),
+            'trash': os.path.join(os.path.dirname(__file__), r'ui\icons\trash-solid.svg'),
+            'next': os.path.join(os.path.dirname(__file__), r'ui\icons\angle-right-solid.svg'),
+            'prev': os.path.join(os.path.dirname(__file__), r'ui\icons\angle-left-solid.svg'),
+            'atlas': os.path.join(os.path.dirname(__file__), r'ui\icons\map-solid.svg'),
+            'print': os.path.join(os.path.dirname(__file__), r'ui\icons\print-solid.svg'),
             'lgnd1': os.path.join(os.path.dirname(__file__), r'ui\img\lgnd1.svg'),
             'p1': os.path.join(os.path.dirname(__file__), r'ui\img\p1.svg'),
-            'co2': os.path.join(os.path.dirname(__file__), r'ui\img\co2.svg'),
+            'co2': os.path.join(os.path.dirname(__file__), r'ui\img\co2.svg')
         }
 
         return icons_path
+    
+    def add_action(
+        self,
+        icon_path,
+        text,
+        callback,
+        toolbar,
+        enabled_flag=True,
+        add_to_toolbar=True,
+        status_tip=None,
+        whats_this=None,
+        parent=None):
+        """Add a toolbar icon to the toolbar.
 
+        :param icon_path: Path to the icon for this action. Can be a resource
+            path (e.g. ':/plugins/foo/bar.png') or a normal file system path.
+        :type icon_path: str
+
+        :param text: Text that should be shown in menu items for this action.
+        :type text: str
+
+        :param callback: Function to be called when the action is triggered.
+        :type callback: function
+
+        :param enabled_flag: A flag indicating if the action should be enabled
+            by default. Defaults to True.
+        :type enabled_flag: bool
+
+        :param add_to_menu: Flag indicating whether the action should also
+            be added to the menu. Defaults to True.
+        :type add_to_menu: bool
+
+        :param add_to_toolbar: Flag indicating whether the action should also
+            be added to the toolbar. Defaults to True.
+        :type add_to_toolbar: bool
+
+        :param status_tip: Optional text to show in a popup when mouse pointer
+            hovers over the action.
+        :type status_tip: str
+
+        :param parent: Parent widget for the new action. Defaults None.
+        :type parent: QWidget
+
+        :param whats_this: Optional text to show in the status bar when the
+            mouse pointer hovers over the action.
+
+        :returns: The action that was created. Note that the action is also
+            added to self.actions list.
+        :rtype: QAction
+        """
+
+        icon = QIcon(icon_path)
+        action = QAction(icon, text, parent)
+        action.triggered.connect(callback)
+        action.setEnabled(enabled_flag)
+
+        if status_tip is not None:
+            action.setStatusTip(status_tip)
+
+        if whats_this is not None:
+            action.setWhatsThis(whats_this)
+
+        if add_to_toolbar:
+            toolbar.addAction(action)
+
+        
+
+        # self.actions.append(action)
+
+        return action
     def saveFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(
-            self, "QFileDialog.getSaveFileName()", "", "Todos los Archivos (*);;Archivos separados por coma (*.csv)", options=options)
+            self, "QFileDialog.getSaveFileName()", 
+            "",
+            "Todos los Archivos (*);;Archivos separados por coma (*.csv)", 
+            options=options)
         if fileName:
             return fileName
         else:
             return False
 
+    def saveDirectory(self): 
+        filename = QFileDialog.getExistingDirectory(
+            None, "Seleccionar directorio de Paneles:")
+        return filename
     def msgBar(self,text:str,level:int,duration:int): 
         self.iface.messageBar().pushMessage('aGraes GIS', '{}'.format(text), level=level, duration=duration)
+        
+    def logger(self,text:str,level:int):
+        """logger aGrae Logger
+
+        :param str text: text of log.
+        :param int level: level of message: 
+            0-Info
+            1-Warning
+            2-Critical
+            3-Success
+        """()
+        QgsMessageLog.logMessage(f'{text}', 'aGrae GIS', level=level)
+        if level == 2: 
+            self.iface.messageBar().pushMessage('aGraes GIS', 'Ocurrio un Error, Revisa el panel de registro.', level=level, duration=5)      
 
 class AgraeToolset():
     def __init__(self):
@@ -211,7 +324,7 @@ class AgraeToolset():
             lyr = self.iface.activeLayer()
             srid = lyr.crs().authid()[5:]
             features = lyr.selectedFeatures()
-            print(features)
+            # print(features)
             
             with self.conn as conn:
                 try:
@@ -219,22 +332,23 @@ class AgraeToolset():
                     if len(features) > 0: 
                         for f in features:
                             # print('test')
-                            oa = f[0]
-                            amb = f[1]
-                            ndvimax = f[2]
-                            atlas = f[3]
+                            # oa = f['obj_amb']
+                            if f['ambiente']: 
+                                amb = f['ambiente'] 
+                            else:
+                                amb = f['amb'] 
+                                
+                            ndvimax = f['ndvimax']
                             geometria = f.geometry().asWkt()
-                            sql = f''' insert into ambiente(obj_amb,ambiente,ndvimax,atlas,geometria)
-                                    values
-                                    ({oa},
+                            sql = f''' insert into ambiente(ambiente,ndvimax,geometria)
+                                    values(
                                     {amb},
                                     {ndvimax},
-                                    '{atlas}',
                                     st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))'''
                             # print(f'{oa}-{amb}-{ndvimax}-{atlas}')
                             cursor.execute(sql)
-                            conn.commit()
-                            print(f[0])
+                            
+                        conn.commit()
                             
                         QMessageBox.about(widget, 'aGrae GIS', 'Ambiente Cargado Correctamente \na la base de datos')
                     else:
@@ -242,7 +356,7 @@ class AgraeToolset():
                             widget, 'aGrae GIS', 'Debe Seleccionar al menos un ambiente')
 
                 except Exception as ex:
-                    # print(ex)
+                    QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
                     conn.rollback()
                     pass
         except: 
@@ -272,23 +386,52 @@ class AgraeToolset():
                 cur = conn.cursor()
                 layer = self.iface.activeLayer()
                 # print(layer.name())
-                features = layer.getFeatures()
+                if len(layer.selectedFeatures()) > 0:
+                    features = layer.selectedFeatures()
+                else: 
+                    features = [f for f in layer.getFeatures()]
+                
                 confirm = QMessageBox.question(
-                    widget, 'aGrae GIS', f"Se Cargaran {layer.featureCount()} recintos, de la capa {layer.name()} a la Base de Datos.\nProceder con la carga? ", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    widget, 'aGrae GIS', f"Se Cargaran {len(features)} recintos, de la capa {layer.name()} a la Base de Datos.\nProceder con la carga? ", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if confirm == QMessageBox.Yes: 
                     for feat in features: 
                         
                         ls = feat.geometry().asWkt()
                         srid = layer.crs().authid()[5:]
                         name = ''
-                        prov = feat[2]
-                        mcpo = feat[3]
-                        aggregate = feat[4]
-                        zone = feat[5]
-                        poly = feat[6]
-                        allotment = feat[7]
-                        inclosure = feat[8]
-                        idsigpac = feat[0]
+                        #* update select of features attributes
+                        
+                        if feat['provincia']: 
+                            prov = feat['provincia'] 
+                        else: 
+                            prov = feat['PROVINCIA']
+                        if feat['municipio']: 
+                            mcpo = feat['municipio'] 
+                        else: 
+                            mcpo = feat['MUNICIPIO']
+                        if feat['agregado']: 
+                            aggregate = feat['agregado'] 
+                        else: 
+                            aggregate = feat['AGREGADO']
+                        if feat['zona']: 
+                            zone = feat['zona'] 
+                        else: 
+                            zone = feat['ZONA']
+                        if feat['poligono']: 
+                            poly = feat['poligono'] 
+                        else: 
+                            poly = feat['POLIGONO']
+                        if feat['parcela']: 
+                            allotment = feat['parcela'] 
+                        else: 
+                            allotment = feat['PARCELA']
+                        if feat['recinto']: 
+                            inclosure = feat['recinto'] 
+                        else: 
+                            inclosure = feat['RECINTO']
+                            
+                        
+                        idsigpac = f'{prov:02d}{mcpo:03d}{aggregate:02d}{zone:02d}{poly:03d}{allotment:05d}{inclosure:05d}'
 
                         sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria,idsigpac) VALUES('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))),'{idsigpac}')'''
                         try:
@@ -296,15 +439,16 @@ class AgraeToolset():
                             conn.commit()
                             count += 1
                             # print('agregado correctamente')
+                            # QgsMessageLog.logMessage(str(idsigpac))
                         except errors.lookup('23505'):
                             # errors.append(idParcela)
                             _count += 1
                             # print(f'La parcela {feat[0]} ya existe.')
-                            # QMessageBox.about(widget, f"aGrae GIS:",f'La parcela: {feat[0]} ya existe.')
-                            conn.rollback()
+                            QMessageBox.about(widget, f"aGrae GIS:",f'La parcela: {feat[0]} ya existe.')
+                            # conn.rollback()
 
                     QMessageBox.about(widget, f"aGrae GIS:",
-                                        f"Se agregaron {count} parcelas correctamente.\nErronas = {_count}")
+                                        f"Se agregaron {count} parcelas correctamente.\nErroneas = {_count}")
                 else: 
                     pass
 
@@ -317,7 +461,7 @@ class AgraeToolset():
             except Exception as ex:
                 # print(ex)
                 QMessageBox.about(widget, f"aGrae GIS", f"No se pudo almacenar el registro {ex}")
-                conn.rollback()
+                # conn.rollback()
     def renameParcela(self,widget): 
         lyr = QgsProject.instance().mapLayersByName('aGrae Parcelas')[0]
         nombreParcelario = str(widget.lineEdit_2.text())
@@ -390,11 +534,13 @@ class AgraeToolset():
         untilDate = widget.untilDate.date().toString('yyyy-MM-dd')
 
         sqlQuery = ''
+        
+        
          
         with self.conn as conn:
             try:
                 if nombre == '' and status == False:
-                    sqlQuery = f'''select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
+                    sqlQuery = f'''select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela,coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     from lotecampania lc
                     join loteparcela lp on lp.idlotecampania = lc.idlotecampania
                     join lotes ls on lc.idlotecampania = ls.idlotecampania
@@ -402,8 +548,9 @@ class AgraeToolset():
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
-                    order by ca.fechasiembra desc'''
+                    left join explotacion ex on ex.idexplotacion = ca.idexplotacion 
+                    group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
+                    order by ex.nombre, cu.nombre, ca.fechasiembra desc'''
                     widget.btn_add_layer.setEnabled(False)
                     try:
                         widget.btn_chart.setEnabled(True)
@@ -412,7 +559,7 @@ class AgraeToolset():
                     
 
                 elif nombre != '' and status == False:
-                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
+                    sqlQuery = f"""select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela, coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha, cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     from lotecampania lc
                     join loteparcela lp on lp.idlotecampania = lc.idlotecampania
                     join lotes ls on lc.idlotecampania = ls.idlotecampania
@@ -420,9 +567,10 @@ class AgraeToolset():
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
-                    where l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
-                    order by ca.fechasiembra desc                        
+                    left join explotacion ex on ex.idexplotacion = ca.idexplotacion 
+                    where l.nombre ilike '%{nombre}%' or ex.nombre ilike '%{nombre}%'
+                    group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
+                    order by ex.nombre, cu.nombre, ca.fechasiembra desc;                        
                     """
                     widget.btn_reload.setEnabled(True)
                     try:
@@ -431,7 +579,7 @@ class AgraeToolset():
                         pass
 
                 elif nombre == '' and status == True:
-                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
+                    sqlQuery = f"""select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela,coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha, cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     from lotecampania lc
                     join loteparcela lp on lp.idlotecampania = lc.idlotecampania
                     join lotes ls on lc.idlotecampania = ls.idlotecampania
@@ -439,9 +587,11 @@ class AgraeToolset():
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
-                    where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
-                    order by ca.fechasiembra desc"""
+                    left join explotacion ex on ex.idexplotacion = ca.idexplotacion
+                    where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}' 
+                    group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
+                    order ex.nombre, by cu.nombre, ca.fechasiembra desc
+                    """
                     widget.btn_reload.setEnabled(True)
                     try:
                         widget.btn_chart.setEnabled(True)
@@ -449,7 +599,7 @@ class AgraeToolset():
                         pass
 
                 elif nombre != '' and status == True:
-                    sqlQuery = f"""select lc.idlotecampania , l.nombre lote, p.nombre parcela, ca.fechasiembra, ca.fechacosecha , cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
+                    sqlQuery = f"""select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela,coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha, cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
                     from lotecampania lc
                     join loteparcela lp on lp.idlotecampania = lc.idlotecampania
                     join lotes ls on lc.idlotecampania = ls.idlotecampania
@@ -457,20 +607,22 @@ class AgraeToolset():
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
+                    left join explotacion ex on ex.idexplotacion = ca.idexplotacion
                     where ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}'
-                    or l.nombre ilike '%{nombre}%' or p.nombre ilike '%{nombre}%' or cu.nombre ilike '%{nombre}%' 
-                    group by lc.idlotecampania , l.nombre , p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
-                    order by ca.fechasiembra desc"""
+                    or l.nombre ilike '%{nombre}%' or ex.nombre ilike '%{nombre}%' 
+                    group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
+                    order by ex.nombre,cu.nombre, ca.fechasiembra desc 
+                    """
                     widget.btn_reload.setEnabled(True)
-                    try:
-                        widget.btn_chart.setEnabled(True)
-                    except:
-                        pass
+                
+                
 
 
                 cursor = conn.cursor()
+                # print(sqlQuery)
                 cursor.execute(sqlQuery)
                 data = cursor.fetchall()
+                # print(data)
                 if len(data) == 0:
                     QMessageBox.about(
                         widget, "aGrae GIS:", "No existen registros con los parametros de busqueda")
@@ -481,6 +633,16 @@ class AgraeToolset():
                     widget.sinceDateStatus = False
                     widget.untilDate.setEnabled(False)
                     self.queryCapaLotes = sqlQuery
+                    try:
+                        widget.combo_cultivos.clear()
+                        cultivos = list(set([i[7] for i in data]))
+                        # print(cultivos)
+                        widget.combo_cultivos.addItems(cultivos)
+                        widget.check_cultivos.setEnabled(True)
+                        widget.combo_cultivos.setEnabled(True)
+                    except Exception as ex: 
+                        QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
+                        pass
                     a = len(data)
                     b = len(data[0])
                     i = 1
@@ -493,11 +655,69 @@ class AgraeToolset():
                         for i in range(b):
                             item = QTableWidgetItem(str(data[j][i]))
                             widget.tableWidget.setItem(j,i,item)
-                        obj = widget.tableWidget.item(j,1).text()
+                        # obj = widget.tableWidget.item(j,1).text()
             except Exception as ex:
                 # print(ex)
                 print(ex)
-                QMessageBox.about(widget, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")  
+                QMessageBox.about(widget, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")
+
+    def filtrarCultivo(self,widget,cultivo:str,status:bool):
+        nombre = widget.line_buscar.text()
+        sinceDate = widget.sinceDate.date().toString('yyyy-MM-dd')
+        untilDate = widget.untilDate.date().toString('yyyy-MM-dd')
+        # print(cultivo)
+        if status == False:
+            sqlQuery = f"""select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela, coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha, cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
+                        from lotecampania lc
+                        join loteparcela lp on lp.idlotecampania = lc.idlotecampania
+                        join lotes ls on lc.idlotecampania = ls.idlotecampania
+                        left join lote l on l.idlote = lc.idlote
+                        left join parcela p on p.idparcela = lp.idparcela 
+                        left join campania ca on ca.idcampania = lc.idcampania 
+                        left join cultivo cu on cu.idcultivo = ca.idcultivo 
+                        left join explotacion ex on ex.idexplotacion = ca.idexplotacion 
+                        where l.nombre ilike '%{nombre}%' or ex.nombre ilike '%{nombre}%' and cu.nombre ilike '{cultivo}'
+                        group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
+                        order by ex.nombre, cu.nombre, ca.fechasiembra desc;                        
+                        """
+        else: 
+                sqlQuery = f"""select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela,coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha, cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
+                from lotecampania lc
+                join loteparcela lp on lp.idlotecampania = lc.idlotecampania
+                join lotes ls on lc.idlotecampania = ls.idlotecampania
+                left join lote l on l.idlote = lc.idlote
+                left join parcela p on p.idparcela = lp.idparcela 
+                left join campania ca on ca.idcampania = lc.idcampania 
+                left join cultivo cu on cu.idcultivo = ca.idcultivo 
+                left join explotacion ex on ex.idexplotacion = ca.idexplotacion
+                where  l.nombre ilike '%{nombre}%' or ex.nombre ilike '%{nombre}%' and ca.fechasiembra >= '{sinceDate}' and ca.fechasiembra <= '{untilDate}' and cu.nombre ilike '{cultivo}'
+                group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
+                order by ex.nombre, cu.nombre, ca.fechasiembra desc 
+                """
+        try: 
+            with self.conn as conn: 
+                cursor  = self.conn.cursor() 
+                cursor.execute(sqlQuery)
+                data = cursor.fetchall() 
+                # print(data)
+                a = len(data)
+                b = len(data[0])
+                i = 1
+                j = 1
+            
+            
+                widget.tableWidget.setRowCount(a)
+                widget.tableWidget.setColumnCount(b)
+                for j in range(a):
+                    for i in range(b):
+                        item = QTableWidgetItem(str(data[j][i]))
+                        widget.tableWidget.setItem(j,i,item)
+                    # obj = widget.tableWidget.item(j,1).text()
+
+        except Exception as ex : print(ex)
+
+
+
             
     def cargarLote(self,widget):
         selected = widget.tableWidget.selectionModel().selectedRows()
@@ -517,7 +737,7 @@ class AgraeToolset():
                 nombreLote = widget.tableWidget.item(row, 1)
                 nombreParcela = widget.tableWidget.item(row, 2)
                 fecha = widget.tableWidget.item(row, 3)
-                exp = f''' "idlotecampania" = {idlote.text()} and "lote" ilike '%{nombreLote.text()}%' and "parcela" ilike'%{nombreParcela.text()}%' and "fechasiembra" = '{fecha.text()}' '''
+                exp = f''' "idlotecampania" = {idlote.text()} '''
                 uri = QgsDataSourceUri()
                 uri.setConnection(dns['host'], dns['port'],
                                   dns['dbname'], dns['user'], dns['password'])
@@ -536,12 +756,13 @@ class AgraeToolset():
                     QMessageBox.about(widget, "aGrae GIS:", "Capa invalida.")
             
             except Exception as ex:
-                # print(ex)
+                QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
                 QMessageBox.about(widget, f"Error:{ex}", f"Debe seleccionar un campo para el Nombre")
     def dataSegmento(self,table):
         try: 
             lyr = self.iface.activeLayer()
-            features = lyr.getFeatures()
+            if len(lyr.selectedFeatures()) > 0: features = lyr.selectedFeatures() 
+            else: features = lyr.getFeatures()
             columns = [fld.name() for fld in lyr.fields()]
             data = ([f[col] for col in columns] for f in features)
             df = pd.DataFrame.from_records(data=data, columns=columns)
@@ -557,33 +778,32 @@ class AgraeToolset():
                     table.setItem(r,c,item)
         except Exception: 
             pass
-    def crearSegmento(self,widget,table):
+    def crearSegmento(self,widget):
         lyr = self.iface.activeLayer()
         srid = lyr.crs().authid()[5:]
-        features = lyr.getFeatures()
-
-        nRow = table.rowCount() 
-        nColumn = table.columnCount()
+        if len(lyr.selectedFeatures()) > 0: features = lyr.selectedFeatures() 
+        else: features = lyr.getFeatures()
         try:
             with self.conn as conn:
                 try: 
                     cursor = conn.cursor()
-                    for row , f in (zip(range(nRow), features)):
-                        segm = f[0]               
-                        geometria = f.geometry() .asWkt()                                        
+                    for f in features :
+                        segm = f['segm']            
+                        geometria = f.geometry() .asWkt()
                         sql = f""" insert into segmento(segmento,geometria)
                                             values
                                             ({segm},
                                             st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))"""                   
-                        cursor.execute(sql)
-                        conn.commit()                            
                         # print(sql)
-
-                    QMessageBox.about(widget, 'aGrae GIS', 'Segmento Cargado Correctamente \na la base de datos')
-                finally: 
-                    conn.close()
+                        cursor.execute(sql)
+                        
+                    conn.commit() 
+                    QMessageBox.about(widget, 'aGrae GIS', 'Segmentos Cargados Correctamente \na la base de datos')
+                except Exception as ex:
+                    QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
         except Exception as ex: 
-            # print(ex)
+            QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
+            conn.rollback()
             pass
     
     def asignarCodigoSegmento(self,widget):
@@ -592,7 +812,7 @@ class AgraeToolset():
         idsegmento = widget.tableWidget_2.item(row, 0).text()
         idlotecampania = widget.tableWidget_2.item(row, 1).text()
         analisis = widget.tableWidget_2.item(row, 7).text()
-        print(idsegmento, idlotecampania, analisis)
+        # print(idsegmento, idlotecampania, analisis)
         cursor = self.conn.cursor()
         sql = f''' insert into segmentoanalisis (idsegmento,idlotecampania,idanalisis)
                 select {idsegmento},{idlotecampania} , qan.idanalisis 
@@ -600,7 +820,7 @@ class AgraeToolset():
         try:
             cursor.execute(sql)
             self.conn.commit()
-            print('relacionado correctamente')
+            # print('relacionado correctamente')
         except errors.lookup('23505'):
             print('Segmento ya pertenece al lote')
             self.conn.rollback()
@@ -661,6 +881,7 @@ class AgraeToolset():
 
         layer = QgsVectorLayer(uri.uri(False), f'{nombre}', f'{ogr}')
         QgsProject.instance().addMapLayer(layer)
+    
     def retUri(self,sql,geom,id, exp=None, table=None):
         dns = self.dns
         uri = QgsDataSourceUri()
@@ -673,6 +894,7 @@ class AgraeToolset():
 
 
         return uri
+    
     def crearCampania(self,widget):
         lote = str(widget.line_lote_nombre.text()).upper()
         idexp = widget.line_lote_idexp.text()
@@ -729,7 +951,7 @@ class AgraeToolset():
                 if regimen != 0:
                     cursor = conn.cursor()
                     cursor.execute(_sql_verify)
-                    print(cursor.fetchall())
+                    # print(cursor.fetchall())
                     cursor.execute(sql)
                     conn.commit()
                     cursor.execute(sql2)
@@ -806,12 +1028,46 @@ class AgraeToolset():
                 table.setItem(r, c, item)
 
 
+    def actualizarNecesidades(self):
+        conn = connect(dbname=self.dns['dbname'], user=self.dns['user'],
+                       password=self.dns['password'], host=self.dns['host'], port=self.dns['port'])
+        with conn: 
+            cursor = conn.cursor() 
+            try:
+                QgsMessageLog.logMessage(f'Calculando Necesidades...', 'aGrae GIS', level=0)
+                cursor.execute('refresh materialized view analisis.necesidades_iniciales')
+                self.conn.commit()
+                # print('FINALIZADO NECESIDADES INICIALES')  
+                # print('ACTUALIZANDO NECESIDADES 1')
+                cursor.execute('refresh materialized view analisis.necesidades_a01')
+                self.conn.commit()
+                # print('FINALIZADO NECESIDADES 1')  
+                # print('ACTUALIZANDO NECESIDADES 2')
+                cursor.execute('refresh materialized view analisis.necesidades_a02')
+                self.conn.commit()
+                # print('FINALIZADO NECESIDADES 2')  
+                # print('ACTUALIZANDO NECESIDADES 3')
+                cursor.execute('refresh materialized view analisis.necesidades_a03')
+                self.conn.commit()
+                # print('FINALIZADO NECESIDADES 3')  
+                # print('ACTUALIZANDO NECESIDADES FINALES')
+                cursor.execute('refresh materialized view analisis.necesidades_a04')
+                self.conn.commit()
+                # print('FINALIZADO NECESIDADES FINALES')  
+                QgsMessageLog.logMessage(f'Actualizando mapa de Unidades...', 'aGrae GIS', level=0)
+                cursor.execute('refresh materialized view public.unidades')
+                self.conn.commit()
+                QgsMessageLog.logMessage(f'Actualizacion correcta', 'aGrae GIS', level=3)
+            except Exception as ex: 
+                QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
+
     def populateTable(self,sql,widget, action=False):
         
         with self.conn:
                 cursor = self.conn.cursor()
                 cursor.execute(sql)
                 data = cursor.fetchall()
+                print(data)
                 a = len(data)
                 b = len(data[0])
                 i = 1
@@ -830,12 +1086,12 @@ class AgraeToolset():
             table.setEditTriggers(QAbstractItemView.AllEditTriggers)
             variable = True
             button.setEnabled(True)
-            print('editando')
+            # print('editando')
         else:
             table.setEditTriggers(QAbstractItemView.NoEditTriggers)
             variable = False
             button.setEnabled(False)
-            print('nada')
+            # print('nada')
 
 
 class AgraeAnalitic(): 
@@ -909,7 +1165,8 @@ class TableModel(QtCore.QAbstractTableModel):
 
         if role == Qt.DisplayRole:
             value = self._data.iloc[index.row(), index.column()]
-            if value != NULL:
+            if value != NULL and value != 0:
+                # print(value)
                 return str(value)
             else:
                 return int(0)
@@ -1116,6 +1373,7 @@ class PanelRender():
         h = 307
 
         datos = self.dataHuellaCarbono
+        # print(datos)
 
 
         img = Image.open(self.path['base2'])
@@ -1324,12 +1582,12 @@ class PanelRender():
         self.img.show()
 
     def savePanel(self):
-        
+        s = QSettings('agrae','dbConnection')
         self.panelUno()
         self.panelHuellaCarbono(self.dataHuellaCarbono)
+        # print(self.i,self._pesos,self._precios)
         self.panelDos(self.i,self._pesos,self._precios)
-        filename = QFileDialog.getExistingDirectory(
-            None, "Seleccionar directorio de Paneles:")
+        filename = s.value('paneles_path')
         self.panelTres()
         self.p1.save(f'{filename}\\Panel00{self.lote}.png')
         self.p2.save(f'{filename}\\Panel02{self.lote}.png')
@@ -1341,4 +1599,78 @@ class PanelRender():
         
 
 
+
+class AppDemo(QtWidgets.QWidget): 
+    def __init__(self) -> None:
+        super().__init__()
+        
+        self.s = QSettings('agrae', 'dbConnection')
+        self.dns = {
+            'dbname': self.s.value('dbname'),
+            'user': self.s.value('dbuser'),
+            'password': self.s.value('dbpass'),
+            'host': self.s.value('dbhost'),
+            'port': self.s.value('dbport')
+        }
+
+        self.setMinimumWidth(600)
+        self.layout = QtWidgets.QVBoxLayout() 
+        n = 6
+        self.progressBar =  QtWidgets.QProgressBar() 
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(n)
+        self.progressBar.setRange(0,n)
+        self.button = QtWidgets.QPushButton('Run')
+        self.button.clicked.connect(self.run)
+
+    def run(self):
+        conn = connect(dbname=self.dns['dbname'], user=self.dns['user'],
+                    password=self.dns['password'], host=self.dns['host'], port=self.dns['port'])
+        with conn: 
+            cursor = conn.cursor() 
+            i = 0
+            try:
+                # print('ACTUALIZANDO NECESIDADES INICIALES')
+                cursor.execute('refresh materialized view analisis.necesidades_iniciales')
+                self.conn.commit()
+                self.progressBar.setValue(i+1)
+                i += 1
+                # print('FINALIZADO NECESIDADES INICIALES')  
+                # print('ACTUALIZANDO NECESIDADES 1')
+                cursor.execute('refresh materialized view analisis.necesidades_a01')
+                self.conn.commit()
+                self.progressBar.setValue(i+1)
+                i += 1
+                # print('FINALIZADO NECESIDADES 1')  
+                # print('ACTUALIZANDO NECESIDADES 2')
+                cursor.execute('refresh materialized view analisis.necesidades_a02')
+                self.conn.commit()
+                self.progressBar.setValue(i+1)
+                i += 1
+                # print('FINALIZADO NECESIDADES 2')  
+                # print('ACTUALIZANDO NECESIDADES 3')
+                cursor.execute('refresh materialized view analisis.necesidades_a03')
+                self.conn.commit()
+                self.progressBar.setValue(i+1)
+                i += 1
+                # print('FINALIZADO NECESIDADES 3')  
+                # print('ACTUALIZANDO NECESIDADES FINALES')
+                cursor.execute('refresh materialized view analisis.necesidades_a04')
+                self.conn.commit()
+                self.progressBar.setValue(i+1)
+                i += 1
+                # print('FINALIZADO NECESIDADES FINALES')  
+                # print('ACTUALIZANDO UNIDADES FERTILIZANTES')
+                cursor.execute('refresh materialized view public.unidades')
+                self.conn.commit()
+                self.progressBar.setValue(i+1)
+                i += 1
+                # print('FINALIZADO UNIDADES FERTILIZANTES') 
+            except Exception as ex: 
+                print(ex)
+
+
+
+
+    
 
