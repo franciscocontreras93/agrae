@@ -1489,6 +1489,8 @@ class PanelRender():
             formulas = formulas + f1 + ' --- '
             t1 = round(pesos[0]/self.area)*(precios[0]/1000)
             # print(t1)
+            #! ERROR EN LA MEDIA OJO
+            #! BUG
             draw.text((140, y), '{}\n\n{:,} Kg/ha\n{:,} {}/ha\n\n{:,} Kg'.format(f1, round(pesos[0]/self.area), round(
                 t1),self.moneda, round(pesos[0])), font=font2, fill=color, align='center', spacing=8)
             total_unitario = total_unitario + round(

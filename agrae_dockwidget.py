@@ -837,6 +837,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_reporte.setIconSize(QtCore.QSize(20, 20))
         self.btn_reporte.setToolTip('Generar Reporte')
         self.btn_reporte.clicked.connect(self.crearReporte)
+        self.btn_calcular.clicked.connect(self.CalcularCEAP)
     
         
 
@@ -1363,7 +1364,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         idsegmento = self.tableWidget_2.item(row,0).text()
         idlotecampania = self.tableWidget_2.item(row,1).text()
         codigo = self.tableWidget_2.item(row,9).text()
-        regimen = self.tableWidget_2.item(row,4).text()
+        regimen = self.tableWidget_2.item(row,1).text()
 
         idx = self.tableWidget_2.selectionModel().selectedRows()
         if len(idx) > 0:
@@ -1384,6 +1385,25 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                             QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
 
                             conn.rollback()
+
+    def CalcularCEAP(self): 
+        lyr = iface.activeLayer()
+        ids  = [f[1] for f in lyr.selectedFeatures()]
+        query = ', '.join(str(id) for id in ids)
+        sql = f''' update public.segmento
+        set ceap = q.ceap
+        from (select s.idsegmento, percentile_cont(0.5) within group( order by c.ceap) ceap from ceap36 c 
+        join segmento s on st_intersects(c.geom,s.geometria)
+        where s.idsegmento in ({query})
+        group by s.idsegmento ) as q
+        where  segmento.idsegmento = q.idsegmento'''
+        with self.conn: 
+            cursor = self.conn.cursor() 
+            cursor.execute(sql)
+            self.conn.commit()
+            print('CalcularCEAP DONE')
+
+
 
     
     def crearReporte(self):
@@ -1695,7 +1715,11 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             self.atlas.next()
         self.atlas.endRender()
         iface.messageBar().pushMessage('Reporte generado correctamente: <a href="{}">{}</a>'.format(path+r'\\'+name,name), 3, 5)
-       
+    
+    def exportResumeTable(self): 
+        with self.conn: 
+            cursor = self.conn.cursor() 
+            
 
     def addLotesMap(self):
         self.tools.addMapLayer('lotes','aGrae Lotes',id='id')
@@ -1984,8 +2008,8 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             data2 = self.checkData(data, e)
             # print(data2) 
         data = sorted(data2)
-        print('function getDataExtracciones: ')
-        print(type(data),data)
+        # print('function getDataExtracciones: ')
+        # print(type(data),data)
         return data
 
     def checkData(self,data,uf):
@@ -2219,7 +2243,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
         
         df = pd.DataFrame.from_records(data=datagen, columns=cols)        
         df_sorted = df.sort_values(by=0).round({'area_has':2})
-        print(df_sorted) #! debug
+        # print(df_sorted) #! debug
         model = TableModel(df_sorted)
         self.tableView.setModel(model)
         self.tableView.setColumnWidth(0,35)
@@ -2256,12 +2280,13 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
         """
         try:
             zipedd = zip(x, y)
+            # print('zipped',zipedd)
             p1 = [x * y for (x, y) in zipedd]
             p2 = round(sum(p1)/sum(y))
         except ZeroDivisionError:
             p2=0 
 
-        # print(p2)
+        # print('suma_ponderada',p2)
         return p2
  
     def ajustesFertilizantes(self,n:list,x:float,p:list,y:float,k:list,z:float):
@@ -2373,14 +2398,15 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
             # print(l)
             a1 = [int(e[1]) for e in l]
             a2 = [int(round(x*y)) for x,y in zip(a1,area)]
-            # print(a2)
+            # print('a2',a2)
             p_aporte = self.sumaPonderada(a1, area)
             # p_aporte = sum(a2)
             p_aporte = p_aporte  #* sum(area)
+            print('p_aporte',p_aporte)
             self._pesos.append(round(p_aporte))
-            # print(l_aplicados.text())
+            # print(self._pesos)
             self._pesos_aplicados.append(round(sum(a2)))
-            # print(self._pesos_aplicados)
+            print(self._pesos_aplicados)
 
             # print(round(sum(a2)))
 
@@ -2956,6 +2982,9 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         row = self.tableWidget.currentRow()
 
 
+        # self.pushButton.clicked.connect(self.BuscarCampania)
+
+
         pass
     
     
@@ -2999,7 +3028,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
     def crearCampania(self):
         # self.tools.crearCampania(self)
         lote = str(self.line_lote_nombre.text()).upper()
-        idexp = self.idExp
+        idexp = self.idExp[0]
         idcult = self.idCultivo
         regimen = int(self.cmb_regimen.currentIndex())
         produccion = float(self.ln_produccion.text())
@@ -3525,14 +3554,12 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None):
-        # plt.rcParams.update({'font.size': 8})
+
         fig, (self.ax1, self.ax2, self.ax3) = plt.subplots(1, 3)
         fig.patch.set_facecolor('None')
         fig.patch.set_alpha(0)
         super(MplCanvas, self).__init__(fig)
-        # self.plot()
-        # self.data = str(data)
-        # print('plot {}'.format(self.data))
+        
     def close(self): 
         plt.cla()
     def saveImage(self,path):
