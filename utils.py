@@ -187,7 +187,7 @@ class AgraeUtils():
             'upload-to-db': os.path.join(os.path.dirname(__file__), r'ui\icons\upload-db.svg'),
             'chart': os.path.join(os.path.dirname(__file__), r'ui\icons\chart-bar-solid.svg'),
             'settings': os.path.join(os.path.dirname(__file__), r'ui\icons\gear-solid.svg'),
-            'report-pdf': os.path.join(os.path.dirname(__file__), r'ui\icons\file-pdf-regular.svg'),
+            'report-pdf': os.path.join(os.path.dirname(__file__), r'ui\icons\file-excel-solid.svg'),
             'trash': os.path.join(os.path.dirname(__file__), r'ui\icons\trash-solid.svg'),
             'next': os.path.join(os.path.dirname(__file__), r'ui\icons\angle-right-solid.svg'),
             'prev': os.path.join(os.path.dirname(__file__), r'ui\icons\angle-left-solid.svg'),

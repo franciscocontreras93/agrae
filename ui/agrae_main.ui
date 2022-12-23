@@ -622,8 +622,8 @@
       <property name="geometry">
        <rect>
         <x>700</x>
-        <y>80</y>
-        <width>43</width>
+        <y>90</y>
+        <width>41</width>
         <height>341</height>
        </rect>
       </property>
@@ -664,7 +664,7 @@
           <bool>true</bool>
          </property>
          <property name="text">
-          <string/>
+          <string>CEAP</string>
          </property>
         </widget>
        </item>
