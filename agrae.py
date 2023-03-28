@@ -38,7 +38,7 @@ from .utils import AgraeUtils, AgraeToolset
 
 # Import the code for the DockWidget
 from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget, loteFindDialog, loteFilterDialog, parcelaFindDialog, agraeAnaliticaDialog, expFindDialog
-from .agrae_dialogs import personaDialog, agricultorDialog, ceapPrevDialog
+from .agrae_dialogs import personaDialog, agricultorDialog, ceapPrevDialog, verifyGeometryDialog, datosDialog
 import os.path
 from PIL import Image
 from qgis.core import QgsDataSourceUri
@@ -133,6 +133,7 @@ class agrae:
         self.personaDialog = None
         self.agricultorDialog = None
         self.verisDataDialog = None
+        self.verifyGeomDialog = None
 
         self.dataSuelo = None
         self.dataExtracciones = None
@@ -258,12 +259,12 @@ class agrae:
             callback=self.filtrarParcelas,
             parent=self.iface.mainWindow())
         recintos_icon_path = self.icons_path['layer_upload']
-        # self.add_action(
-        #     recintos_icon_path,
-        #     text=self.tr(u'Cargar Recintos'),
-        #     status_tip=self.tr(u'Cargar Recintos'),
-        #     callback=self.uploadRecintos,
-        #     parent=self.iface.mainWindow())
+        self.add_action(
+            recintos_icon_path,
+            text=self.tr(u'Cargar Recintos'),
+            status_tip=self.tr(u'Cargar Recintos'),
+            callback=self.uploadRecintos,
+            parent=self.iface.mainWindow())
         rel_icon_path = self.icons_path['create_rel']
         self.add_action(
             rel_icon_path,
@@ -292,7 +293,13 @@ class agrae:
             status_tip=self.tr(u'Preprocesamiento datos Veris'),
             callback=self.runVeris,
             parent=self.iface.mainWindow())
-
+        icon = self.icons_path['check']
+        self.add_action(
+            icon,
+            text=self.tr(u'Chequear Geometrias'),
+            status_tip=self.tr(u'Preprocesamiento datos Veris'),
+            callback=self.runVerifyGeometry,
+            parent=self.iface.mainWindow())
 
         self.add_action(
             '',
@@ -301,6 +308,9 @@ class agrae:
             callback=self.runConfig,
             parent=self.iface.mainWindow())
         self.toolbar.addSeparator()
+
+
+
         
 
         
@@ -358,6 +368,14 @@ class agrae:
         self.pluginIsActive = False
         pass
     
+    def onCloseVerifyGeomDialog(self): 
+        self.verifyGeomDialog.closingPlugin.disconnect(self.onCloseVerifyGeomDialog)
+        # self.verifyGeomDialog.combo_layers.clear()
+        self.verifyGeomDialog.close()
+
+        self.pluginIsActive = False
+        pass
+
     def onCloseCeapDialog(self): 
         self.verisDataDialog.closingPlugin.disconnect(self.onCloseCeapDialog)
         self.pluginIsActive = False
@@ -904,7 +922,7 @@ class agrae:
             self.pluginIsActive = True
 
             if self.personaDialog == None:
-                self.personaDialog = personaDialog()
+                self.personaDialog = datosDialog()
                 # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
 
                 # self.personaDialog.test_btn.clicked.connect(dbTestConn)
@@ -925,6 +943,17 @@ class agrae:
 
             self.agricultorDialog.closingPlugin.connect(self.onCloseAgricultorDialog)
             self.agricultorDialog.show()
+
+    def runVerifyGeometry(self): 
+
+        if not self.pluginIsActive:
+            self.pluginIsActive = True
+
+            if self.verifyGeomDialog == None:
+                self.verifyGeomDialog = verifyGeometryDialog()
+                # self.verifyGeomDialog.getMapLayers()
+            self.verifyGeomDialog.closingPlugin.connect(self.onCloseVerifyGeomDialog)
+            self.verifyGeomDialog.show()
 
     def runVeris(self):
         if not self.pluginIsActive:

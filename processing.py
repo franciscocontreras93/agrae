@@ -1,6 +1,7 @@
 from osgeo import gdal
 from qgis import processing
 from qgis.core import *
+from qgis.utils import iface
 
 import numpy as np
 import jenkspy
@@ -277,3 +278,259 @@ class agraeVerisAlgorithm():
 
         process = {}
         output = {}
+
+
+
+class agraeVerifyAlgorithm():
+   
+    def __init__(self,bar):
+        """
+        aGrae Algoritmo de Verificacion de Capas: 
+            Verifica la integridad de las geometrias de una capa para su inclusion en la Base de Datos
+
+        """      
+        self.bar = bar
+        self.f = QgsProcessingFeedback()
+        self.f.progressChanged.connect(self.progress_changed)
+
+        pass
+    def progress_changed(self, progress):
+        # print(progress)
+        self.bar.setValue(progress)
+
+
+    def verifySegmento(self,layer,field,grid_size,layer_lotes):
+        """_summary_
+
+        Args:
+            layer (QgsVectorLayer): _description_
+            field (QgsField): _description_
+            grid_size (Integer): _description_
+            layer_lotes (QgsVectorLayer): _description_
+
+        Returns:
+            _type_: _description_
+        """      
+        # process = {}
+        try:
+        
+            layer_data = layer
+            lotes = [f for f in layer_lotes.getFeatures()]
+            buffer_lyrs = []
+            lotes_lyrs = []
+           
+            process = {}
+            for f in lotes:
+                
+                nombre = f['lote']
+                loteLyr = QgsVectorLayer('Polygon?crs=epsg:4326', f['lote'],"memory")
+                provider = loteLyr.dataProvider() 
+                provider.addFeature(f)
+                lotes_lyrs.append(loteLyr)
+                params = {'INPUT':loteLyr,
+                'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:3857'),
+                'OPERATION':'+proj=pipeline +step +proj=unitconvert +xy_in=deg +xy_out=rad +step +proj=webmerc +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84',
+                'OUTPUT':'TEMPORARY_OUTPUT'}
+                reproject_process = processing.run("native:reprojectlayer",params ,feedback=self.f)
+                reprojected = reproject_process['OUTPUT']
+                params = {
+                'INPUT':reprojected,
+                'DISTANCE':10,
+                'SEGMENTS':5,
+                'END_CAP_STYLE':1,
+                'JOIN_STYLE':1,
+                'MITER_LIMIT':2,
+                'DISSOLVE':False,
+                'OUTPUT':'TEMPORARY_OUTPUT'}
+                buffer_process = processing.run("native:buffer",params,feedback=self.f)
+                buffer = buffer_process['OUTPUT']
+                buffer.setName(nombre)
+                buffer_lyrs.append(buffer)
+            #    QgsProject.instance().addMapLayer(buffer)
+                
+            #print(buffer_lyrs)
+            procesadas = []
+            for buffer,lote in zip(buffer_lyrs,lotes_lyrs):
+                nombre = buffer.name()
+                params = {
+                    'TYPE':2,
+                    'EXTENT':buffer,
+                    'HSPACING':grid_size,
+                    'VSPACING':grid_size,
+                    'HOVERLAY':0,
+                    'VOVERLAY':0,
+                    'CRS':QgsCoordinateReferenceSystem('EPSG:3857'),
+                    'OUTPUT':'TEMPORARY_OUTPUT'}
+                process['grid'] = processing.run("native:creategrid",params,feedback=self.f)
+                grid = process['grid']['OUTPUT']
+                params = {'INPUT':grid,
+                        'JOIN':layer_data,
+                        'PREDICATE':[0],
+                        'JOIN_FIELDS':field,
+                        'METHOD':1,
+                        'DISCARD_NONMATCHING':True,
+                        'PREFIX':'',
+                        'OUTPUT':'TEMPORARY_OUTPUT'}
+                process['gridjoin']=processing.run("native:joinattributesbylocation",params,feedback=self.f)
+                gridJoin = process['gridjoin']['OUTPUT']
+                params = {'INPUT':gridJoin,
+                        'FIELD':[field],
+                        'OUTPUT':'TEMPORARY_OUTPUT'}
+                process['gridDisolve'] = processing.run("native:dissolve",params,feedback=self.f)
+                gridDisolve = process['gridDisolve']['OUTPUT']
+                
+                params = {
+                    'INPUT': gridDisolve,
+                    'OVERLAY': lote, 
+                    'OUTPUT': 'TEMPORARY_OUTPUT'}
+                
+                process['clip'] = processing.run("native:clip", params, feedback=self.f)
+                clipped = process['clip']['OUTPUT']
+                
+                params =  {'INPUT':clipped,'COLUMN':['left','top','right','bottom'],'OUTPUT':'TEMPORARY_OUTPUT'}
+                process['removeFields'] = processing.run("qgis:deletecolumn", params,feedback=self.f)
+                removeFields = process['removeFields']['OUTPUT']
+                removeFields.setName(nombre)
+                procesadas.append(removeFields)
+                
+
+            params = {
+            'LAYERS':procesadas,
+            'CRS':QgsCoordinateReferenceSystem('EPSG:25832'),
+            'OUTPUT':'TEMPORARY_OUTPUT'}
+
+            unificar  = processing.run("native:mergevectorlayers",params,feedback=self.f )
+
+            
+            params =  {'INPUT':unificar['OUTPUT'],'COLUMN':['layer','path'],'OUTPUT':'TEMPORARY_OUTPUT'}
+            limpiar_process = processing.run("qgis:deletecolumn", params,feedback=self.f)
+            removeFields = limpiar_process['OUTPUT']              
+            duplicates = processing.run("native:deleteduplicategeometries", {'INPUT':removeFields,'OUTPUT':'TEMPORARY_OUTPUT'})   
+            verificada  = duplicates['OUTPUT']
+            verificada = processing.run("native:renametablefield", {'INPUT':verificada,'FIELD':'SEGM','NEW_NAME':'segmento','OUTPUT':'TEMPORARY_OUTPUT'}) 
+            verificada = verificada['OUTPUT']
+            verificada.setName(f'{layer_data.name()}_Verificada')
+            
+            return verificada
+
+        except Exception as ex: 
+            # QgsMessageLog.logMessage(f'{ex} \nError ejecutando el proceso VerifyLayer', 'aGrae GIS', level=1)
+            # QMessageBox.about(self,'aGrae GIS', 'Ocurrio un error, revisa el panel de mensajes de registros')
+            print(ex)
+
+    def verifyAmbiente(self,layer,grid_size,layer_lotes):
+            """_summary_
+
+            Args:
+                layer (QgsVectorLayer): _description_
+                grid_size (Integer): _description_
+                layer_lotes (QgsVectorLayer): _description_
+
+            Returns:
+                _type_: _description_
+            """      
+            # process = {}
+            try:
+            
+                layer_data = layer
+                lotes = [f for f in layer_lotes.getFeatures()]
+                buffer_lyrs = []
+                lotes_lyrs = []
+            
+                process = {}
+                for f in lotes:
+                    
+                    nombre = f['lote']
+                    loteLyr = QgsVectorLayer('Polygon?crs=epsg:4326', f['lote'],"memory")
+                    provider = loteLyr.dataProvider() 
+                    provider.addFeature(f)
+                    lotes_lyrs.append(loteLyr)
+                    params = {'INPUT':loteLyr,
+                    'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:3857'),
+                    'OPERATION':'+proj=pipeline +step +proj=unitconvert +xy_in=deg +xy_out=rad +step +proj=webmerc +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84',
+                    'OUTPUT':'TEMPORARY_OUTPUT'}
+                    reproject_process = processing.run("native:reprojectlayer",params ,feedback=self.f)
+                    reprojected = reproject_process['OUTPUT']
+                    params = {
+                    'INPUT':reprojected,
+                    'DISTANCE':10,
+                    'SEGMENTS':5,
+                    'END_CAP_STYLE':1,
+                    'JOIN_STYLE':1,
+                    'MITER_LIMIT':2,
+                    'DISSOLVE':False,
+                    'OUTPUT':'TEMPORARY_OUTPUT'}
+                    buffer_process = processing.run("native:buffer",params,feedback=self.f)
+                    buffer = buffer_process['OUTPUT']
+                    buffer.setName(nombre)
+                    buffer_lyrs.append(buffer)
+                #    QgsProject.instance().addMapLayer(buffer)
+                    
+                #print(buffer_lyrs)
+                procesadas = []
+                for buffer,lote in zip(buffer_lyrs,lotes_lyrs):
+                    nombre = buffer.name()
+                    params = {
+                        'TYPE':2,
+                        'EXTENT':buffer,
+                        'HSPACING':grid_size,
+                        'VSPACING':grid_size,
+                        'HOVERLAY':0,
+                        'VOVERLAY':0,
+                        'CRS':QgsCoordinateReferenceSystem('EPSG:3857'),
+                        'OUTPUT':'TEMPORARY_OUTPUT'}
+                    process['grid'] = processing.run("native:creategrid",params,feedback=self.f)
+                    grid = process['grid']['OUTPUT']
+                    params = {'INPUT':grid,
+                            'JOIN':layer_data,
+                            'PREDICATE':[0],
+                            'JOIN_FIELDS':['AMB','NDVIMAX'],
+                            'METHOD':1,
+                            'DISCARD_NONMATCHING':True,
+                            'PREFIX':'',
+                            'OUTPUT':'TEMPORARY_OUTPUT'}
+                    process['gridjoin']=processing.run("native:joinattributesbylocation",params,feedback=self.f)
+                    gridJoin = process['gridjoin']['OUTPUT']
+                    params = {'INPUT':gridJoin,
+                            'FIELD':['AMB','NDVIMAX'],
+                            'OUTPUT':'TEMPORARY_OUTPUT'}
+                    process['gridDisolve'] = processing.run("native:dissolve",params,feedback=self.f)
+                    gridDisolve = process['gridDisolve']['OUTPUT']
+                    
+                    params = {
+                        'INPUT': gridDisolve,
+                        'OVERLAY': lote, 
+                        'OUTPUT': 'TEMPORARY_OUTPUT'}
+                    
+                    process['clip'] = processing.run("native:clip", params, feedback=self.f)
+                    clipped = process['clip']['OUTPUT']
+                    
+                    params =  {'INPUT':clipped,'COLUMN':['left','top','right','bottom'],'OUTPUT':'TEMPORARY_OUTPUT'}
+                    process['removeFields'] = processing.run("qgis:deletecolumn", params,feedback=self.f)
+                    removeFields = process['removeFields']['OUTPUT']
+                    removeFields.setName(nombre)
+                    procesadas.append(removeFields)
+                    
+
+                params = {
+                'LAYERS':procesadas,
+                'CRS':QgsCoordinateReferenceSystem('EPSG:25832'),
+                'OUTPUT':'TEMPORARY_OUTPUT'}
+
+                unificar  = processing.run("native:mergevectorlayers",params,feedback=self.f )
+
+                params =  {'INPUT':unificar['OUTPUT'],'COLUMN':['layer','path'],'OUTPUT':'TEMPORARY_OUTPUT'}
+                limpiar_process = processing.run("qgis:deletecolumn", params,feedback=self.f)
+                removeFields = limpiar_process['OUTPUT']
+                renameFields = processing.run("native:renametablefield", {'INPUT':removeFields,'FIELD':'AMB','NEW_NAME':'ambiente','OUTPUT':'TEMPORARY_OUTPUT'})   
+
+                duplicates = processing.run("native:deleteduplicategeometries", {'INPUT':renameFields['OUTPUT'],'OUTPUT':'TEMPORARY_OUTPUT'})   
+                verificada  = duplicates['OUTPUT']
+                verificada.setName(f'{layer_data.name()}_Verificada')
+                
+                return verificada
+
+            except Exception as ex: 
+                # QgsMessageLog.logMessage(f'{ex} \nError ejecutando el proceso VerifyLayer', 'aGrae GIS', level=1)
+                # QMessageBox.about(self,'aGrae GIS', 'Ocurrio un error, revisa el panel de mensajes de registros')
+                print(ex)

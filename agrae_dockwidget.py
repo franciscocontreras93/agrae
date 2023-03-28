@@ -63,6 +63,7 @@ agraeCultivoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), '
 
 agraeAnaliticaDialog_, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/analitica_dialog.ui'))
 
+
 class agraeDockWidget(QtWidgets.QDockWidget, agraeSidePanel):
     closingPlugin = pyqtSignal()
     def __init__(self, parent=None):
@@ -740,18 +741,17 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         # columna geometria lote parcela
         # self.tableWidget.setColumnHidden(6, True) # columna geometria loteparcela
-        self.tableWidget.setColumnHidden(0, True)  # columna id lote parcela
-        self.tableWidget.setColumnHidden(1, True)  # columna id explotacion
-        self.tableWidget.setColumnHidden(4, True)  # columna nombre parcela
-        self.tableWidget.setColumnHidden(8, True)  # columna prod esperada
-        self.tableWidget.setColumnHidden(9, True)  # columna biomasa
+        self.tableWidget.setColumnHidden(0, True)   # columna id lote parcela
+        self.tableWidget.setColumnHidden(1, True)   # columna id explotacion
+        self.tableWidget.setColumnHidden(4, True)   # columna nombre parcela
+        self.tableWidget.setColumnHidden(8, True)   # columna prod esperada
+        self.tableWidget.setColumnHidden(9, True)   # columna biomasa
         self.tableWidget.setColumnHidden(10, True)  # columna Residuo
         self.tableWidget.setColumnHidden(11, True)  # columna Indice de cosecha
         self.tableWidget.setColumnHidden(12, True)  # columna C cosecha
         self.tableWidget.setColumnHidden(13, True)  # columna C Residuo
-
+        #! ESPERAR
         self.tableWidget.doubleClicked.connect(self.openAnaliticaDialog)
-
         self.tableWidget_2.horizontalHeader().setStretchLastSection(True)
         self.tableWidget_2.setColumnHidden(0, True)
         self.tableWidget_2.setColumnHidden(1, True)
@@ -835,14 +835,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.btn_cod_segmento.clicked.connect(self.codificarSegmento)
         self.btn_reporte.setIcon(QIcon(icons_path['export-csv']))
         self.btn_reporte.setIconSize(QtCore.QSize(20, 20))
-        self.btn_reporte.setToolTip('Generar Reporte')
+        self.btn_reporte.setToolTip('Generar Plantilla Analisis')
         self.btn_reporte.clicked.connect(self.crearReporte)
         self.btn_calcular.clicked.connect(self.CalcularCEAP)
-    
-        
-
-
-        
+              
         self.sinceDate.setDate(QDate.currentDate())
         self.untilDate.setDate(QDate.currentDate())
         self.sinceDate.dateChanged.connect(self.sinceDateChange)
@@ -1853,6 +1849,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 self.tools.actualizarNecesidades()
                 # self.close()          
             except Exception as ex:
+                QMessageBox.about(self, 'aGrae GIS', 'Ocurrio un error, revisa el panel de registros para más información')
                 QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
             
 
@@ -2396,7 +2393,8 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
         :param _type_ l_precio: _description_
         :param _type_ l_aplicados: _description_
         :param _type_ i: _description_
-        """        
+        """
+        d = None
         try:
             if index != 0 and self.dataValidator == False:
                 precio = precio.text()
@@ -2792,7 +2790,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
             except ValueError as ve:
                 QgsMessageLog.logMessage(f'{ve}', 'aGrae GIS', level=1)
                 # QMessageBox.about(self, f"aGrae GIS:",f"No Existen datos de Fertilizacion Tradicional")
-                self.btn_panel.setEnabled(False)
+                # self.btn_panel.setEnabled(False)
             except Exception as ex: 
                 QgsMessageLog.logMessage(f'Exception {ex}', 'aGrae GIS', level=1)
 
@@ -3279,8 +3277,8 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
                     sql = sql + f'\nidexplotacion = {self.idExp},'
                 if self.idCultivo != self.dataCampania['idcultivo']:
                     sql = sql + f'\nidcultivo = {self.idCultivo},'
-                if float(self.ln_produccion.text()) != self.dataCampania['prod_esperada']:
-                    sql = sql + f'\nprod_esperada = {float(self.ln_produccion.text())},'
+                if self.ln_produccion.text() != self.dataCampania['prod_esperada']:
+                    sql = sql + f'\nprod_esperada = {self.ln_produccion.text()},'
                 if self.cmb_regimen.currentIndex() != self.dataCampania['regimen']:
                     sql = sql + f'\nregimen = {self.cmb_regimen.currentIndex()},'
                 if self.cmb_moneda.currentText() != self.dataCampania['unidadesprecio']:
@@ -3289,45 +3287,46 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
                     sql = sql + f'''\nfechasiembra = '{self.lote_dateSiembra.date().toString('yyyy.MM.dd')}','''
                 if self.lote_dateCosecha.date() != self.dataCampania['fechacosecha']: 
                     sql = sql + f'''\nfechacosecha = '{self.lote_dateCosecha.date().toString('yyyy.MM.dd')}','''
-                #* DATOS FERTILIZACION FONDO
-                if self.date_fert_1.date() != self.dataCampania['fechafertilizacionfondo']: 
-                    sql = sql + f'''\nfechafertilizacionfondo = '{self.date_fert_1.date().toString('yyyy.MM.dd')}','''
-                if  self.line_formula_fert_1.text() != self.dataCampania['fertilizantefondoformula']:
-                    sql = sql + f'''\nfertilizantefondoformula = '{self.line_formula_fert_1.text() }','''
-                if  self.line_precio_fert_1.text() != self.dataCampania['fertilizantefondoprecio']:
-                    sql = sql + f'''\nfertilizantefondoprecio = {float(self.line_precio_fert_1.text())},'''
-                # if self.line_calculado_fert_1.text() != self.dataCampania['fertilizantefondocalculado']:
-                #     sql = sql + f'''\nfertilizantefondocalculado = {float(self.line_calculado_fert_1.text())},'''
-                if self.cmb_ajustar_fert_1.currentText() != self.dataCampania['fertilizantefondoajustado']:
-                    if self.cmb_ajustar_fert_1.currentIndex() != 0:
-                        sql = sql + f'''\nfertilizantefondoajustado = '{self.cmb_ajustar_fert_1.currentText()}','''
-                    else:
-                        QgsMessageLog.logMessage(f'No se pudo almacenar el ajuste, seleccione un elemento', 'aGrae GIS', level=1)
-                # if self.line_aplicado_fert_1.text() != self.dataCampania['fertilizantefondoaplicado']:
-                #     sql = sql + f'''\nfertilizantefondoaplicado = {float(self.line_aplicado_fert_1.text())},'''
-                #* DATOS FERTILIZACION COB1
-                if self.date_fert_2.date() != self.dataCampania['fechafertilizacioncbo1']: 
-                    sql = sql + f'''\nfechafertilizacioncbo1 = '{self.date_fert_2.date().toString('yyyy.MM.dd')}','''
-                if  self.line_formula_fert_2.text() != self.dataCampania['fertilizantecob1formula']:
-                    sql = sql + f'''\nfertilizantecob1formula = '{self.line_formula_fert_2.text() }','''
-                if  self.line_precio_fert_2.text() != self.dataCampania['fertilizantecob1precio']:
-                    sql = sql + f'''\nfertilizantecob1precio = {float(self.line_precio_fert_2.text())},'''
-                # if self.line_calculado_fert_2.text() != self.dataCampania['fertilizantecob1calculado']:
-                #     sql = sql + f'''\nfertilizantecob1calculado = {float(self.line_calculado_fert_2.text())},'''
-                if self.cmb_ajustar_fert_2.currentText() != self.dataCampania['fertilizantecob1ajustado']:
-                    if self.cmb_ajustar_fert_2.currentIndex() != 0:
-                        sql = sql + f'''\nfertilizantecob1ajustado = '{self.cmb_ajustar_fert_2.currentText()}','''
-                    else:
-                        QgsMessageLog.logMessage(f'No se pudo almacenar el ajuste, seleccione un elemento', 'aGrae GIS', level=1)
-                # if self.line_aplicado_fert_2.text() != self.dataCampania['fertilizantecob1aplicado']:
-                #     sql = sql + f'''\nfertilizantecob1aplicado = {float(self.line_aplicado_fert_2.text())},'''
+                # #* DATOS FERTILIZACION FONDO
+                # if self.date_fert_1.date() != self.dataCampania['fechafertilizacionfondo']: 
+                #     sql = sql + f'''\nfechafertilizacionfondo = '{self.date_fert_1.date().toString('yyyy.MM.dd')}','''
+                # if  self.line_formula_fert_1.text() != self.dataCampania['fertilizantefondoformula']:
+                #     sql = sql + f'''\nfertilizantefondoformula = '{self.line_formula_fert_1.text() }','''
+                # if  self.line_precio_fert_1.text() != self.dataCampania['fertilizantefondoprecio']:
+                #     sql = sql + f'''\nfertilizantefondoprecio = {self.line_precio_fert_1.text()},'''
+                # # if self.line_calculado_fert_1.text() != self.dataCampania['fertilizantefondocalculado']:
+                # #     sql = sql + f'''\nfertilizantefondocalculado = {float(self.line_calculado_fert_1.text())},'''
+                # if self.cmb_ajustar_fert_1.currentText() != self.dataCampania['fertilizantefondoajustado']:
+                #     if self.cmb_ajustar_fert_1.currentIndex() != 0:
+                #         sql = sql + f'''\nfertilizantefondoajustado = '{self.cmb_ajustar_fert_1.currentText()}','''
+                #     else:
+                #         QgsMessageLog.logMessage(f'No se pudo almacenar el ajuste, seleccione un elemento', 'aGrae GIS', level=1)
+                # # if self.line_aplicado_fert_1.text() != self.dataCampania['fertilizantefondoaplicado']:
+                # #     sql = sql + f'''\nfertilizantefondoaplicado = {float(self.line_aplicado_fert_1.text())},'''
+                # #* DATOS FERTILIZACION COB1
+                # if self.date_fert_2.date() != self.dataCampania['fechafertilizacioncbo1']: 
+                #     sql = sql + f'''\nfechafertilizacioncbo1 = '{self.date_fert_2.date().toString('yyyy.MM.dd')}','''
+                # if  self.line_formula_fert_2.text() != self.dataCampania['fertilizantecob1formula']:
+                #     sql = sql + f'''\nfertilizantecob1formula = '{self.line_formula_fert_2.text() }','''
+                # if  self.line_precio_fert_2.text() != self.dataCampania['fertilizantecob1precio']:
+                #     sql = sql + f'''\nfertilizantecob1precio = {self.line_precio_fert_2.text()},'''
+                # # if self.line_calculado_fert_2.text() != self.dataCampania['fertilizantecob1calculado']:
+                # #     sql = sql + f'''\nfertilizantecob1calculado = {float(self.line_calculado_fert_2.text())},'''
+                # if self.cmb_ajustar_fert_2.currentText() != self.dataCampania['fertilizantecob1ajustado']:
+                #     if self.cmb_ajustar_fert_2.currentIndex() != 0:
+                #         sql = sql + f'''\nfertilizantecob1ajustado = '{self.cmb_ajustar_fert_2.currentText()}','''
+                #     else:
+                #         QgsMessageLog.logMessage(f'No se pudo almacenar el ajuste, seleccione un elemento', 'aGrae GIS', level=1)
+                # # if self.line_aplicado_fert_2.text() != self.dataCampania['fertilizantecob1aplicado']:
+                # #     sql = sql + f'''\nfertilizantecob1aplicado = {float(self.line_aplicado_fert_2.text())},'''
                         
                     
                     
                 sql = sql[:-1]
                 sql = sql + f'\nwhere idcampania = {self.idCampania};'
                 # print(sql)
-                with self.conn : 
+                with self.conn :
+                    # print(sql)
                     cursor = self.conn.cursor() 
                     cursor.execute(sql)
                     self.conn.commit()
@@ -3335,7 +3334,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
                     self.tools.actualizarNecesidades()
                     QMessageBox.about(self, f"aGrae GIS:",f"Campaña Actualizada Correctamente")
                 
-            except Exception as ex: 
+            except Exception as ex:
                  QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
 
             

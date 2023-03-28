@@ -1,5 +1,5 @@
 import os
-from PyQt5.QtCore import QDate
+from PyQt5.QtCore import QDate,QSize
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import * 
@@ -21,7 +21,285 @@ agraeCultivoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), '
 agraePersonaDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/personas_dialog.ui'))
 agraeAgricultorDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/agricultor_dialog.ui'))
 agraeCeapDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/ceap_dialog.ui'))
+agraeVerifyGeomDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/verifyGeom_dialog.ui'))
 
+agraeDatosDialog_ , _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/datos_dialog.ui'))
+
+
+
+class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
+    closingPlugin = pyqtSignal()
+    def __init__(self, parent=None) -> None:
+        super(datosDialog,self).__init__(parent)
+        self.utils = AgraeUtils()
+        self.conn = self.utils.Conn()
+        self.icons_path = self.utils.iconsPath()
+        self.completerExp = self.dataAuto('select nombre,direccion from explotacion')
+
+
+        self.idExplotacion = None
+
+
+
+        self.setupUi(self)
+        self.UIcomponents()
+        self.loadDataExp()
+
+    def closeEvent(self, event):
+        self.closingPlugin.emit()
+        self.btn_save_exp.disconnect()
+        self.btn_save_exp.clicked.connect(self.createExplotacion)
+        self.btn_save_exp.setIcon(QIcon(self.icons_path['save']))
+        self.name_exp.clear()
+        self.dir_exp.clear()
+        
+        event.accept()
+
+    def UIcomponents(self):
+        
+        self.btn_save_exp.clicked.connect(self.createExplotacion)
+        self.btn_save_exp.setIconSize(QtCore.QSize(20, 20))
+        self.btn_save_exp.setIcon(QIcon(self.icons_path['save']))
+        
+        self.btn_delete_exp.clicked.connect(self.deleteExplotacion)
+        self.btn_delete_exp.setIconSize(QtCore.QSize(20, 20))
+        self.btn_delete_exp.setIcon(QIcon(self.icons_path['trash']))
+
+    
+        #* TABLE WIDGET ACTIONS
+        # hidden
+        self.table_exp.setColumnHidden(0, True)
+        self.table_exp.doubleClicked.connect(self.getExpValues)
+        
+        #* TAB WIDGET ACTIONS
+        self.tab_exp.setTabIcon(0, QIcon(self.icons_path['search_icon_path']))
+        self.tab_exp.setTabIcon(1, QIcon(self.icons_path['pen-to-square']))
+        #* ACTIONS 
+
+        self.search_exp.setCompleter(self.completerExp)
+        self.search_exp.returnPressed.connect(self.searchExp)
+        self.search_exp.setClearButtonEnabled(True)
+        line_buscar_action = self.search_exp.addAction(
+            QIcon(self.icons_path['search_icon_path']), self.search_exp.TrailingPosition)
+        line_buscar_action.triggered.connect(self.searchExp)
+
+
+        # self.pushButton_2.clicked.connect(self.dataAutoExp)
+
+    def dataAuto(self,sql:str) -> list:
+        cursor = self.conn.cursor()
+        cursor.execute(sql)
+        data = []
+        for t in cursor.fetchall():
+            for i in t:
+                data.append(i) 
+        completer = QCompleter(data)
+        completer.setCaseSensitivity(False)    
+        return completer
+    
+    
+    #! EXPLOTACION
+    def getExpValues(self):
+        
+        try:
+           
+            row = self.table_exp.currentRow()
+            self.idExplotacion = self.table_exp.item(row,0).text()
+            nombre = self.table_exp.item(row,1).text()
+            direccion = self.table_exp.item(row,2).text()
+            self.name_exp.setText(nombre)
+            self.dir_exp.setPlainText(direccion)
+
+            self.tab_exp.setCurrentIndex(1)
+            self.btn_save_exp.disconnect()
+            self.btn_save_exp.clicked.connect(self.updateExplotacion)
+            self.btn_save_exp.setIcon(QIcon(self.icons_path['pen-to-square']))
+
+
+        except Exception as ex:
+            print(ex)
+
+            
+
+
+
+
+
+
+
+    def createExplotacion(self):
+        cursor = self.conn.cursor()
+        nombre = self.name_exp.text()
+        nombre = nombre.upper()
+        direccion = self.dir_exp.toPlainText()
+        if nombre != '' and direccion != '':
+            try:
+                sql = f''' insert into explotacion(nombre,direccion)
+                values('{nombre}','{direccion}') '''
+                cursor.execute(sql)
+                self.conn.commit()
+                QgsMessageLog.logMessage("Explotacion {} creada correctamente".format(nombre), 'aGrae GIS', level=3)
+                QMessageBox.about(self, "aGrae GIS:", "Explotacion {} creada correctamente".format(nombre))
+                self.name_exp.clear()
+                self.dir_exp.clear()
+                try: 
+                    # self.tabWidget.setCurrentIndex(0)
+                    # self.tableWidget.setRowCount(0)
+                    self.loadData()
+                    print(sql)
+                except: 
+                    pass
+            except Exception as ex:
+                QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
+                QMessageBox.about(self, "Error:", "Error revisa el panel de registros")
+                self.conn.rollback()
+            
+            finally: 
+                self.loadDataExp()
+                self.tab_exp.setCurrentIndex(0)
+        else:
+            QMessageBox.about(
+                self, "Error:", "Debes rellenar todos los campos")
+
+    def deleteExplotacion(self):
+        cursor = self.conn.cursor()
+        row = self.table_exp.currentRow()
+        id = self.table_exp.item(row,0).text()
+        nombre = self.table_exp.item(row,1).text()
+        with cursor: 
+            try:
+                sql = '''DELETE FROM public.explotacion
+                WHERE idexplotacion={};'''.format(id)
+                cursor.execute(sql)
+                self.conn.commit()
+                QgsMessageLog.logMessage("Explotacion {} eliminada correctamente".format(nombre), 'aGrae GIS', level=3)
+                QMessageBox.about(self, "aGrae GIS:", "La explotacion {} se elimino correctamente".format(nombre))
+            except  errors.lookup('23503'):
+                QgsMessageLog.logMessage("La explotacion {} esta referida en otras tablas".format(nombre), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "La explotacion {} esta referida en otras tablas".format(nombre))
+                self.conn.rollback()
+
+            except Exception as ex:
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un error, revisa el panel de registros.".format())
+                self.conn.rollback()
+
+            finally: 
+                self.loadDataExp()
+
+
+
+        
+
+    def updateExplotacion(self):
+        cursor = self.conn.cursor()
+        row = self.table_exp.currentRow()
+
+        nombre = self.name_exp.text()
+        nombre = nombre.upper()
+        direccion = self.dir_exp.toPlainText()
+
+        with cursor: 
+            try:
+                sql = '''UPDATE public.explotacion
+                SET nombre='{}', direccion='{}', borradologico=false
+                WHERE idexplotacion={};
+                '''.format(nombre,direccion,self.idExplotacion)
+                cursor.execute(sql)
+                self.conn.commit()
+                QgsMessageLog.logMessage("Explotacion {} actualizada correctamente".format(nombre), 'aGrae GIS', level=3)
+                QMessageBox.about(self, "aGrae GIS:", "Explotacion {} Actualziada correctamente".format(nombre))
+                self.name_exp.clear()
+                self.dir_exp.clear()
+
+                # print(sql)
+                
+                
+
+
+
+            
+            except Exception as ex:
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un error, revisa el panel de registros.".format())
+                self.conn.rollback()
+
+            finally:
+                self.btn_save_exp.disconnect()
+                self.btn_save_exp.clicked.connect(self.createExplotacion)
+                self.btn_save_exp.setIcon(QIcon(self.icons_path['save']))
+
+                self.tab_exp.setCurrentIndex(0)
+                self.loadDataExp()
+                
+
+
+   
+               
+
+
+    def dataExp(self, filtro=None):
+       
+        if filtro == None or filtro == '':
+            cursor = self.conn.cursor()
+            sql = '''select e.idexplotacion, e.nombre, e.direccion, count(a.idagricultor) agricultores from explotacion e
+            left join agricultor a on a.idexplotacion = e.idexplotacion
+            group by e.idexplotacion, e.nombre, e.direccion
+            order by e.idexplotacion desc'''
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        else:
+            cursor = self.conn.cursor()
+            sql = f'''select e.idexplotacion,e.nombre,e.direccion , count(a.idagricultor) agricultores from explotacion e 
+            left join agricultor a on a.idexplotacion = e.idexplotacion 
+            where e.nombre ilike '%{filtro}%' or e.direccion ilike '%{filtro}%' 
+            group by e.idexplotacion,e.nombre,e.direccion 
+            order by e.idexplotacion desc '''
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        if len(data) >= 1:
+            return data
+        elif len(data) == 0:
+            data = [0, 0]
+            return data
+
+    def populateExp(self, data):
+        try:
+            a = len(data)
+            b = len(data[0])
+            i = 1
+            j = 1
+            self.table_exp.setRowCount(a)
+            self.table_exp.setColumnCount(b)
+            for j in range(a):
+                for i in range(b):
+                    item = QTableWidgetItem(str(data[j][i]))
+                    self.table_exp.setItem(j, i, item)
+        except:
+            self.table_exp.setRowCount(0)
+            QMessageBox.about(self, "Error:", "No Existen Registros")
+            # print('error')
+
+    def loadDataExp(self, param=None):
+        if param == None:
+            data = self.dataExp()
+            self.populateExp(data)
+        else:
+            data = self.dataExp(param)
+            self.populateExp(data)
+        pass
+
+    def searchExp(self):
+        filtro = self.search_exp.text()
+        self.loadDataExp(filtro)
+        pass
+    
+    
+
+    #! DISTRIBUIDOR
+
+
+    
 
 class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
     closingPlugin = pyqtSignal()
@@ -63,7 +341,7 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
             QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
 
     def UIcomponents(self):
-
+        
         data = self.dataAuto()
         lista = [e[0] for e in data]
         completer = QCompleter(lista)
@@ -2364,6 +2642,121 @@ class ceapPrevDialog(QtWidgets.QDialog, agraeCeapDialog):
         else:
             return False
 
+class verifyGeometryDialog(QtWidgets.QDialog,agraeVerifyGeomDialog):
+    closingPlugin = pyqtSignal()
+    def __init__(self,parent=None) -> None:
+        super(verifyGeometryDialog,self).__init__(parent)
+        uic.loadUi(os.path.join(os.path.dirname(__file__),'ui/dialogs/verifyGeom_dialog.ui'),self)
+        
+        self.UIComponents()
+        self.processing = agraeVerifyAlgorithm(self.progressBar)
+
+
+
+    def closeEvent(self,event):
+        self.closingPlugin.emit()
+        # self.combo_layers.clear()
+        self.progressBar.setValue(0)
+        self.label_status.setText('Capa verificada...')
+        event.accept()
+
+
+    def UIComponents(self):
+        self.setWindowTitle('Verificar Geometrias')
+        self.combo_layers.layerChanged.connect(self.layerChanged)
+        layer = self.combo_layers.currentLayer()
+        self.combo_fields.setLayer(layer)
+        # self.combo_fields.fieldChanged.connect(self.fieldChanged)
+        self.pushButton.clicked.connect(self.runAlgorithm)
+
+        self.radio_2.toggled.connect(self.radio2Changed)
+
+    def layerChanged(self,layer):
+        # print(layer)
+        self.combo_fields.setLayer(layer)
+
+    def fieldChanged(self,field): 
+        # print(field)
+        pass
+    
+    def radio2Changed(self,b):
+        if b:
+            self.combo_fields.setEnabled(False)
+        else:
+            self.combo_fields.setEnabled(True)
+
+    def runAlgorithm(self):
+        lotes = self.combo_lotes.currentLayer() 
+        layer = self.combo_layers.currentLayer()
+        field = self.combo_fields.currentField()
+        grid  = self.spinBox.value()
+        if self.validateGeometry(layer) == False:
+            if grid <= 10:
+                confirm = QMessageBox.question(self, 'aGrae GIS', f"El tamaño de la Cuadricula es pequeño.\nEste proceso puede demorar unos minutos, desea continuar?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                if confirm == QMessageBox.Yes:
+                    self.fixGeometries(layer,field,grid,lotes)
+                    self.progressBar.setValue(100)
+            else:
+                self.fixGeometries(layer,field,grid,lotes)
+                self.progressBar.setValue(100)
+
+        else:
+            self.label_status.setText('Capa correcta, no requiere verificar...')
+            confirm = QMessageBox.question(self, 'aGrae GIS', f"Capa correcta, no requiere verificar...\nDesea realizar el proceso de validacion Geometrica?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if confirm == QMessageBox.Yes:
+                self.fixGeometries(layer,field,grid,lotes)
+
+            
+    def validateGeometry(self,layer) -> bool:
+        errors = list()
+        for f in layer.getFeatures():
+            geom = f.geometry() 
+            validator = QgsGeometryValidator(geom)
+            error = validator.validateGeometry(geom)
+            if len(error) != 0 : 
+                errors.append(error)
+        if len(errors) > 0: 
+            # print(errors)
+            return False 
+        else: return True
+
+    def fixGeometries(self,layer,field,grid_size,layer_lotes):
+        # try:
+        self.label_status.setText('Ejecutando, por favor espere...')
+        self.progressBar.setValue(0)
+        if self.radio_1.isChecked():
+            fixed = self.processing.verifySegmento(layer,field,grid_size,layer_lotes)
+            self.label_status.setText('Capa verificada...')
+            confirm = QMessageBox.question(self, 'aGrae GIS', f"Desea Agregar la capa corregida al Proyecto?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if confirm == QMessageBox.Yes:
+                QgsProject.instance().addMapLayer(fixed)
+
+        elif self.radio_2.isChecked():
+            self.combo_fields.setEnabled
+            fixed = self.processing.verifyAmbiente(layer,grid_size,layer_lotes)
+            self.label_status.setText('Capa verificada...')
+            confirm = QMessageBox.question(self, 'aGrae GIS', f"Desea Agregar la capa corregida al Proyecto?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if confirm == QMessageBox.Yes:
+                QgsProject.instance().addMapLayer(fixed)
+        
+            
+            
+        # except Exception as ex:
+        #     print(ex)
+        
+
+
+
+
+    
+   
+
+
+
+        
+
+
+
 
     
 
@@ -2381,5 +2774,3 @@ class ColorDelegateGreen(QtWidgets.QStyledItemDelegate):
 class ReadOnlyDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         return
-
-

@@ -191,6 +191,7 @@ class AgraeUtils():
             'trash': os.path.join(os.path.dirname(__file__), r'ui\icons\trash-solid.svg'),
             'next': os.path.join(os.path.dirname(__file__), r'ui\icons\angle-right-solid.svg'),
             'prev': os.path.join(os.path.dirname(__file__), r'ui\icons\angle-left-solid.svg'),
+            'check': os.path.join(os.path.dirname(__file__), r'ui\icons\square-check-solid.svg'),
             'atlas': os.path.join(os.path.dirname(__file__), r'ui\icons\map-solid.svg'),
             'print': os.path.join(os.path.dirname(__file__), r'ui\icons\print-solid.svg'),
             'lgnd1': os.path.join(os.path.dirname(__file__), r'ui\img\lgnd1.svg'),
@@ -788,7 +789,7 @@ class AgraeToolset():
                 try: 
                     cursor = conn.cursor()
                     for f in features :
-                        segm = f['segm']            
+                        segm = f['segmento']            
                         geometria = f.geometry() .asWkt()
                         sql = f""" insert into segmento(segmento,geometria)
                                             values
@@ -1035,27 +1036,27 @@ class AgraeToolset():
             cursor = conn.cursor() 
             try:
                 QgsMessageLog.logMessage(f'Calculando Necesidades...', 'aGrae GIS', level=0)
-                cursor.execute('refresh materialized view analisis.necesidades_iniciales')
+                cursor.execute('REFRESH MATERIALIZED VIEW CONCURRENTLY analisis.necesidades_iniciales')
                 self.conn.commit()
                 # print('FINALIZADO NECESIDADES INICIALES')  
                 # print('ACTUALIZANDO NECESIDADES 1')
-                cursor.execute('refresh materialized view analisis.necesidades_a01')
+                cursor.execute('REFRESH MATERIALIZED VIEW CONCURRENTLY analisis.necesidades_a01 ')
                 self.conn.commit()
                 # print('FINALIZADO NECESIDADES 1')  
                 # print('ACTUALIZANDO NECESIDADES 2')
-                cursor.execute('refresh materialized view analisis.necesidades_a02')
+                cursor.execute('REFRESH MATERIALIZED VIEW CONCURRENTLY analisis.necesidades_a02')
                 self.conn.commit()
                 # print('FINALIZADO NECESIDADES 2')  
                 # print('ACTUALIZANDO NECESIDADES 3')
-                cursor.execute('refresh materialized view analisis.necesidades_a03')
+                cursor.execute('REFRESH MATERIALIZED VIEW CONCURRENTLY analisis.necesidades_a03')
                 self.conn.commit()
                 # print('FINALIZADO NECESIDADES 3')  
                 # print('ACTUALIZANDO NECESIDADES FINALES')
-                cursor.execute('refresh materialized view analisis.necesidades_a04')
+                cursor.execute('REFRESH MATERIALIZED VIEW CONCURRENTLY analisis.necesidades_a04')
                 self.conn.commit()
                 # print('FINALIZADO NECESIDADES FINALES')  
                 QgsMessageLog.logMessage(f'Actualizando mapa de Unidades...', 'aGrae GIS', level=0)
-                cursor.execute('refresh materialized view public.unidades')
+                cursor.execute('REFRESH MATERIALIZED VIEW CONCURRENTLY public.unidades')
                 self.conn.commit()
                 QgsMessageLog.logMessage(f'Actualizacion correcta', 'aGrae GIS', level=3)
             except Exception as ex: 
@@ -1150,6 +1151,7 @@ class AgraeAnalitic():
 class TableModel(QtCore.QAbstractTableModel):
     def __init__(self, data):
         super(TableModel, self).__init__()
+        self._data = None
         self._data = data
         self.colors = {'UF1': '#0be825',
                        'UF2': '#dd3f20',
