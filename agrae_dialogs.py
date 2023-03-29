@@ -23,14 +23,15 @@ agraeAgricultorDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__)
 agraeCeapDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/ceap_dialog.ui'))
 agraeVerifyGeomDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/verifyGeom_dialog.ui'))
 
-agraeDatosDialog_ , _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/datos_dialog.ui'))
+agraeGestionDatos_ , _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/datos_dialog.ui'))
+agraeDatos_, _ =  uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/datos2_dialog.ui'))
 
 
 
-class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
+class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
     closingPlugin = pyqtSignal()
     def __init__(self, parent=None) -> None:
-        super(datosDialog,self).__init__(parent)
+        super(gestionDatosDialog,self).__init__(parent)
         self.utils = AgraeUtils()
         self.tools = AgraeToolset()
         self.conn = self.utils.Conn()
@@ -40,9 +41,15 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
         self.completerExp = self.dataAuto('select nombre,direccion from public.explotacion')
         self.completerDist = self.dataAuto('select cif,nombre,personacontacto from public.distribuidor')
         self.completerPer = self.dataAuto('select nombre, apellidos, direccion from public.persona')
+        self.completerAgri = self.dataAuto('''select a.nombre, e.nombre, d.nombre from agricultor a 
+            left join explotacion e on a.idexplotacion = e.idexplotacion 
+            left join persona p on p.idpersona = a.idpersona
+            left join distribuidor d on d.iddistribuidor = a.iddistribuidor ''')
 
         self.idExplotacion = None
         self.idDistribuidor = None
+        self.idPersona = None
+        self.idAgricultor = None
 
 
         self.setupUi(self)
@@ -50,16 +57,20 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
         self.dataExp()
         self.dataDist()
         self.dataPer()
+        self.dataAgri()
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
+        
         self.btn_save_exp.disconnect()
         self.btn_save_exp.clicked.connect(self.createExplotacion)
         self.btn_save_exp.setIcon(QIcon(self.icons_path['save']))
+        
+        
         self.name_exp.clear()
         self.dir_exp.clear()
-
         self.clearDist()
+        self.clearPer()
 
         self.tab_main.setCurrentIndex(0)
         self.tab_exp.setCurrentIndex(0)
@@ -67,11 +78,16 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
 
         self.idExplotacion = None
         self.idDistribuidor = None
+        self.idPersona = None
+        self.idAgricultor = None
+
         
         event.accept()
 
     def UIcomponents(self):
         self.date_start.setDate(QDate.currentDate())
+        self.date_cultivo.setDate(QDate.currentDate())
+
         
         self.btn_save_exp.clicked.connect(self.createExplotacion)
         self.btn_save_exp.setIconSize(QtCore.QSize(20, 20))
@@ -89,13 +105,36 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
         self.btn_delete_dist.setIconSize(QtCore.QSize(20, 20))
         self.btn_delete_dist.setIcon(QIcon(self.icons_path['trash']))
 
-        # self.btn_save_per.clicked.connect(self.createDistribuidor)
+        self.btn_save_per.clicked.connect(self.createPersona)
         self.btn_save_per.setIconSize(QtCore.QSize(20, 20))
         self.btn_save_per.setIcon(QIcon(self.icons_path['save']))
 
-        # self.btn_delete_per.clicked.connect(self.deleteDistribuidor)
+        
+        
+        self.btn_delete_per.clicked.connect(self.deletePersona)
         self.btn_delete_per.setIconSize(QtCore.QSize(20, 20))
         self.btn_delete_per.setIcon(QIcon(self.icons_path['trash']))
+
+        self.btn_agri.clicked.connect(self.getAgriValues)
+        self.btn_agri.setIconSize(QtCore.QSize(20, 20))
+        self.btn_agri.setIcon(QIcon(self.icons_path['farmer-color']))
+        
+        self.btn_delete_agri.clicked.connect(self.deleteAgricultor)
+        self.btn_delete_agri.setIconSize(QtCore.QSize(20, 20))
+        self.btn_delete_agri.setIcon(QIcon(self.icons_path['trash']))
+
+        self.btn_save_agri.clicked.connect(self.createAgricultor)
+        self.btn_save_agri.setIconSize(QtCore.QSize(20, 20))
+        self.btn_save_agri.setIcon(QIcon(self.icons_path['save']))
+
+
+        self.btn_save_agri_cult.clicked.connect(self.createCultivoAgricultor)
+        self.btn_save_agri_cult.setIconSize(QtCore.QSize(20, 20))
+        self.btn_save_agri_cult.setIcon(QIcon(self.icons_path['save']))
+
+        self.btn_delete_agri_cult.clicked.connect(self.deleteCultivoAgricultor)
+        self.btn_delete_agri_cult.setIconSize(QtCore.QSize(20, 20))
+        self.btn_delete_agri_cult.setIcon(QIcon(self.icons_path['trash']))
 
     
         #* TABLE WIDGET ACTIONS
@@ -103,26 +142,44 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
         self.table_exp.setColumnHidden(0, True)
         self.table_dist.setColumnHidden(0,True)
         self.table_per.setColumnHidden(0,True)
+        self.table_agri.setColumnHidden(0,True)
+        # self.table_agri.setColumnHidden(1,True)
         
         self.table_exp.doubleClicked.connect(self.getExpValues)
         self.table_dist.doubleClicked.connect(self.getDistValues)
         self.table_per.doubleClicked.connect(self.getPerValues)
+        self.table_agri.doubleClicked.connect(self.getAgriValues)
+        self.table_agri_cult.doubleClicked.connect(self.getAgriCultValues)
+
         
         
         #* TAB WIDGET ACTIONS
         self.tab_main.setCurrentIndex(0)
         self.tab_exp.setCurrentIndex(0)
         self.tab_dist.setCurrentIndex(0)
+        self.tab_per.setCurrentIndex(0)
+        self.tab_agri.setCurrentIndex(0)
+
+        self.tab_agri.setTabEnabled(2,False)
 
         self.tab_exp.setTabIcon(0, QIcon(self.icons_path['search_icon_path']))
         self.tab_exp.setTabIcon(1, QIcon(self.icons_path['pen-to-square']))
 
         self.tab_dist.setTabIcon(0, QIcon(self.icons_path['search_icon_path']))
         self.tab_dist.setTabIcon(1, QIcon(self.icons_path['pen-to-square']))
+
+        self.tab_per.setTabIcon(0, QIcon(self.icons_path['search_icon_path']))
+        self.tab_per.setTabIcon(1, QIcon(self.icons_path['pen-to-square']))
+
+        self.tab_agri.setTabIcon(0, QIcon(self.icons_path['search_icon_path']))
+        self.tab_agri.setTabIcon(1, QIcon(self.icons_path['pen-to-square']))
+        self.tab_agri.setTabIcon(2, QIcon(self.icons_path['farmer']))
         
         self.tab_exp.currentChanged.connect(self.onChangeExp)
         self.tab_dist.currentChanged.connect(self.onChangeDist)
         self.tab_per.currentChanged.connect(self.onChangePer)
+        self.tab_agri.currentChanged.connect(self.onChangeAgri)
+        
         #* ACTIONS 
 
         self.search_exp.setCompleter(self.completerExp)
@@ -149,10 +206,30 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
         line_buscar_action = self.search_per.addAction(
             QIcon(self.icons_path['search_icon_path']), self.search_per.TrailingPosition)
         line_buscar_action.triggered.connect(self.dataPer)
+        
+
+        self.search_agri.setCompleter(self.completerAgri)
+        self.search_agri.returnPressed.connect(self.dataAgri)
+        self.search_agri.textChanged.connect(self.dataPer)
+        self.search_agri.setClearButtonEnabled(True)
+        line_buscar_action = self.search_agri.addAction(
+            QIcon(self.icons_path['search_icon_path']), self.search_agri.TrailingPosition)
+        line_buscar_action.triggered.connect(self.dataAgri)
+        
+
 
 
         line_open_dialog = self.icon_dist.addAction(QIcon(self.icons_path['menu']),self.icon_dist.TrailingPosition)
         line_open_dialog.triggered.connect(self.openImageDialog)
+
+        line_open_per_dialog = self.agri_name.addAction(QIcon(self.icons_path['search_icon_path']),self.agri_name.TrailingPosition)
+        line_open_per_dialog.triggered.connect(lambda: self.openDatosDialog(0))
+        line_open_per_dialog = self.agri_exp.addAction(QIcon(self.icons_path['search_icon_path']),self.agri_exp.TrailingPosition)
+        line_open_per_dialog.triggered.connect(lambda: self.openDatosDialog(1))
+        line_open_per_dialog = self.agri_dist.addAction(QIcon(self.icons_path['search_icon_path']),self.agri_dist.TrailingPosition)
+        line_open_per_dialog.triggered.connect(lambda: self.openDatosDialog(2))
+        line_open_per_dialog = self.agri_cult.addAction(QIcon(self.icons_path['search_icon_path']),self.agri_cult.TrailingPosition)
+        line_open_per_dialog.triggered.connect(lambda: self.openDatosDialog(3))
 
 
 
@@ -169,7 +246,7 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
 
         data = set(data)
         completer = QCompleter(data)
-        completer.setCaseSensitivity(False)    
+        completer.setCaseSensitivity(False)
         return completer
     
     def clearDist(self):
@@ -190,9 +267,6 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
         self.dir_per.clear()
         self.phone_per.clear()
         self.email_per.clear()
-        
-
-
     
     #! DIALOGS
     def openImageDialog(self): 
@@ -204,9 +278,45 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
             file = path[-1]
             self.icon_dist.setText(file)
         else: 
-            return False
+            return False 
     
+    def openDatosDialog(self, index): 
+        dialog = datosDialog()
+        dialog.setModal(True)
+        tab = dialog.tab_main
+        for e in range(tab.count()):
+            if e != index:
+                tab.setTabEnabled(e,False)
+
+        tab.setCurrentIndex(index)
+
+
+
+            
+        dialog.perSignal.connect(self.popPerData)
+        dialog.expSignal.connect(self.popExpData)
+        dialog.distSignal.connect(self.popDistData)
+        dialog.cultSignal.connect(self.popCultData)
+
+        # dialog.idDistribuidor.connect(self.popDist)
+
+        dialog.exec()
     
+    def popPerData(self,data):
+        self.idPersona = data['id']
+        self.agri_name.setText(data['nombre'])
+
+    def popExpData(self,data): 
+        self.idExplotacion = data['id']
+        self.agri_exp.setText(data['nombre'])
+    
+    def popDistData(self,data): 
+        self.idDistribuidor = data['id']
+        self.agri_dist.setText(data['nombre'])
+
+    def popCultData(self,data):
+        self.idCultivo = data['id']
+        self.agri_cult.setText(data['nombre'])
     
     #! EXPLOTACION
     def onChangeExp(self,e): 
@@ -256,8 +366,8 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
                 except: 
                     pass
             except Exception as ex:
-                QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
-                QMessageBox.about(self, "Error:", "Error revisa el panel de registros")
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un Error, revisar el panel de registros.".format())
                 self.conn.rollback()
             
             finally: 
@@ -287,7 +397,7 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
 
             except Exception as ex:
                 QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
-                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un error, revisa el panel de registros.".format())
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un Error, revisar el panel de registros.".format())
                 self.conn.rollback()
 
             finally: 
@@ -323,7 +433,7 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
             
             except Exception as ex:
                 QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
-                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un error, revisa el panel de registros.".format())
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un Error, revisar el panel de registros.".format())
                 self.conn.rollback()
 
             finally:
@@ -334,7 +444,7 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
                 self.tab_exp.setCurrentIndex(0)
                 self.dataExp()
 
-    def dataExp(self, ):
+    def dataExp(self):
         
         param = self.search_exp.text()
 
@@ -346,11 +456,11 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
             self.tools.populateTable(sql, self.table_exp)
         else:
             
-            sql = f'''select e.idexplotacion,e.nombre,e.direccion , count(a.idagricultor) agricultores from explotacion e 
+            sql = '''select e.idexplotacion,e.nombre,e.direccion , count(a.idagricultor) agricultores from explotacion e 
             left join agricultor a on a.idexplotacion = e.idexplotacion 
-            where e.nombre ilike '%{param}%' or e.direccion ilike '%{param}%' 
+            where e.nombre ilike '%{}%' or e.direccion ilike '%{}%' 
             group by e.idexplotacion,e.nombre,e.direccion 
-            order by e.idexplotacion desc '''
+            order by e.idexplotacion desc '''.format(param,param)
             self.tools.populateTable(sql, self.table_exp)
        
     
@@ -362,7 +472,6 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
             self.btn_save_dist.clicked.connect(self.createDistribuidor)
             self.btn_save_dist.setIcon(QIcon(self.icons_path['save']))
             self.clearDist()
-           
 
     def getDistValues(self):
         with self.conn.cursor() as cursor: 
@@ -394,9 +503,6 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
                 self.btn_save_dist.disconnect()
                 self.btn_save_dist.clicked.connect(self.updateDistribuidor)
                 self.btn_save_dist.setIcon(QIcon(self.icons_path['pen-to-square']))
-
-
-
 
     def dataDist(self):
         param = self.search_dist.text()
@@ -454,7 +560,9 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
                 
 
             except Exception as ex: 
-                print(ex)
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un Error, revisar el panel de registros.".format())
+                self.conn.rollback()
             finally: 
                 self.dataDist()
                 self.tab_dist.setCurrentIndex(0)
@@ -477,7 +585,8 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
                 self.conn.rollback()
             
             except Exception as ex:
-                print(ex)
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un Error, revisar el panel de registros.".format())
                 self.conn.rollback()
 
     def updateDistribuidor(self):
@@ -528,6 +637,7 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
             self.btn_save_per.setIcon(QIcon(self.icons_path['save']))
             self.clearPer()
         pass
+    
     def getPerValues(self): 
         with self.conn.cursor() as cursor: 
             try: 
@@ -600,15 +710,607 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
                 
 
             except Exception as ex: 
-                print(ex)
-    def deletePersona(self): 
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un Error, revisar el panel de registros.".format())
+                self.conn.rollback()
+
+    def deletePersona(self):
+        row = self.table_per.currentRow()
+        with self.conn.cursor() as cursor: 
+            try:
+                id = self.table_per.item(row,0).text()
+                nombre = self.table_per.item(row,2).text()
+                # print(id)
+                sql = '''DELETE FROM public.persona
+                WHERE idpersona={};
+                '''.format(id)
+                cursor.execute(sql)
+                self.conn.commit() 
+                QgsMessageLog.logMessage("Persona {} eliminada correctamente".format(nombre), 'aGrae GIS', level=3)
+                QMessageBox.about(self, "aGrae GIS:", "La Persona {} se elimino correctamente".format(nombre))
+                
+            except  errors.lookup('23503'):
+                QgsMessageLog.logMessage("La persona {} esta referida en otras tablas".format(nombre), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "La persona {} esta referida en otras tablas".format(nombre))
+                self.conn.rollback()
+            except Exception as ex:
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un Error, revisar el panel de registros.".format())
+                self.conn.rollback()
+            finally:
+                self.dataPer()
+                pass
         pass
 
     def updatePersona(self):
+        DNI = self.dni_per.text()
+        NOMBRE = self.name_per.text()
+        APELLIDO = self.last_name_per.text()
+        DIRECCION = self.dir_per.toPlainText()
+        TELEFONO = self.phone_per.text()
+        EMAIL = self.email_per.text()
+        with self.conn.cursor() as cursor: 
+            try:
+                sql = '''UPDATE public.persona
+                SET dni='{}', nombre='{}', apellidos='{}', direccion='{}', telefono='{}', email='{}'
+                WHERE idpersona={};
+                '''.format(DNI,NOMBRE,APELLIDO,DIRECCION,TELEFONO,EMAIL,self.idPersona)
+                cursor.execute(sql)
+                self.conn.commit()
+                QgsMessageLog.logMessage("Persona {} actualizada correctamente".format(NOMBRE.upper()), 'aGrae GIS', level=3)
+                QMessageBox.about(self, "aGrae GIS:", "Persona {} actualizada correctamente".format(NOMBRE.upper()))
+                self.clearPer()
+
+
+                pass
+            except Exception as ex:
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un error, consulte el panel de registros.".format())
+                self.conn.rollback()
+                pass
+            finally:
+                self.dataPer()
+                self.tab_per.setCurrentIndex(0)
+                self.btn_save_per.disconnect()
+                self.btn_save_per.clicked.connect(self.createPersona)
+                self.btn_save_per.setIcon(QIcon(self.icons_path['save']))
+                pass
+
         pass
 
-              
+    #! AGRICULTOR
     
+    def onChangeAgri(self,e):
+        if e != 2:
+            self.tab_agri.setTabEnabled(2,False)
+            self.agri_cult.clear()
+            self.agri_npk.clear()
+            self.agri_cost.clear()
+            self.agri_cost_npk.clear()
+            self.date_cultivo.setDate(QDate.currentDate())
+            self.agri_name.clear()
+            self.agri_exp.clear()
+            self.agri_dist.clear()
+
+           
+            self.btn_save_agri_cult.setIcon(QIcon(self.icons_path['save']))
+            self.idAgricultor = None
+            self.agri_name.clear()
+            self.agri_exp.clear()
+            self.agri_dist.clear()
+
+            self.btn_save_agri_cult.disconnect()
+            self.btn_save_agri_cult.clicked.connect(self.createCultivoAgricultor)
+            self.btn_save_agri_cult.setIcon(QIcon(self.icons_path['save']))
+
+
+        pass
+    
+    def endAgriCult(self):
+        self.dataAgriCult(self.idAgricultor)
+        self.btn_save_agri_cult.disconnect()
+        self.btn_save_agri_cult.clicked.connect(self.createCultivoAgricultor)
+        self.btn_save_agri_cult.setIcon(QIcon(self.icons_path['save']))
+        self.agri_cult.clear()
+        self.agri_npk.clear()
+        self.agri_cost.clear()
+        self.agri_cost_npk.clear()
+        self.date_cultivo.setDate(QDate.currentDate())
+
+    def getAgriValues(self):
+        row = self.table_agri.currentRow()
+        self.idAgricultor = self.table_agri.item(row,0).text()
+        nombre = self.table_agri.item(row,2).text()
+        self.dataAgriCult(self.idAgricultor,nombre)
+        # print(self.idAgricultor, nombre)
+
+    def getAgriCultValues(self): 
+        row = self.table_agri_cult.currentRow()
+        id = self.table_agri_cult.item(row,0).text()
+        self.idAgricultor = self.table_agri_cult.item(row,1).text()
+        self.idCultivo = self.table_agri_cult.item(row,2).text()
+        with self.conn.cursor() as cursor: 
+            try: 
+                sql = '''select c.idcultivoagricultor , cu.nombre, c.unidadesnpktradicionales, c.costefertilizante , c.costefertilizanteunidades , c.fechacultivo from cultivoagricultor c
+                join cultivo cu on cu.idcultivo = c.idcultivo 
+                where c.idcultivoagricultor = {}'''.format(id)
+                cursor.execute(sql)
+                data_cultivo = cursor.fetchone()
+                self.idCultivoAgricultor = data_cultivo[0]
+                self.agri_cult.setText(data_cultivo[1])
+                self.agri_npk.setText(str(data_cultivo[2]))
+                self.agri_cost.setText(str(data_cultivo[3]))
+                self.agri_cost_npk.setText(str(data_cultivo[4]))
+                self.date_cultivo.setDate(data_cultivo[5])
+
+            except Exception as  ex:
+                print(ex)
+                pass
+
+            finally:
+                self.btn_save_agri_cult.disconnect()
+                self.btn_save_agri_cult.clicked.connect(self.updateCultivoAgricultor)
+                self.btn_save_agri_cult.setIcon(QIcon(self.icons_path['pen-to-square']))
+                # self.clearPer()
+
+
+    def dataAgri(self):
+        param = self.search_agri.text()
+        if param == '':
+            sql = ''' select a.idagricultor, p.dni, a.nombre, e.nombre explotacion, d.nombre as distribuidor from agricultor a 
+            left join explotacion e on a.idexplotacion = e.idexplotacion 
+            left join persona p on p.idpersona = a.idpersona
+            left join distribuidor d on d.iddistribuidor = a.iddistribuidor
+            order by a.idagricultor desc  '''
+            # print(sql)
+            try:
+                self.tools.populateTable(sql, self.table_agri)
+            except IndexError as ie:
+                pass
+            except Exception as ex:
+                print(ex)
+        else:
+            sql = ''' select a.idagricultor, p.dni, a.nombre, e.nombre explotacion, d.nombre as distribuidor from agricultor a 
+            left join explotacion e on a.idexplotacion = e.idexplotacion 
+            left join persona p on p.idpersona = a.idpersona
+            left join distribuidor d on d.iddistribuidor = a.iddistribuidor where nombre ilike '%{}%'  or explotacion ilike '%{}%' or distribuidor ilike '%{}%'
+            order by a.idagricultor desc  '''.format(param, param, param,param)
+            try:
+                self.tools.populateTable(sql, self.table_agri)
+            except IndexError as ie:
+                print(ie)
+                pass
+            except Exception as ex:
+                print(ex)
+
+    def dataAgriCult(self,id,nombre:str=False):
+        self.tab_agri.setTabEnabled(2,True)
+        self.tab_agri.setCurrentIndex(2)
+        # self.lbl_agri.setText(nombre)
+        sql = ''' select ca.idcultivoagricultor , a.idagricultor, cu.idcultivo, cu.nombre as cultivo , ca.unidadesnpktradicionales fert_tradicional  from agricultor a 
+        join cultivoagricultor ca on ca.idagricultor = a.idagricultor 
+        join cultivo cu on cu.idcultivo = ca.idcultivo
+        where a.idagricultor  = {}
+        order by a.idagricultor desc  '''.format(id)
+        try:
+            if nombre:
+                self.lbl_agri.setText(nombre)
+            self.tools.populateTable(sql, self.table_agri_cult)
+        except IndexError as ie:
+            print(ie)
+            pass
+        except Exception as ex:
+            print(ex)
+
+
+
+    def createAgricultor(self):
+        NOMBRE =  str(self.agri_name.text())
+        with self.conn.cursor() as cursor: 
+            try:
+                sql = ''' INSERT INTO public.agricultor
+                (idpersona, idexplotacion, iddistribuidor, nombre)
+                VALUES({}, {}, {}, '{}');
+
+                '''.format(self.idPersona,self.idExplotacion,self.idDistribuidor,NOMBRE)
+                cursor.execute(sql)
+                self.conn.commit()
+
+                QMessageBox.about(self, "", "Datos Guardados Correctamente")
+                # print(sql)
+                self.dataAgri()
+                self.tab_agri.setCurrentIndex(0)
+            except errors.lookup('23505'):
+                QgsMessageLog.logMessage("El Agricultor {} ya existe".format(NOMBRE), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "El Agricultor {} ya existe".format(NOMBRE))
+                self.conn.rollback()
+            
+            except Exception as ex:
+                print(ex)
+
+    def deleteAgricultor(self):
+        row = self.table_agri.currentRow()
+        with self.conn.cursor() as cursor: 
+            try:
+                id = self.table_agri.item(row,0).text()
+                nombre = self.table_agri.item(row,2).text()
+                # print(id)
+                sql = '''DELETE FROM public.agricultor
+                WHERE idagricultor={};
+                '''.format(id)
+                cursor.execute(sql)
+                self.conn.commit() 
+                QgsMessageLog.logMessage("Agricultor {} eliminada correctamente".format(nombre), 'aGrae GIS', level=3)
+                QMessageBox.about(self, "aGrae GIS:", "Agricultor {} se elimino correctamente".format(nombre))
+                
+            except  errors.lookup('23503'):
+                QgsMessageLog.logMessage("Agricultor {} esta referido en otras tablas".format(nombre), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Agricultor {} esta referido en otras tablas".format(nombre))
+                self.conn.rollback()
+            except Exception as ex:
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un Error, revisar el panel de registros.".format())
+                self.conn.rollback()
+            finally:
+                self.dataAgri()
+                pass
+        pass
+    
+    def updateAgricultor(self):
+        #TODO
+
+        pass
+
+    def createCultivoAgricultor(self):
+        nombre = self.lbl_agri.text()
+        cultivo = self.agri_cult.text()
+        npk = self.agri_npk.text()
+        coste = self.agri_cost.text()
+        coste_unidades = self.agri_cost_npk.text()
+        fechacultivo = self.date_cultivo.date().toString("dd/MM/yyyy")
+
+        with self.conn.cursor() as cursor: 
+            try:
+                sql = ''' INSERT INTO public.cultivoagricultor
+                (idagricultor, idcultivo, unidadesnpktradicionales, costefertilizante, costefertilizanteunidades, fechacultivo)
+                VALUES({}, {}, '{}', {}, '{}', '{}');'''.format(self.idAgricultor,self.idCultivo,npk,coste,coste_unidades,fechacultivo)
+                cursor.execute(sql)
+                self.conn.commit()
+                QMessageBox.about(self, "aGrae GIS:", "Datos Guardados Correctamente")
+                
+
+            except errors.lookup('23505'):
+                QgsMessageLog.logMessage("El Agricultor ya tiene el cultivo  {} asociado.".format(cultivo), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:","El Agricultor ya tiene el cultivo  {} asociado.".format(cultivo))
+                self.conn.rollback()
+            
+            except Exception as ex:
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un error, consulte el panel de registros.".format())
+                self.conn.rollback()
+
+            finally:
+                self.endAgriCult()
+
+    def deleteCultivoAgricultor(self):
+        
+        idx = self.table_agri_cult.selectionModel().selectedRows() 
+        if len(idx) > 0:
+            ids = [self.table_agri_cult.item(i.row(),0).text() for i in sorted(idx)]
+            names = [self.table_agri_cult.item(i.row(),3).text() for i in sorted(idx)]
+        for id,nombre in zip(ids,names):
+            with self.conn.cursor() as cursor:
+                try:
+                    sql = '''DELETE FROM public.cultivoagricultor
+                    WHERE idcultivoagricultor={};
+                    '''.format(id)
+                    # print(id)
+                    cursor.execute(sql)
+                    self.conn.commit()
+                    QgsMessageLog.logMessage("Cultivo {} eliminado correctamente".format(nombre), 'aGrae GIS', level=3)
+                    QMessageBox.about(self, "aGrae GIS:", "Cultivo {} eliminado correctamente".format(nombre))
+
+                    pass
+                except  errors.lookup('23503'):
+                    QgsMessageLog.logMessage("Cultivo {} referido en otras tablas".format(nombre), 'aGrae GIS', level=1)
+                    QMessageBox.about(self, "aGrae GIS:", "Cultivo {} referido en otras tablas".format(nombre))
+                    self.conn.rollback()
+                except Exception as ex:
+                    QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                    QMessageBox.about(self, "aGrae GIS:", "Ocurrio un Error, revisar el panel de registros.".format())
+                    self.conn.rollback()
+                finally:
+                    self.dataAgriCult(self.idAgricultor)
+                    pass
+    
+    def updateCultivoAgricultor(self):
+        nombre = self.lbl_agri.text()
+        cultivo = self.agri_cult.text()
+        npk = self.agri_npk.text()
+        coste = self.agri_cost.text()
+        coste_unidades = self.agri_cost_npk.text()
+        fechacultivo = self.date_cultivo.date().toString("dd/MM/yyyy")
+         
+        with self.conn.cursor() as cursor:
+            try:
+                sql = '''UPDATE public.cultivoagricultor
+                SET  unidadesnpktradicionales='{}', costefertilizante={}, costefertilizanteunidades='{}', fechacultivo='{}'
+                WHERE idcultivoagricultor={};
+                '''.format(npk,coste,coste_unidades,fechacultivo,self.idCultivoAgricultor)
+                cursor.execute(sql)
+                self.conn.commit()
+                QMessageBox.about(self, "aGrae GIS", "Cultivo {} actualizado correctamente".format(cultivo))
+                
+                pass
+            except Exception as ex:
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un error, consulte el panel de registros.".format())
+                self.conn.rollback()
+                pass
+            finally:
+                self.endAgriCult()
+
+                pass
+
+
+
+
+       
+
+
+class datosDialog(QtWidgets.QDialog, agraeDatos_):
+    closingPlugin = pyqtSignal()
+    expSignal = pyqtSignal(dict)
+    perSignal = pyqtSignal(dict)
+    distSignal = pyqtSignal(dict)
+    cultSignal = pyqtSignal(dict)
+
+
+
+
+    def __init__(self, parent=None) -> None:
+        super(datosDialog,self).__init__(parent)
+        self.setupUi(self)
+        
+        self.utils = AgraeUtils()
+        self.tools = AgraeToolset()
+        self.conn = self.utils.Conn()
+        self.icons_path = self.utils.iconsPath()
+
+        self.completerExp = self.dataAuto('select nombre from public.explotacion')
+        self.completerDist = self.dataAuto('select cif,nombre,personacontacto from public.distribuidor')
+        self.completerPer = self.dataAuto('select nombre, apellidos from public.persona')
+        self.completerCult = self.dataAuto('select nombre from public.cultivo')
+        
+
+
+        
+        self.dataExp()
+        self.dataPer()
+        self.dataDist()
+        self.dataCult()
+        self.UIComponents()
+        
+    def closeEvent(self, event):
+        self.closingPlugin.emit()
+        
+
+        event.accept()
+
+    def UIComponents(self): 
+
+        self.table_per.doubleClicked.connect(self.perDoubleClicked)
+        self.table_exp.doubleClicked.connect(self.expDoubleClicked)
+        self.table_dist.doubleClicked.connect(self.distDoubleClicked)
+        self.table_cult.doubleClicked.connect(self.cultDoubleClicked)
+
+
+
+        self.search_per.setCompleter(self.completerPer)
+        self.search_per.returnPressed.connect(self.dataPer)
+        self.search_per.textChanged.connect(self.dataPer)
+        self.search_per.setClearButtonEnabled(True)
+        line_buscar_action = self.search_per.addAction(
+            QIcon(self.icons_path['search_icon_path']), self.search_per.TrailingPosition)
+        line_buscar_action.triggered.connect(self.dataPer)
+
+        self.search_exp.setCompleter(self.completerExp)
+        self.search_exp.returnPressed.connect(self.dataExp)
+        self.search_exp.textChanged.connect(self.dataExp)
+        self.search_exp.setClearButtonEnabled(True)
+        line_buscar_action = self.search_exp.addAction(
+            QIcon(self.icons_path['search_icon_path']), self.search_exp.TrailingPosition)
+        line_buscar_action.triggered.connect(self.dataExp)
+        
+        self.search_dist.setCompleter(self.completerDist)
+        self.search_dist.returnPressed.connect(self.dataDist)
+        self.search_dist.textChanged.connect(self.dataDist)
+        self.search_dist.setClearButtonEnabled(True)
+        line_buscar_action = self.search_dist.addAction(
+            QIcon(self.icons_path['search_icon_path']), self.search_dist.TrailingPosition)
+        line_buscar_action.triggered.connect(self.dataDist)
+
+
+        self.search_cult.setCompleter(self.completerCult)
+        self.search_cult.returnPressed.connect(self.dataCult)
+        self.search_cult.textChanged.connect(self.dataCult)
+        self.search_cult.setClearButtonEnabled(True)
+        line_buscar_action = self.search_cult.addAction(
+            QIcon(self.icons_path['search_icon_path']), self.search_cult.TrailingPosition)
+        line_buscar_action.triggered.connect(self.dataCult)
+
+
+    
+    def dataAuto(self,sql:str) -> list:
+        cursor = self.conn.cursor()
+        cursor.execute(sql)
+        data = []
+        for t in cursor.fetchall():
+            for i in t:
+                data.append(i)
+
+        data = set(data)
+        completer = QCompleter(data)
+        completer.setCaseSensitivity(False)
+        return completer
+
+    def dataPer(self):
+        param = self.search_per.text()
+        if param == '':
+            sql = ''' select idpersona, dni, nombre || ' ' || apellidos from persona p   '''
+            try:
+                self.tools.populateTable(sql, self.table_per)
+            except IndexError as ie:
+                pass
+            except Exception as ex:
+                print(ex)
+        else:
+            sql = ''' select idpersona, dni, nombre || ' ' || apellidos from persona p where p.dni = '{}' or p.nombre ilike '%{}%' or apellidos ilike '%{}%' '''.format(param, param, param)
+            try:
+                # print(sql)
+                self.tools.populateTable(sql, self.table_per)
+            except IndexError as ie:
+                print(ie)
+                pass
+            except Exception as ex:
+                print(ex)
+     
+    def dataExp(self):
+        param = self.search_exp.text()
+        if param == '':
+            sql = '''select e.idexplotacion, e.nombre, count(a.idagricultor) agricultores from explotacion e
+            left join agricultor a on a.idexplotacion = e.idexplotacion
+            group by e.idexplotacion, e.nombre
+            order by e.idexplotacion desc'''
+            try:
+                self.tools.populateTable(sql, self.table_exp)
+            except IndexError as ie:
+                pass
+            except Exception as ex:
+                print(ex)
+        else:
+            sql ='''select e.idexplotacion,e.nombre, count(a.idagricultor) agricultores from explotacion e 
+            left join agricultor a on a.idexplotacion = e.idexplotacion 
+            where e.nombre ilike '%{}%' 
+            group by e.idexplotacion,e.nombre
+            order by e.idexplotacion desc '''.format(param)
+            try:
+                # print(sql)
+                self.tools.populateTable(sql, self.table_exp)
+            except IndexError as ie:
+                print(ie)
+                pass
+            except Exception as ex:
+                print(ex)
+    
+    def dataDist(self):
+        param = self.search_dist.text()
+        if param == '':
+            sql = ''' select d.iddistribuidor, d.cif,d.nombre,d.personacontacto,d.telefono,d.email from distribuidor d   '''
+            try:
+                self.tools.populateTable(sql, self.table_dist)
+            except IndexError as ie:
+                pass
+            except Exception as ex:
+                print(ex)
+        else:
+            sql = ''' select d.iddistribuidor, d.cif,d.nombre,d.personacontacto,d.telefono,d.email 
+            from distribuidor d 
+            where d.cif ilike  '%{}%' 
+            or d.nombre ilike '%{}%' 
+            or d.personacontacto ilike '%{}%' 
+             '''.format(param, param, param)
+            try:
+                # print(sql)
+                self.tools.populateTable(sql, self.table_dist)
+            except IndexError as ie:
+                # print(ie)
+                pass
+            except Exception as ex:
+                print(ex)
+    
+    def dataCult(self):
+        param = self.search_cult.text()
+        # print(param)
+        if param == '':
+            sql = ''' SELECT idcultivo, nombre
+            FROM public.cultivo;
+            '''
+            try:
+                self.tools.populateTable(sql, self.table_cult)
+            except IndexError as ie:
+                pass
+            except Exception as ex:
+                print(ex)
+        else:
+            sql = ''' SELECT idcultivo, nombre
+            FROM public.cultivo 
+            where nombre ilike '%{}%' '''.format(param )
+            try:
+                # print(sql)
+                self.tools.populateTable(sql, self.table_cult)
+            except IndexError as ie:
+                # print(ie)
+                pass
+            except Exception as ex:
+                print(ex)
+
+    def perDoubleClicked(self): 
+        row = self.table_per.currentRow()
+        id = int(self.table_per.item(row,0).text())
+        dni = str(self.table_per.item(row,1).text())
+        nombre = str(self.table_per.item(row,2).text())
+        data = {
+            'id' : id,
+            'dni' : dni,
+            'nombre' : nombre
+
+        }
+        self.perSignal.emit(data)
+
+
+        self.close()
+    def expDoubleClicked(self): 
+        row = self.table_exp.currentRow()
+        id = int(self.table_exp.item(row,0).text())
+        nombre = str(self.table_exp.item(row,1).text())
+        data = {
+            'id' : id,
+            'nombre' : nombre
+
+        }
+        self.expSignal.emit(data)
+
+
+        self.close()
+    
+    def distDoubleClicked(self): 
+        row = self.table_dist.currentRow()
+        id = int(self.table_dist.item(row,0).text())
+        nombre = str(self.table_dist.item(row,2).text())
+        data = {
+            'id' : id,
+            'nombre' : nombre
+
+        }
+        self.distSignal.emit(data)
+
+
+        self.close()
+
+    def cultDoubleClicked(self): 
+        row = self.table_cult.currentRow()
+        id = int(self.table_cult.item(row,0).text())
+        nombre = str(self.table_cult.item(row,1).text())
+        data = {
+            'id' : id,
+            'nombre' : nombre
+
+        }
+        self.cultSignal.emit(data)
+
+
+        self.close()
 
 class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
     closingPlugin = pyqtSignal()
@@ -2449,6 +3151,7 @@ class agraeParametrosDialog(QtWidgets.QDialog, _agraeParametrosDialog):
             self.loadData(i,suelo=3,regimen=3,metodo=m) 
             pass
 
+
 class personaDialog(QtWidgets.QDialog,agraePersonaDialog): 
     closingPlugin = pyqtSignal()
     dniSignal = pyqtSignal(list)
@@ -2494,17 +3197,13 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
         self.tabWidget.setCurrentIndex(0)
         self.pushButton.setIconSize(QtCore.QSize(20, 20))
         self.pushButton.setIcon(QIcon(icons_path['share']))
-        self.pushButton_2.setIconSize(QtCore.QSize(20, 20))
-        self.pushButton_2.setIcon(QIcon(icons_path['user-check']))
-        self.pushButton_2.clicked.connect(self.crearPersona)
+        
         
         self.tabWidget.setTabIcon(0, QIcon(icons_path['search_icon_path']))
         self.tabWidget.setTabIcon(1, QIcon(icons_path['pen-to-square']))
         self.tabWidget.setTabIcon(2, QIcon(icons_path['search_icon_path']))
         self.tabWidget.setTabIcon(3, QIcon(icons_path['pen-to-square']))
         
-        
-        self.date_inicio.setDate(QDate.currentDate())
 
 
 
@@ -2523,10 +3222,7 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
         # self.pushButton_3.clicked.connect(self.buscarDistribuidor)
 
         
-        self.pushButton_5.setIconSize(QtCore.QSize(20, 20))
-        self.pushButton_5.setIcon(QIcon(icons_path['save']))
-        self.pushButton_5.clicked.connect(self.crearDistribuidor)
-        
+       
         self.tableWidget.setColumnHidden(0,True)
         self.tableWidget_2.setColumnHidden(0,True)
 
@@ -2586,35 +3282,7 @@ class personaDialog(QtWidgets.QDialog,agraePersonaDialog):
                 pass
             except Exception as ex:
                 print(ex)
-    def crearPersona(self): 
-        with self.conn.cursor() as cursor: 
-            try: 
-                DNI = self.ln_dni.text()
-                NOMBRE = self.ln_nombre.text()
-                APELLIDO = self.ln_apellido.text()
-                DIRECCION = self.ln_direccion.text()
-                TELEFONO = self.ln_telefono.text()
-                EMAIL = self.ln_email.text()
-                sql = ''' insert into persona(dni,nombre,apellidos,direccion,telefono,email) 
-                values('{}','{}','{}','{}','{}','{}') '''.format(DNI.upper(),NOMBRE.upper(),APELLIDO.upper(),DIRECCION.upper(),TELEFONO.upper(),EMAIL)
-                
-                cursor.execute(sql)
-                self.conn.commit()
-                QMessageBox.about(self, "", "Datos Guardados Correctamente")
-                # print(sql)
-                self.buscarPersona()
-                self.tabWidget.setCurrentIndex(0)
-                self.ln_dni.clear()
-                self.ln_nombre.clear()
-                self.ln_apellido.clear()
-                self.ln_direccion.clear()
-                self.ln_telefono.clear()
-                self.ln_email.clear()
-                
-
-            except Exception as ex: 
-                print(ex)
-    def crearDistribuidor(self): 
+  
         with self.conn.cursor() as cursor: 
             try: 
                 CIF = self.ln_cif.text()

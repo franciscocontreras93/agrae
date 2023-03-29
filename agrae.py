@@ -38,7 +38,7 @@ from .utils import AgraeUtils, AgraeToolset
 
 # Import the code for the DockWidget
 from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget, loteFindDialog, loteFilterDialog, parcelaFindDialog, agraeAnaliticaDialog, expFindDialog
-from .agrae_dialogs import personaDialog, agricultorDialog, ceapPrevDialog, verifyGeometryDialog, datosDialog
+from .agrae_dialogs import ceapPrevDialog, verifyGeometryDialog, gestionDatosDialog
 import os.path
 from PIL import Image
 from qgis.core import QgsDataSourceUri
@@ -131,7 +131,6 @@ class agrae:
         self.parcelaFilterDialog = None
         self.analiticaDialog = None
         self.personaDialog = None
-        self.agricultorDialog = None
         self.verisDataDialog = None
         self.verifyGeomDialog = None
 
@@ -279,13 +278,6 @@ class agrae:
             status_tip=self.tr(u'Registro de Personas'),
             callback=self.runPersonas,
             parent=self.iface.mainWindow())
-        agricultor_icon_path = self.icons_path['farmer-color']
-        self.add_action(
-            agricultor_icon_path,
-            text=self.tr(u'Agricultor'),
-            status_tip=self.tr(u'Registro de Agricultores'),
-            callback=self.runAgricultores,
-            parent=self.iface.mainWindow())
         veris_icon_path = self.icons_path['ceap']
         self.add_action(
             veris_icon_path,
@@ -363,10 +355,7 @@ class agrae:
         self.pluginIsActive = False
         pass
     
-    def onCloseAgricultorDialog(self):
-        self.agricultorDialog.closingPlugin.disconnect(self.onCloseAgricultorDialog)
-        self.pluginIsActive = False
-        pass
+
     
     def onCloseVerifyGeomDialog(self): 
         self.verifyGeomDialog.closingPlugin.disconnect(self.onCloseVerifyGeomDialog)
@@ -922,7 +911,7 @@ class agrae:
             self.pluginIsActive = True
 
             if self.personaDialog == None:
-                self.personaDialog = datosDialog()
+                self.personaDialog = gestionDatosDialog()
                 # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
 
                 # self.personaDialog.test_btn.clicked.connect(dbTestConn)
@@ -930,19 +919,6 @@ class agrae:
 
             self.personaDialog.closingPlugin.connect(self.onClosePersonaDialog)
             self.personaDialog.show()
-    def runAgricultores(self): 
-        if not self.pluginIsActive:
-            self.pluginIsActive = True
-
-            if self.agricultorDialog == None:
-                self.agricultorDialog = agricultorDialog()
-                # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
-
-                # self.personaDialog.test_btn.clicked.connect(dbTestConn)
-                # self.personaDialog.pushButton.clicked.connect(saveConn)
-
-            self.agricultorDialog.closingPlugin.connect(self.onCloseAgricultorDialog)
-            self.agricultorDialog.show()
 
     def runVerifyGeometry(self): 
 

@@ -1069,16 +1069,19 @@ class AgraeToolset():
                     cursor = self.conn.cursor()
                     cursor.execute(sql)
                     data = cursor.fetchall()
-                    a = len(data)
-                    b = len(data[0])
-                    i = 1
-                    j = 1
-                    widget.setRowCount(a)
-                    widget.setColumnCount(b)
-                    for j in range(a):
-                        for i in range(b):
-                            item = QTableWidgetItem(str(data[j][i]))
-                            widget.setItem(j, i, item)
+                    # print(data)
+                    widget.setRowCount(0)
+                    if len(data) > 0:
+                        a = len(data)
+                        b = len(data[0])
+                        i = 1
+                        j = 1
+                        widget.setRowCount(a)
+                        widget.setColumnCount(b)
+                        for j in range(a):
+                            for i in range(b):
+                                item = QTableWidgetItem(str(data[j][i]))
+                                widget.setItem(j, i, item)
                 except IndexError as ie:
                     pass
 
