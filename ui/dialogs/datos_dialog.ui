@@ -35,7 +35,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -45,19 +45,19 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>20</y>
+       <y>10</y>
        <width>551</width>
-       <height>311</height>
+       <height>341</height>
       </rect>
      </property>
      <property name="tabPosition">
-      <enum>QTabWidget::West</enum>
+      <enum>QTabWidget::North</enum>
      </property>
      <property name="tabShape">
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab_4">
       <attribute name="title">
@@ -68,7 +68,7 @@
         <rect>
          <x>20</x>
          <y>10</y>
-         <width>481</width>
+         <width>451</width>
          <height>31</height>
         </rect>
        </property>
@@ -76,7 +76,7 @@
         <item>
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>Buscar por Nombre o Direccion</string>
+           <string>Buscar:</string>
           </property>
          </widget>
         </item>
@@ -90,8 +90,8 @@
         <rect>
          <x>20</x>
          <y>60</y>
-         <width>431</width>
-         <height>231</height>
+         <width>451</width>
+         <height>241</height>
         </rect>
        </property>
        <property name="sizeAdjustPolicy">
@@ -130,15 +130,18 @@
       <widget class="QWidget" name="verticalLayoutWidget">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>490</x>
          <y>60</y>
          <width>43</width>
-         <height>231</height>
+         <height>241</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
          <widget class="QPushButton" name="btn_delete_exp">
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -167,7 +170,7 @@
       <widget class="QWidget" name="verticalLayoutWidget_7">
        <property name="geometry">
         <rect>
-         <x>450</x>
+         <x>470</x>
          <y>20</y>
          <width>43</width>
          <height>271</height>
@@ -176,6 +179,9 @@
        <layout class="QVBoxLayout" name="verticalLayout_8">
         <item>
          <widget class="QPushButton" name="btn_save_exp">
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -223,130 +229,269 @@
     <attribute name="title">
      <string>Distribuidor</string>
     </attribute>
-    <widget class="QGroupBox" name="groupBox_4">
+    <widget class="QTabWidget" name="tab_dist">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>10</y>
        <width>551</width>
-       <height>331</height>
+       <height>341</height>
       </rect>
      </property>
-     <property name="title">
-      <string>Registrar Distribuidores</string>
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
      </property>
-     <widget class="QWidget" name="gridLayoutWidget_3">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>30</y>
-        <width>471</width>
-        <height>291</height>
-       </rect>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0">
-        <widget class="QLineEdit" name="ln_cif">
-         <property name="placeholderText">
-          <string>CIF...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLineEdit" name="ln_contacto">
-         <property name="placeholderText">
-          <string>Persona Contacto...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <widget class="QLineEdit" name="ln_direccionEnvio">
-         <property name="text">
-          <string/>
-         </property>
-         <property name="placeholderText">
-          <string>Direccion Envio...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLineEdit" name="ln_distTelefono">
-         <property name="placeholderText">
-          <string>Telefono...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLineEdit" name="ln_direccionFiscal">
-         <property name="text">
-          <string/>
-         </property>
-         <property name="placeholderText">
-          <string>Direccion Fiscal...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QLineEdit" name="ln_icono">
-         <property name="text">
-          <string/>
-         </property>
-         <property name="placeholderText">
-          <string>Logo Dist. (nombre.png)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="QLineEdit" name="ln_distEmail">
-         <property name="placeholderText">
-          <string>Email...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLineEdit" name="ln_distNombre">
-         <property name="text">
-          <string/>
-         </property>
-         <property name="placeholderText">
-          <string>Nombre Distribuidor</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1">
-        <widget class="QDateEdit" name="date_inicio">
-         <property name="calendarPopup">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>Fecha Inicio:</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+     <property name="tabPosition">
+      <enum>QTabWidget::North</enum>
+     </property>
+     <property name="currentIndex">
+      <number>1</number>
+     </property>
+     <widget class="QWidget" name="tab_6">
+      <attribute name="title">
+       <string>Consultar</string>
+      </attribute>
+      <widget class="QWidget" name="horizontalLayoutWidget_3">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>10</y>
+         <width>451</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Buscar:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="search_dist"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QTableWidget" name="table_dist">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>60</y>
+         <width>451</width>
+         <height>241</height>
+        </rect>
+       </property>
+       <property name="editTriggers">
+        <set>QAbstractItemView::NoEditTriggers</set>
+       </property>
+       <property name="selectionBehavior">
+        <enum>QAbstractItemView::SelectRows</enum>
+       </property>
+       <column>
+        <property name="text">
+         <string>iddistribuidor</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>CIF</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Nombre</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Persona Contacto</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Telefono</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Email</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Direccion Fiscal</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Direccion Envio</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Fecha Inicio</string>
+        </property>
+       </column>
+      </widget>
+      <widget class="QWidget" name="verticalLayoutWidget_3">
+       <property name="geometry">
+        <rect>
+         <x>490</x>
+         <y>60</y>
+         <width>43</width>
+         <height>241</height>
+        </rect>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <widget class="QPushButton" name="btn_delete_dist">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
-     <widget class="QWidget" name="verticalLayoutWidget_5">
-      <property name="geometry">
-       <rect>
-        <x>500</x>
-        <y>30</y>
-        <width>43</width>
-        <height>291</height>
-       </rect>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_5">
-       <item>
-        <widget class="QPushButton" name="pushButton_5">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-      </layout>
+     <widget class="QWidget" name="tab_7">
+      <attribute name="title">
+       <string>Crear o Modificar</string>
+      </attribute>
+      <widget class="QWidget" name="verticalLayoutWidget_5">
+       <property name="geometry">
+        <rect>
+         <x>470</x>
+         <y>10</y>
+         <width>43</width>
+         <height>301</height>
+        </rect>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_6">
+        <item>
+         <widget class="QPushButton" name="btn_save_dist">
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="gridLayoutWidget_3">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>441</width>
+         <height>301</height>
+        </rect>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="2" column="0">
+         <widget class="QLineEdit" name="phone_dist">
+          <property name="placeholderText">
+           <string>Telefono...</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="name_dist">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="placeholderText">
+           <string>Nombre Distribuidor</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>Fecha Inicio:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="email_dist">
+          <property name="placeholderText">
+           <string>Email...</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="icon_dist">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+          <property name="placeholderText">
+           <string>Logo Dist. (nombre.png)</string>
+          </property>
+          <property name="clearButtonEnabled">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLineEdit" name="cif_dist">
+          <property name="placeholderText">
+           <string>CIF...</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLineEdit" name="contact_dist">
+          <property name="placeholderText">
+           <string>Persona Contacto...</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QDateEdit" name="date_start">
+          <property name="calendarPopup">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QPlainTextEdit" name="dir_env_dist">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>50</height>
+           </size>
+          </property>
+          <property name="placeholderText">
+           <string>Direccion de Envio</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QPlainTextEdit" name="dir_fisc_dist">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>50</height>
+           </size>
+          </property>
+          <property name="placeholderText">
+           <string>Direccion Fiscal</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </widget>
    </widget>
@@ -354,95 +499,224 @@
     <attribute name="title">
      <string>Persona</string>
     </attribute>
-    <widget class="QGroupBox" name="groupBox_2">
+    <widget class="QTabWidget" name="tab_per">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>10</y>
        <width>551</width>
-       <height>331</height>
+       <height>341</height>
       </rect>
      </property>
-     <property name="title">
-      <string>Registrar Personas</string>
+     <property name="currentIndex">
+      <number>0</number>
      </property>
-     <widget class="QWidget" name="gridLayoutWidget_2">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>30</y>
-        <width>451</width>
-        <height>281</height>
-       </rect>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="0">
-        <widget class="QLineEdit" name="ln_dni">
-         <property name="placeholderText">
-          <string>DNI...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="QLineEdit" name="ln_email">
-         <property name="placeholderText">
-          <string>Email...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLineEdit" name="ln_nombre">
-         <property name="placeholderText">
-          <string>Nombre...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLineEdit" name="ln_apellido">
-         <property name="placeholderText">
-          <string>Apellido...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QLineEdit" name="ln_direccion">
-         <property name="placeholderText">
-          <string>Direccion...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLineEdit" name="ln_telefono">
-         <property name="placeholderText">
-          <string>Telefono...</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+     <widget class="QWidget" name="tab_8">
+      <attribute name="title">
+       <string>Consultar</string>
+      </attribute>
+      <widget class="QWidget" name="horizontalLayoutWidget_4">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>10</y>
+         <width>451</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Buscar:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="search_per"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="verticalLayoutWidget_4">
+       <property name="geometry">
+        <rect>
+         <x>490</x>
+         <y>60</y>
+         <width>43</width>
+         <height>241</height>
+        </rect>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QPushButton" name="btn_delete_per">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QTableWidget" name="table_per">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>60</y>
+         <width>451</width>
+         <height>241</height>
+        </rect>
+       </property>
+       <property name="editTriggers">
+        <set>QAbstractItemView::NoEditTriggers</set>
+       </property>
+       <property name="selectionBehavior">
+        <enum>QAbstractItemView::SelectRows</enum>
+       </property>
+       <column>
+        <property name="text">
+         <string>idpersona</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>DNI</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Nombres</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Telefono</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Email</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Direccion</string>
+        </property>
+       </column>
+      </widget>
      </widget>
-     <widget class="QWidget" name="verticalLayoutWidget_2">
-      <property name="geometry">
-       <rect>
-        <x>490</x>
-        <y>30</y>
-        <width>43</width>
-        <height>281</height>
-       </rect>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
-        <widget class="QPushButton" name="pushButton_3">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-      </layout>
+     <widget class="QWidget" name="tab_9">
+      <attribute name="title">
+       <string>Crear o Modificar</string>
+      </attribute>
+      <widget class="QWidget" name="gridLayoutWidget_2">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>20</y>
+         <width>431</width>
+         <height>281</height>
+        </rect>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="QLineEdit" name="dni_per">
+          <property name="placeholderText">
+           <string>DNI...</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="name_per">
+          <property name="placeholderText">
+           <string>Nombre...</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLineEdit" name="last_name_per">
+          <property name="placeholderText">
+           <string>Apellido...</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="phone_per">
+          <property name="placeholderText">
+           <string>Telefono...</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QPlainTextEdit" name="dir_per">
+          <property name="maximumSize">
+           <size>
+            <width>211</width>
+            <height>50</height>
+           </size>
+          </property>
+          <property name="placeholderText">
+           <string>Direccion</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLineEdit" name="email_per">
+          <property name="placeholderText">
+           <string>Email...</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="verticalLayoutWidget_6">
+       <property name="geometry">
+        <rect>
+         <x>470</x>
+         <y>20</y>
+         <width>43</width>
+         <height>281</height>
+        </rect>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_7">
+        <item>
+         <widget class="QPushButton" name="btn_save_per">
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </widget>
    </widget>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>tab_main</tabstop>
+  <tabstop>tab_exp</tabstop>
+  <tabstop>search_exp</tabstop>
+  <tabstop>table_exp</tabstop>
+  <tabstop>name_exp</tabstop>
+  <tabstop>dir_exp</tabstop>
+  <tabstop>search_dist</tabstop>
+  <tabstop>table_dist</tabstop>
+  <tabstop>cif_dist</tabstop>
+  <tabstop>name_dist</tabstop>
+  <tabstop>contact_dist</tabstop>
+  <tabstop>icon_dist</tabstop>
+  <tabstop>phone_dist</tabstop>
+  <tabstop>email_dist</tabstop>
+  <tabstop>date_start</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

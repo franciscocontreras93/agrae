@@ -1065,20 +1065,22 @@ class AgraeToolset():
     def populateTable(self,sql,widget, action=False):
         
         with self.conn:
-                cursor = self.conn.cursor()
-                cursor.execute(sql)
-                data = cursor.fetchall()
-                print(data)
-                a = len(data)
-                b = len(data[0])
-                i = 1
-                j = 1
-                widget.setRowCount(a)
-                widget.setColumnCount(b)
-                for j in range(a):
-                    for i in range(b):
-                        item = QTableWidgetItem(str(data[j][i]))
-                        widget.setItem(j, i, item)
+                try:
+                    cursor = self.conn.cursor()
+                    cursor.execute(sql)
+                    data = cursor.fetchall()
+                    a = len(data)
+                    b = len(data[0])
+                    i = 1
+                    j = 1
+                    widget.setRowCount(a)
+                    widget.setColumnCount(b)
+                    for j in range(a):
+                        for i in range(b):
+                            item = QTableWidgetItem(str(data[j][i]))
+                            widget.setItem(j, i, item)
+                except IndexError as ie:
+                    pass
 
 
 

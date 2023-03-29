@@ -63,7 +63,6 @@ agraeCultivoDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), '
 
 agraeAnaliticaDialog_, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/analitica_dialog.ui'))
 
-
 class agraeDockWidget(QtWidgets.QDockWidget, agraeSidePanel):
     closingPlugin = pyqtSignal()
     def __init__(self, parent=None):

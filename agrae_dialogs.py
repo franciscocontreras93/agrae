@@ -32,18 +32,24 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
     def __init__(self, parent=None) -> None:
         super(datosDialog,self).__init__(parent)
         self.utils = AgraeUtils()
+        self.tools = AgraeToolset()
         self.conn = self.utils.Conn()
         self.icons_path = self.utils.iconsPath()
-        self.completerExp = self.dataAuto('select nombre,direccion from explotacion')
 
+
+        self.completerExp = self.dataAuto('select nombre,direccion from public.explotacion')
+        self.completerDist = self.dataAuto('select cif,nombre,personacontacto from public.distribuidor')
+        self.completerPer = self.dataAuto('select nombre, apellidos, direccion from public.persona')
 
         self.idExplotacion = None
-
+        self.idDistribuidor = None
 
 
         self.setupUi(self)
         self.UIcomponents()
-        self.loadDataExp()
+        self.dataExp()
+        self.dataDist()
+        self.dataPer()
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -52,10 +58,20 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
         self.btn_save_exp.setIcon(QIcon(self.icons_path['save']))
         self.name_exp.clear()
         self.dir_exp.clear()
+
+        self.clearDist()
+
+        self.tab_main.setCurrentIndex(0)
+        self.tab_exp.setCurrentIndex(0)
+        self.tab_dist.setCurrentIndex(0)
+
+        self.idExplotacion = None
+        self.idDistribuidor = None
         
         event.accept()
 
     def UIcomponents(self):
+        self.date_start.setDate(QDate.currentDate())
         
         self.btn_save_exp.clicked.connect(self.createExplotacion)
         self.btn_save_exp.setIconSize(QtCore.QSize(20, 20))
@@ -65,23 +81,80 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
         self.btn_delete_exp.setIconSize(QtCore.QSize(20, 20))
         self.btn_delete_exp.setIcon(QIcon(self.icons_path['trash']))
 
+        self.btn_save_dist.clicked.connect(self.createDistribuidor)
+        self.btn_save_dist.setIconSize(QtCore.QSize(20, 20))
+        self.btn_save_dist.setIcon(QIcon(self.icons_path['save']))
+
+        self.btn_delete_dist.clicked.connect(self.deleteDistribuidor)
+        self.btn_delete_dist.setIconSize(QtCore.QSize(20, 20))
+        self.btn_delete_dist.setIcon(QIcon(self.icons_path['trash']))
+
+        # self.btn_save_per.clicked.connect(self.createDistribuidor)
+        self.btn_save_per.setIconSize(QtCore.QSize(20, 20))
+        self.btn_save_per.setIcon(QIcon(self.icons_path['save']))
+
+        # self.btn_delete_per.clicked.connect(self.deleteDistribuidor)
+        self.btn_delete_per.setIconSize(QtCore.QSize(20, 20))
+        self.btn_delete_per.setIcon(QIcon(self.icons_path['trash']))
+
     
         #* TABLE WIDGET ACTIONS
         # hidden
         self.table_exp.setColumnHidden(0, True)
+        self.table_dist.setColumnHidden(0,True)
+        self.table_per.setColumnHidden(0,True)
+        
         self.table_exp.doubleClicked.connect(self.getExpValues)
+        self.table_dist.doubleClicked.connect(self.getDistValues)
+        self.table_per.doubleClicked.connect(self.getPerValues)
+        
         
         #* TAB WIDGET ACTIONS
+        self.tab_main.setCurrentIndex(0)
+        self.tab_exp.setCurrentIndex(0)
+        self.tab_dist.setCurrentIndex(0)
+
         self.tab_exp.setTabIcon(0, QIcon(self.icons_path['search_icon_path']))
         self.tab_exp.setTabIcon(1, QIcon(self.icons_path['pen-to-square']))
+
+        self.tab_dist.setTabIcon(0, QIcon(self.icons_path['search_icon_path']))
+        self.tab_dist.setTabIcon(1, QIcon(self.icons_path['pen-to-square']))
+        
+        self.tab_exp.currentChanged.connect(self.onChangeExp)
+        self.tab_dist.currentChanged.connect(self.onChangeDist)
+        self.tab_per.currentChanged.connect(self.onChangePer)
         #* ACTIONS 
 
         self.search_exp.setCompleter(self.completerExp)
-        self.search_exp.returnPressed.connect(self.searchExp)
+        self.search_exp.returnPressed.connect(self.dataExp)
+        self.search_exp.textChanged.connect(self.dataExp)
         self.search_exp.setClearButtonEnabled(True)
         line_buscar_action = self.search_exp.addAction(
             QIcon(self.icons_path['search_icon_path']), self.search_exp.TrailingPosition)
-        line_buscar_action.triggered.connect(self.searchExp)
+        line_buscar_action.triggered.connect(self.dataExp)
+
+
+        self.search_dist.setCompleter(self.completerDist)
+        self.search_dist.returnPressed.connect(self.dataDist)
+        self.search_dist.textChanged.connect(self.dataDist)
+        self.search_dist.setClearButtonEnabled(True)
+        line_buscar_action = self.search_dist.addAction(
+            QIcon(self.icons_path['search_icon_path']), self.search_dist.TrailingPosition)
+        line_buscar_action.triggered.connect(self.dataDist)
+
+        self.search_per.setCompleter(self.completerPer)
+        self.search_per.returnPressed.connect(self.dataPer)
+        self.search_per.textChanged.connect(self.dataPer)
+        self.search_per.setClearButtonEnabled(True)
+        line_buscar_action = self.search_per.addAction(
+            QIcon(self.icons_path['search_icon_path']), self.search_per.TrailingPosition)
+        line_buscar_action.triggered.connect(self.dataPer)
+
+
+        line_open_dialog = self.icon_dist.addAction(QIcon(self.icons_path['menu']),self.icon_dist.TrailingPosition)
+        line_open_dialog.triggered.connect(self.openImageDialog)
+
+
 
 
         # self.pushButton_2.clicked.connect(self.dataAutoExp)
@@ -92,40 +165,73 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
         data = []
         for t in cursor.fetchall():
             for i in t:
-                data.append(i) 
+                data.append(i)
+
+        data = set(data)
         completer = QCompleter(data)
         completer.setCaseSensitivity(False)    
         return completer
     
+    def clearDist(self):
+        self.cif_dist.clear()
+        self.contact_dist.clear()
+        self.icon_dist.clear()
+        self.phone_dist.clear()
+        self.email_dist.clear()
+        self.date_start.setDate(QDate.currentDate())
+        self.dir_fisc_dist.clear()
+        self.dir_env_dist.clear()
+        self.name_dist.clear()
+
+    def clearPer(self):
+        self.dni_per.clear()
+        self.name_per.clear()
+        self.last_name_per.clear()
+        self.dir_per.clear()
+        self.phone_per.clear()
+        self.email_per.clear()
+        
+
+
+    
+    #! DIALOGS
+    def openImageDialog(self): 
+        options = QFileDialog.Options()
+        fileName, _ = QFileDialog.getOpenFileName(
+            self, "aGrae GIS", "", "Todos los archivos (*);;Archivos separados por coma (*.csv)", options=options)
+        if fileName:
+            path = fileName.split('/')
+            file = path[-1]
+            self.icon_dist.setText(file)
+        else: 
+            return False
+    
+    
     
     #! EXPLOTACION
+    def onChangeExp(self,e): 
+        # print(e)
+        if e == 0: 
+            self.btn_save_exp.disconnect()
+            self.btn_save_exp.clicked.connect(self.createExplotacion)
+            self.btn_save_exp.setIcon(QIcon(self.icons_path['save']))
+            self.name_exp.clear()
+            self.dir_exp.clear()
+
     def getExpValues(self):
-        
         try:
-           
             row = self.table_exp.currentRow()
             self.idExplotacion = self.table_exp.item(row,0).text()
             nombre = self.table_exp.item(row,1).text()
             direccion = self.table_exp.item(row,2).text()
             self.name_exp.setText(nombre)
             self.dir_exp.setPlainText(direccion)
-
             self.tab_exp.setCurrentIndex(1)
             self.btn_save_exp.disconnect()
             self.btn_save_exp.clicked.connect(self.updateExplotacion)
             self.btn_save_exp.setIcon(QIcon(self.icons_path['pen-to-square']))
-
-
         except Exception as ex:
             print(ex)
-
-            
-
-
-
-
-
-
 
     def createExplotacion(self):
         cursor = self.conn.cursor()
@@ -187,10 +293,6 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
             finally: 
                 self.loadDataExp()
 
-
-
-        
-
     def updateExplotacion(self):
         cursor = self.conn.cursor()
         row = self.table_exp.currentRow()
@@ -230,75 +332,282 @@ class datosDialog(QtWidgets.QDialog, agraeDatosDialog_):
                 self.btn_save_exp.setIcon(QIcon(self.icons_path['save']))
 
                 self.tab_exp.setCurrentIndex(0)
-                self.loadDataExp()
-                
+                self.dataExp()
 
+    def dataExp(self, ):
+        
+        param = self.search_exp.text()
 
-   
-               
-
-
-    def dataExp(self, filtro=None):
-       
-        if filtro == None or filtro == '':
-            cursor = self.conn.cursor()
+        if param == None or param == '':
             sql = '''select e.idexplotacion, e.nombre, e.direccion, count(a.idagricultor) agricultores from explotacion e
             left join agricultor a on a.idexplotacion = e.idexplotacion
             group by e.idexplotacion, e.nombre, e.direccion
             order by e.idexplotacion desc'''
-            cursor.execute(sql)
-            data = cursor.fetchall()
+            self.tools.populateTable(sql, self.table_exp)
         else:
-            cursor = self.conn.cursor()
+            
             sql = f'''select e.idexplotacion,e.nombre,e.direccion , count(a.idagricultor) agricultores from explotacion e 
             left join agricultor a on a.idexplotacion = e.idexplotacion 
-            where e.nombre ilike '%{filtro}%' or e.direccion ilike '%{filtro}%' 
+            where e.nombre ilike '%{param}%' or e.direccion ilike '%{param}%' 
             group by e.idexplotacion,e.nombre,e.direccion 
             order by e.idexplotacion desc '''
-            cursor.execute(sql)
-            data = cursor.fetchall()
-        if len(data) >= 1:
-            return data
-        elif len(data) == 0:
-            data = [0, 0]
-            return data
-
-    def populateExp(self, data):
-        try:
-            a = len(data)
-            b = len(data[0])
-            i = 1
-            j = 1
-            self.table_exp.setRowCount(a)
-            self.table_exp.setColumnCount(b)
-            for j in range(a):
-                for i in range(b):
-                    item = QTableWidgetItem(str(data[j][i]))
-                    self.table_exp.setItem(j, i, item)
-        except:
-            self.table_exp.setRowCount(0)
-            QMessageBox.about(self, "Error:", "No Existen Registros")
-            # print('error')
-
-    def loadDataExp(self, param=None):
-        if param == None:
-            data = self.dataExp()
-            self.populateExp(data)
-        else:
-            data = self.dataExp(param)
-            self.populateExp(data)
-        pass
-
-    def searchExp(self):
-        filtro = self.search_exp.text()
-        self.loadDataExp(filtro)
-        pass
+            self.tools.populateTable(sql, self.table_exp)
+       
     
-    
-
     #! DISTRIBUIDOR
+    def onChangeDist(self,e): 
+        # print(e)
+        if e == 0: 
+            self.btn_save_dist.disconnect()
+            self.btn_save_dist.clicked.connect(self.createDistribuidor)
+            self.btn_save_dist.setIcon(QIcon(self.icons_path['save']))
+            self.clearDist()
+           
+
+    def getDistValues(self):
+        with self.conn.cursor() as cursor: 
+
+            try: 
+                row = self.table_dist.currentRow()
+                self.idDistribuidor = self.table_dist.item(row,0).text()
+                sql = '''SELECT cif, personacontacto, icono, telefono, email, fechainicio, direccionfiscal, direccionenvio, nombre
+                FROM public.distribuidor WHERE iddistribuidor = {};'''.format(self.idDistribuidor)
+                cursor.execute(sql)
+                data = cursor.fetchone()
+
+                self.cif_dist.setText(data[0])
+                self.contact_dist.setText(data[1])
+                self.icon_dist.setText(data[2])
+                self.phone_dist.setText(data[3])
+                self.email_dist.setText(data[4])
+                self.date_start.setDate(data[5])
+                self.dir_fisc_dist.setPlainText(data[6])
+                self.dir_env_dist.setPlainText(data[7])
+                self.name_dist.setText(data[8])
 
 
+            except Exception as  ex:
+                print(ex)
+
+            finally:
+                self.tab_dist.setCurrentIndex(1)
+                self.btn_save_dist.disconnect()
+                self.btn_save_dist.clicked.connect(self.updateDistribuidor)
+                self.btn_save_dist.setIcon(QIcon(self.icons_path['pen-to-square']))
+
+
+
+
+    def dataDist(self):
+        param = self.search_dist.text()
+        if param == '':
+            sql = ''' select d.iddistribuidor, d.cif,d.nombre,d.personacontacto,d.telefono,d.email,d.direccionfiscal,d.direccionenvio,d.fechainicio from distribuidor d   '''
+            try:
+                self.tools.populateTable(sql, self.table_dist)
+            except IndexError as ie:
+                pass
+            except Exception as ex:
+                print(ex)
+        else:
+            sql = ''' select d.iddistribuidor, d.cif,d.nombre,d.personacontacto,d.telefono,d.email,d.direccionfiscal,d.direccionenvio,d.fechainicio 
+            from distribuidor d 
+            where d.cif ilike  '%{}%' 
+            or d.nombre ilike '%{}%' 
+            or d.personacontacto ilike '%{}%' 
+            or d.direccionfiscal ilike '%{}%' '''.format(param, param, param,param)
+            try:
+                # print(sql)
+                self.tools.populateTable(sql, self.table_dist)
+            except IndexError as ie:
+                # print(ie)
+                pass
+            except Exception as ex:
+                print(ex)
+
+    def createDistribuidor(self): 
+        with self.conn.cursor() as cursor: 
+            try: 
+                CIF = self.cif_dist.text()
+                NOMBRE = self.name_dist.text()
+                CONTACTO = self.contact_dist.text()
+                ICONO = self.icon_dist.text()
+                DIRECCIONFISCAL = self.dir_fisc_dist.toPlainText()
+                DIRECCIOENVIO = self.dir_env_dist.toPlainText()
+                TELEFONO = self.phone_dist.text()
+                EMAIL = self.email_dist.text()
+                FECHAINICIO = self.date_start.date().toString("dd/MM/yyyy")
+                sql = ''' insert into distribuidor(cif,personacontacto,icono,telefono,email,fechainicio,direccionfiscal,direccionenvio,nombre) 
+                values('{}','{}','{}','{}','{}','{}','{}','{}','{}') '''.format(CIF.upper(),CONTACTO.upper(),ICONO,TELEFONO,EMAIL,FECHAINICIO,DIRECCIONFISCAL,DIRECCIOENVIO,NOMBRE.upper())
+                cursor.execute(sql)
+                self.conn.commit()
+                QMessageBox.about(self, "", "Datos Guardados Correctamente")
+                # print(sql)
+                self.cif_dist.clear()
+                self.name_dist.clear()
+                self.contact_dist.clear()
+                self.icon_dist.clear()
+                self.dir_fisc_dist.clear()
+                self.dir_env_dist.clear()
+                self.phone_dist.clear()
+                self.email_dist.clear()
+                self.date_start.setDate(QDate.currentDate())
+                
+
+            except Exception as ex: 
+                print(ex)
+            finally: 
+                self.dataDist()
+                self.tab_dist.setCurrentIndex(0)
+    
+    def deleteDistribuidor(self): 
+        with self.conn.cursor() as cursor: 
+            try:
+                row = self.table_dist.currentRow()
+                id = self.table_dist.item(row,0).text()
+                nombre = self.table_dist.item(row,2).text()
+
+                sql = '''DELETE FROM public.distribuidor where iddistribuidor = {} '''.format(id)
+                cursor.execute(sql)
+                self.conn.commit() 
+                self.dataDist()
+            
+            except  errors.lookup('23503'):
+                QgsMessageLog.logMessage("El Distribuidor {} esta referido en otras tablas".format(nombre), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "El Distribuidor {} esta referido en otras tablas".format(nombre))
+                self.conn.rollback()
+            
+            except Exception as ex:
+                print(ex)
+                self.conn.rollback()
+
+    def updateDistribuidor(self):
+        CIF = self.cif_dist.text()
+        NOMBRE = self.name_dist.text()
+        CONTACTO = self.contact_dist.text()
+        ICONO = self.icon_dist.text()
+        DIRECCIONFISCAL = self.dir_fisc_dist.text()
+        DIRECCIOENVIO = self.dir_env_dist.text()
+        TELEFONO = self.phone_dist.text()
+        EMAIL = self.email_dist.text()
+        FECHAINICIO = self.date_start.date().toString("dd/MM/yyyy")
+
+        with self.conn.cursor() as cursor: 
+            try: 
+                sql = '''
+                UPDATE public.distribuidor
+                SET cif='{}', personacontacto='{}', icono='{}', telefono='{}', email='{}', fechainicio='{}', direccionfiscal='{}', direccionenvio='{}', nombre='{}'
+                WHERE iddistribuidor={};
+                '''.format(CIF.upper(),CONTACTO.upper(),ICONO, TELEFONO, EMAIL, FECHAINICIO, DIRECCIONFISCAL, DIRECCIOENVIO, NOMBRE.upper() ,self.idDistribuidor)
+                cursor.execute(sql)
+                self.conn.commit() 
+
+                QgsMessageLog.logMessage("Distribuidor {} actualizado correctamente".format(NOMBRE.upper()), 'aGrae GIS', level=3)
+                QMessageBox.about(self, "aGrae GIS:", "Distribuidor {} actualizado correctamente".format(NOMBRE.upper()))
+
+                self.clearDist()
+
+            except Exception as ex: 
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=1)
+                QMessageBox.about(self, "aGrae GIS:", "Ocurrio un error, consulte el panel de registros.".format())
+                self.conn.rollback()
+
+
+            finally: 
+                self.dataDist()
+                self.tab_dist.setCurrentIndex(0)
+                self.btn_save_dist.disconnect()
+                self.btn_save_dist.clicked.connect(self.createDistribuidor)
+                self.btn_save_dist.setIcon(QIcon(self.icons_path['save']))
+
+    #! PERSONAS
+
+    def onChangePer(self,e):
+        if e == 0:
+            self.btn_save_per.disconnect()
+            self.btn_save_per.clicked.connect(self.createPersona)
+            self.btn_save_per.setIcon(QIcon(self.icons_path['save']))
+            self.clearPer()
+        pass
+    def getPerValues(self): 
+        with self.conn.cursor() as cursor: 
+            try: 
+                row = self.table_per.currentRow() 
+                self.idPersona = self.table_per.item(row,0).text()
+                sql = '''SELECT dni, nombre, apellidos, telefono, email,direccion
+                FROM public.persona where idpersona = {} ;
+                '''.format(self.idPersona)
+                cursor.execute(sql)
+                data = cursor.fetchone()
+                self.dni_per.setText(data[0])
+                self.name_per.setText(data[1])
+                self.last_name_per.setText(data[2])
+                self.phone_per.setText(data[3])
+                self.email_per.setText(data[4])
+                self.dir_per.setPlainText(data[5])
+
+
+            except Exception as ex:
+                print(ex)
+                pass
+            finally:
+                self.tab_per.setCurrentIndex(1)
+                self.btn_save_per.disconnect()
+                self.btn_save_per.clicked.connect(self.updatePersona)
+                self.btn_save_per.setIcon(QIcon(self.icons_path['pen-to-square']))
+                pass
+    
+    def dataPer(self):
+        param = self.search_per.text()
+        if param == '':
+            sql = ''' select idpersona, dni, nombre || ' ' || apellidos, telefono, email, direccion from persona p   '''
+            try:
+                self.tools.populateTable(sql, self.table_per)
+            except IndexError as ie:
+                pass
+            except Exception as ex:
+                print(ex)
+        else:
+            sql = ''' select idpersona, dni, nombre || ' ' || apellidos, telefono, email, direccion from persona p where p.dni = '{}' or p.nombre ilike '%{}%' or apellidos ilike '%{}%' or p.direccion ilike '%{}%' '''.format(param, param, param,param)
+            try:
+                # print(sql)
+                self.tools.populateTable(sql, self.table_per)
+            except IndexError as ie:
+                print(ie)
+                pass
+            except Exception as ex:
+                print(ex)
+
+    def createPersona(self):
+         with self.conn.cursor() as cursor: 
+            try: 
+                DNI = self.dni_per.text()
+                NOMBRE = self.name_per.text()
+                APELLIDO = self.last_name_per.text()
+                DIRECCION = self.dir_per.toPlainText()
+                TELEFONO = self.phone_per.text()
+                EMAIL = self.email_per.text()
+                sql = ''' insert into persona(dni,nombre,apellidos,direccion,telefono,email) 
+                values('{}','{}','{}','{}','{}','{}') '''.format(DNI.upper(),NOMBRE.upper(),APELLIDO.upper(),DIRECCION,TELEFONO,EMAIL)
+                
+                cursor.execute(sql)
+                self.conn.commit()
+                QMessageBox.about(self, "", "Datos Guardados Correctamente")
+                # print(sql)
+                self.dataPer()
+                self.tab_per.setCurrentIndex(0)
+                self.clearPer()
+                
+                
+
+            except Exception as ex: 
+                print(ex)
+    def deletePersona(self): 
+        pass
+
+    def updatePersona(self):
+        pass
+
+              
     
 
 class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
@@ -2774,3 +3083,8 @@ class ColorDelegateGreen(QtWidgets.QStyledItemDelegate):
 class ReadOnlyDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         return
+    
+
+
+
+
