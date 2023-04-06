@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 import time
 # from datetime import date
 from psycopg2 import InterfaceError, errors, extras
-from PyQt5.QtCore import QRegExp, QDate, QDateTime
+from PyQt5.QtCore import QRegExp, QDate, QDateTime, QThreadPool
 from PyQt5.QtGui import QRegExpValidator, QIcon, QPixmap
 from PyQt5.QtWidgets import *
 from qgis.PyQt import QtWidgets, uic
@@ -39,6 +39,7 @@ from qgis.utils import iface
 from qgis.PyQt.QtXml import QDomDocument
 from .agrae_dialogs import expFindDialog, agraeSegmentoDialog, agraeParametrosDialog, cultivoFindDialog, agricultorDialog
 from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic, TableModel, PanelRender, AppDemo
+from .agrae_worker import Worker
 
 from .resources import *
 
@@ -116,6 +117,7 @@ class parcelaFindDialog(QtWidgets.QDialog, agraeParcelaDialog):
         self.utils = AgraeUtils()
         self.tools = AgraeToolset()
         self.conn = self.utils.Conn()
+        
         self.idParcela = None     
         self.setupUi(self)
         self.UIcomponents()
@@ -690,7 +692,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             
             
         
-        
+        self.threadpool = QThreadPool()
         self.utils = AgraeUtils()
         self.tools = AgraeToolset()
         self.analitic = AgraeAnalitic()
@@ -898,7 +900,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.utils.add_action(
             icons_path['print'],
             text=self.tr(u'aGrae GIS'),
-            callback=self.exportAtlasReport,
+            callback=self.WorkerAtlas,
             toolbar=self.toolbarAtlas,
             parent=self)
         
@@ -1756,9 +1758,18 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             name = self.atlas.currentFilename().replace(' ','_')
             name = name + '_' + QDateTime.currentDateTime().toString('yyyyMMddHHmmss')+".pdf"
             exporter.exportToPdf(path+r'\\'+name,settings)
+            time.sleep(1)
             self.atlas.next()
         self.atlas.endRender()
-        iface.messageBar().pushMessage('Reporte generado correctamente: <a href="{}">{}</a>'.format(path+r'\\'+name,name), 3, 5)
+        # iface.messageBar().pushMessage('Reporte generado correctamente: <a href="{}">{}</a>'.format(path+r'\\'+name,name), 3, 5)
+
+    def WorkerAtlas(self):
+        worker = Worker(self.exportAtlasReport)
+        worker.signals.finished.connect(lambda: iface.messageBar().pushMessage('Reporte generado correctamente', 3, 5))
+        self.threadpool.start(worker)
+         
+
+
     
     def exportResumeTable(self): 
         with self.conn: 
@@ -3724,7 +3735,9 @@ class MplCanvas(FigureCanvasQTAgg):
         barGenerator(self.ax1,values_3,colors_3,categorias,y_pos,'Suelo 3',True)
         barGenerator(self.ax2,values_2,colors_2,categorias,y_pos,'Suelo 2',False)
         barGenerator(self.ax3, values_1, colors_1,categorias, y_pos, 'Suelo 1', False)
-        
+
+
+
     
 
 

@@ -143,7 +143,10 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         self.table_dist.setColumnHidden(0,True)
         self.table_per.setColumnHidden(0,True)
         self.table_agri.setColumnHidden(0,True)
-        # self.table_agri.setColumnHidden(1,True)
+        self.table_agri_cult.setColumnHidden(0,True)
+        self.table_agri_cult.setColumnHidden(1,True)
+        self.table_agri_cult.setColumnHidden(2,True)
+        
         
         self.table_exp.doubleClicked.connect(self.getExpValues)
         self.table_dist.doubleClicked.connect(self.getDistValues)
@@ -1139,6 +1142,11 @@ class datosDialog(QtWidgets.QDialog, agraeDatos_):
             QIcon(self.icons_path['search_icon_path']), self.search_cult.TrailingPosition)
         line_buscar_action.triggered.connect(self.dataCult)
 
+        self.table_exp.setColumnHidden(0, True)
+        self.table_dist.setColumnHidden(0,True)
+        self.table_per.setColumnHidden(0,True)
+        self.table_cult.setColumnHidden(0,True)
+
 
     
     def dataAuto(self,sql:str) -> list:
@@ -1178,7 +1186,7 @@ class datosDialog(QtWidgets.QDialog, agraeDatos_):
     def dataExp(self):
         param = self.search_exp.text()
         if param == '':
-            sql = '''select e.idexplotacion, e.nombre, count(a.idagricultor) agricultores from explotacion e
+            sql = '''select e.idexplotacion, e.nombre from explotacion e
             left join agricultor a on a.idexplotacion = e.idexplotacion
             group by e.idexplotacion, e.nombre
             order by e.idexplotacion desc'''
@@ -1189,7 +1197,7 @@ class datosDialog(QtWidgets.QDialog, agraeDatos_):
             except Exception as ex:
                 print(ex)
         else:
-            sql ='''select e.idexplotacion,e.nombre, count(a.idagricultor) agricultores from explotacion e 
+            sql ='''select e.idexplotacion,e.nombre from explotacion e 
             left join agricultor a on a.idexplotacion = e.idexplotacion 
             where e.nombre ilike '%{}%' 
             group by e.idexplotacion,e.nombre

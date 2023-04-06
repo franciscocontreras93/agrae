@@ -274,8 +274,8 @@ class agrae:
         user_icon_path = self.icons_path['users']
         self.add_action(
             user_icon_path,
-            text=self.tr(u'Personas'),
-            status_tip=self.tr(u'Registro de Personas'),
+            text=self.tr(u'Gestion Datos de Trabajo'),
+            status_tip=self.tr(u'Gestionar Datos de Trabajo'),
             callback=self.runPersonas,
             parent=self.iface.mainWindow())
         veris_icon_path = self.icons_path['ceap']
