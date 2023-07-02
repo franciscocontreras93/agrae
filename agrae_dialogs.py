@@ -7,8 +7,11 @@ from qgis.core import *
 from qgis.utils import iface
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import pyqtSignal
-from psycopg2 import errors
+from psycopg2 import errors, extras
 from .processing import *
+# import collections
+# import json
+
 
 
 
@@ -22,6 +25,7 @@ agraePersonaDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), '
 agraeAgricultorDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/agricultor_dialog.ui'))
 agraeCeapDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/ceap_dialog.ui'))
 agraeVerifyGeomDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/verifyGeom_dialog.ui'))
+agraeAppliedLayerDialog, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/applied_dialog.ui'))
 
 agraeGestionDatos_ , _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/datos_dialog.ui'))
 agraeDatos_, _ =  uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dialogs/datos2_dialog.ui'))
@@ -30,6 +34,7 @@ agraeDatos_, _ =  uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ui/dia
 
 class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
     closingPlugin = pyqtSignal()
+    
     def __init__(self, parent=None) -> None:
         super(gestionDatosDialog,self).__init__(parent)
         self.utils = AgraeUtils()
@@ -50,6 +55,7 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         self.idDistribuidor = None
         self.idPersona = None
         self.idAgricultor = None
+        self.idCampania = None
 
 
         self.setupUi(self)
@@ -58,6 +64,10 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         self.dataDist()
         self.dataPer()
         self.dataAgri()
+        self.readCampania()
+        self.testTreeWidget()
+
+        self.getExpData()
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -87,6 +97,8 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
     def UIcomponents(self):
         self.date_start.setDate(QDate.currentDate())
         self.date_cultivo.setDate(QDate.currentDate())
+        self.date_desde.setDate(QDate.currentDate())
+        self.date_hasta.setDate(QDate.currentDate())
 
         
         self.btn_save_exp.clicked.connect(self.createExplotacion)
@@ -136,6 +148,24 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         self.btn_delete_agri_cult.setIconSize(QtCore.QSize(20, 20))
         self.btn_delete_agri_cult.setIcon(QIcon(self.icons_path['trash']))
 
+        self.btn_update_camp.clicked.connect(self.getCampValues)
+        self.btn_update_camp.setIconSize(QtCore.QSize(20, 20))
+        self.btn_update_camp.setIcon(QIcon(self.icons_path['pen-to-square']))
+
+        self.btn_delete_camp.clicked.connect(self.deleteCampania)
+        self.btn_delete_camp.setIconSize(QtCore.QSize(20, 20))
+        self.btn_delete_camp.setIcon(QIcon(self.icons_path['trash']))
+
+
+        self.btn_save_camp.clicked.connect(self.createCampania)
+        self.btn_save_camp.setIconSize(QtCore.QSize(20, 20))
+        self.btn_save_camp.setIcon(QIcon(self.icons_path['save']))
+        
+        self.btn_relate_camp.clicked.connect(self.createRelationCampaniaLote)
+        self.btn_relate_camp.setIconSize(QtCore.QSize(20, 20))
+        self.btn_relate_camp.setIcon(QIcon(self.icons_path['link']))
+        self.btn_relate_camp.setToolTip('Agregar Lote a la Campaña')
+
     
         #* TABLE WIDGET ACTIONS
         # hidden
@@ -146,6 +176,7 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         self.table_agri_cult.setColumnHidden(0,True)
         self.table_agri_cult.setColumnHidden(1,True)
         self.table_agri_cult.setColumnHidden(2,True)
+        self.table_camp.setColumnHidden(0,True)
         
         
         self.table_exp.doubleClicked.connect(self.getExpValues)
@@ -153,6 +184,7 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         self.table_per.doubleClicked.connect(self.getPerValues)
         self.table_agri.doubleClicked.connect(self.getAgriValues)
         self.table_agri_cult.doubleClicked.connect(self.getAgriCultValues)
+        self.table_camp.doubleClicked.connect(self.selectCampania)
 
         
         
@@ -162,8 +194,10 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         self.tab_dist.setCurrentIndex(0)
         self.tab_per.setCurrentIndex(0)
         self.tab_agri.setCurrentIndex(0)
+        self.tab_camp.setCurrentIndex(0)
 
         self.tab_agri.setTabEnabled(2,False)
+        self.tab_camp.setTabEnabled(2,False)
 
         self.tab_exp.setTabIcon(0, QIcon(self.icons_path['search_icon_path']))
         self.tab_exp.setTabIcon(1, QIcon(self.icons_path['pen-to-square']))
@@ -178,10 +212,20 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         self.tab_agri.setTabIcon(1, QIcon(self.icons_path['pen-to-square']))
         self.tab_agri.setTabIcon(2, QIcon(self.icons_path['farmer']))
         
+        #*  SIGNALS 
+
         self.tab_exp.currentChanged.connect(self.onChangeExp)
         self.tab_dist.currentChanged.connect(self.onChangeDist)
         self.tab_per.currentChanged.connect(self.onChangePer)
         self.tab_agri.currentChanged.connect(self.onChangeAgri)
+        self.tab_camp.currentChanged.connect(self.onChangeCamp)
+        self.tab_camp.currentChanged.connect(self.getExpData)
+
+
+        self.combo_exp.currentIndexChanged.connect(self.onChangeComboExp)
+
+
+        # self.desde_check.stateChanged.connect(self.onChangeState)
         
         #* ACTIONS 
 
@@ -213,11 +257,19 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
 
         self.search_agri.setCompleter(self.completerAgri)
         self.search_agri.returnPressed.connect(self.dataAgri)
-        self.search_agri.textChanged.connect(self.dataPer)
+        self.search_agri.textChanged.connect(self.dataAgri)
         self.search_agri.setClearButtonEnabled(True)
         line_buscar_action = self.search_agri.addAction(
             QIcon(self.icons_path['search_icon_path']), self.search_agri.TrailingPosition)
         line_buscar_action.triggered.connect(self.dataAgri)
+
+
+        self.search_camp.returnPressed.connect(self.readCampania)
+        self.search_camp.textChanged.connect(self.readCampania)
+        self.search_camp.setClearButtonEnabled(True)
+        line_buscar_action = self.search_camp.addAction(
+            QIcon(self.icons_path['search_icon_path']), self.search_camp.TrailingPosition)
+        line_buscar_action.triggered.connect(self.readCampania)
         
 
 
@@ -252,6 +304,29 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         completer.setCaseSensitivity(False)
         return completer
     
+    def changeAction(self,widget,func,icon):
+        widget.disconnect()
+        widget.clicked.connect(func)
+        widget.setIcon(QIcon(self.icons_path[icon]))
+    
+    def showMessage(self,level:int,msg,error=False):
+        """_summary_
+
+        Args:
+            level (int):    1 - SUCCESS
+                            2 - ERROR
+            msg (_type_): _description_
+        """        
+        if level == 1:
+            QgsMessageLog.logMessage(msg, 'aGrae GIS', level=3)
+            QMessageBox.about(self, "aGrae GIS:", msg)
+        if level == 2:
+            self.conn.rollback()
+            QMessageBox.about(self, "aGrae GIS:", msg)
+            if error:
+                QgsMessageLog.logMessage(error, 'aGrae GIS', level=1)
+
+
     def clearDist(self):
         self.cif_dist.clear()
         self.contact_dist.clear()
@@ -374,7 +449,7 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
                 self.conn.rollback()
             
             finally: 
-                self.loadDataExp()
+                # self.loadDataExp()
                 self.tab_exp.setCurrentIndex(0)
         else:
             QMessageBox.about(
@@ -876,7 +951,8 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
             sql = ''' select a.idagricultor, p.dni, a.nombre, e.nombre explotacion, d.nombre as distribuidor from agricultor a 
             left join explotacion e on a.idexplotacion = e.idexplotacion 
             left join persona p on p.idpersona = a.idpersona
-            left join distribuidor d on d.iddistribuidor = a.iddistribuidor where nombre ilike '%{}%'  or explotacion ilike '%{}%' or distribuidor ilike '%{}%'
+            left join distribuidor d on d.iddistribuidor = a.iddistribuidor 
+            where a.nombre ilike '%{}%'  or e.nombre ilike '%{}%' or d.nombre ilike '%{}%'
             order by a.idagricultor desc  '''.format(param, param, param,param)
             try:
                 self.tools.populateTable(sql, self.table_agri)
@@ -1055,6 +1131,316 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
 
                 pass
 
+    #! CAMPANIA
+    def onChangeCamp(self,e):
+        if e != 1:
+
+            self.nombre_campania.clear()
+            self.date_desde.setDate(QDate.currentDate())
+            self.date_hasta.setDate(QDate.currentDate())
+            self.desde_check.setChecked(False)
+            self.hasta_check.setChecked(False)
+            self.idCampania = None
+
+            self.changeAction(self.btn_save_camp,self.createCampania,'save')
+        
+        if e != 2:
+            self.tab_camp.setTabEnabled(2,False)
+            self.lbl_campania.clear()
+
+
+
+        pass
+    
+    def onChangeComboExp(self): 
+        data = self.combo_exp.currentData()
+        
+        sql = '''select idlotecampania,lote,cultivo, fechasiembra  from public.lotes where idexp = {}'''.format(data)
+        if data != None:
+            try:
+                self.idExplotacion = data
+                self.tools.populateTable(sql,self.table_exp_lote)
+            except Exception as ex: 
+                self.showMessage(2,'Ocurrio un Error favor revisa el panel de registros',str(ex))
+        else:
+            self.table_exp_lote.setRowCount(0)
+
+    
+    def getCampValues(self):
+        # self.getExpData()
+
+        row = self.table_camp.currentRow()
+        self.idCampania = self.table_camp.item(row,0).text()
+        with self.conn.cursor() as cursor: 
+            sql = '''SELECT * FROM datos.campanias WHERE id = {} '''.format(self.idCampania)
+            try: 
+                cursor.execute(sql)
+                data = cursor.fetchone()
+                data = {
+                    'nombre' : data[1],
+                    'desde' : data[2],
+                    'hasta' : data[3]
+                }
+                self.tab_camp.setCurrentIndex(1)
+                self.nombre_campania.setText(data['nombre'])
+                if data['desde'] != None:
+                    self.desde_check.setChecked(True)
+                    self.date_desde.setDate(data['desde'])
+                if data['hasta'] != None:
+                    self.hasta_check.setChecked(True)
+                    self.date_hasta.setDate(data['hasta'])
+                self.changeAction(self.btn_save_camp,self.updateCampania,'pen-to-square')  
+
+
+            except Exception as ex: 
+                print(ex)
+
+    def getExpData(self):
+        self.combo_exp.clear()
+        with self.conn.cursor(cursor_factory = extras.RealDictCursor) as cursor: 
+            sql = '''select idexplotacion as id,nombre FROM public.explotacion ORDER BY nombre'''
+            cursor.execute(sql)
+            data = cursor.fetchall()
+            self.combo_exp.addItem('Seleccionar...')
+
+            for e in data:
+                self.combo_exp.addItem(e['nombre'],e['id'])
+                # print(e['id'], e['nombre'])
+
+    def selectCampania(self):
+        self.tab_camp.setTabEnabled(2,True)
+        self.tab_camp.setCurrentIndex(2)
+        row = self.table_camp.currentRow()
+        self.idCampania = self.table_camp.item(row,0).text()
+        nombre = self.table_camp.item(row,1).text()
+        # print(self.idCampania,nombre)
+        try:
+            self.lbl_campania.setText(nombre)
+        except Exception as ex:
+            self.showMessage(2,'Ocurrio un Error favor revisa el panel de registros',str(ex))
+            pass
+
+        pass
+
+    def createCampania(self):
+        nombre = self.nombre_campania.text()
+
+        if self.desde_check.isChecked():
+            date_desde = self.date_desde.date().toString("dd/MM/yyyy")
+        else: 
+            date_desde = None
+
+        if self.hasta_check.isChecked():
+            date_hasta = self.date_hasta.date().toString("dd/MM/yyyy")
+        else: 
+            date_hasta = None
+        # print(nombre,date_desde,date_hasta)
+        if nombre != '' : 
+            with self.conn.cursor() as cursor: 
+                sql = '''INSERT INTO datos.campanias
+                (nombre, fecha_desde, fecha_hasta)
+                VALUES(%s, %s, %s);
+                '''
+
+                try:
+                    
+                    cursor.execute(sql,(nombre,date_desde,date_hasta))
+                    self.conn.commit()
+                    self.showMessage(1,"Campaña {} creada exitosamente".format(nombre))
+                    self.readCampania()
+                    self.tab_camp.setCurrentIndex(0)
+
+                except errors.lookup('23505'):
+                    
+                    self.showMessage(2,"La Campaña {} ya existe".format(nombre))
+                    self.conn.rollback()
+
+                except Exception as ex:
+                    print(ex)
+                    self.conn.rollback()
+
+                finally:
+                    self.nombre_campania.clear()
+                    self.desde_check.setChecked(False)
+                    self.hasta_check.setChecked(False)
+
+                    self.date_desde.setDate(QDate.currentDate())
+                    self.date_hasta.setDate(QDate.currentDate())
+                    
+
+                
+        else:
+            self.showMessage(2,'Nombre de la campaña incorrecto, favor ingresa un nombre.')
+
+    def readCampania(self):
+        param = self.search_camp.text()
+        if param == '':
+            sql = '''SELECT c.*, lc.total
+            FROM datos.campanias c
+            LEFT JOIN (SELECT idcampania , count(id ) total FROM datos.lotescampania GROUP BY idcampania) as lc on c.id = lc.idcampania
+            ORDER BY c.id desc '''
+
+            try:
+                self.tools.populateTable(sql, self.table_camp)
+            except IndexError as ie:
+                pass
+            except Exception as ex:
+                print(ex)
+        else:
+            sql = '''SELECT c.*, lc.total
+            FROM datos.campanias c
+            LEFT JOIN (SELECT idcampania , count(id ) total FROM datos.lotescampania GROUP BY idcampania) as lc on c.id = lc.idcampania
+            WHERE c.nombre ilike '%{}%' 
+            ORDER BY c.id desc'''.format(param)
+            try:
+                # print(sql)
+                self.tools.populateTable(sql, self.table_camp)
+                self.tab_camp.setCurrentIndex(0)
+            except IndexError as ie:
+                print(ie)
+                pass
+            except Exception as ex:
+                print(ex)
+
+        pass
+    
+    def updateCampania(self):
+        nombre = self.nombre_campania.text()
+        if self.desde_check.isChecked():
+            date_desde = self.date_desde.date().toString("dd/MM/yyyy")
+        else: 
+            date_desde = None
+        if self.hasta_check.isChecked():
+            date_hasta = self.date_hasta.date().toString("dd/MM/yyyy")
+        else: 
+            date_hasta = None
+
+        if self.idCampania != None:
+            sql = '''UPDATE datos.campanias
+            SET nombre=%s, fecha_desde=%s, fecha_hasta=%s
+            WHERE id=%s;
+            '''
+            with self.conn.cursor() as cursor: 
+                try:
+                    cursor.execute(sql,(nombre,date_desde,date_hasta,int(self.idCampania)))
+                    self.conn.commit() 
+                    self.showMessage(1,"Campaña actualizada exitosamente")
+                    self.readCampania()
+                    self.tab_camp.setCurrentIndex(0)
+                
+                except errors.lookup('23505'):
+                    self.showMessage(2,"La Campaña {} ya existe".format(nombre))
+                    # self.conn.rollback()
+
+                except Exception as ex:                    
+                    # self.showMessage(2,"Ocurrio un Error, revisa el panel de registro de mensajes.")
+                    print(ex)
+                    self.conn.rollback()
+                finally:
+                    self.nombre_campania.clear()
+                    self.desde_check.setChecked(False)
+                    self.hasta_check.setChecked(False)
+                    self.date_desde.setDate(QDate.currentDate())
+                    self.date_hasta.setDate(QDate.currentDate())
+                
+    def deleteCampania(self):
+        row = self.table_camp.currentRow()
+        self.idCampania = self.table_camp.item(row,0).text()
+        nombre = self.table_camp.item(row,1).text()
+        sql = f'''DELETE FROM datos.campanias
+        WHERE id={self.idCampania};
+        '''
+        with self.conn.cursor() as cursor:
+            try:
+                cursor.execute(sql)
+                self.conn.commit()
+                self.readCampania()
+                pass
+
+            except  errors.lookup('23503'):
+                self.showMessage(2,"La campaña {} esta referida en otras tablas".format(nombre))
+                # QgsMessageLog.logMessage("La campaña {} esta referida en otras tablas".format(nombre), 'aGrae GIS', level=1)
+                # QMessageBox.about(self, "aGrae GIS:", "La explotacion {} esta referida en otras tablas".format(nombre))
+            
+            except Exception as ex:
+                self.conn.rollback()
+                print(ex)
+                pass
+
+            finally:
+                pass
+        
+        
+
+
+        pass
+    
+    def createRelationCampaniaLote(self):
+        sql = '''INSERT INTO datos.lotescampania
+        (idlotecampania, idcampania)
+        VALUES
+        '''
+        idx = self.table_exp_lote.selectionModel().selectedRows()
+        ids = [int(self.table_exp_lote.item(i.row(), 0).text()) for i in sorted(idx)]
+        values = [ '''({}, {}),'''.format(i,self.idCampania) for i in ids]
+        for e in values:
+            sql = sql + e
+
+        sql = sql[:-1] + ';'
+
+        with self.conn.cursor() as cursor: 
+            try:
+                cursor.execute(sql)
+                self.conn.commit()
+                self.showMessage(1,'Lotes asociados correctamente')
+                pass
+            except errors.lookup('23505'):
+                    
+                    self.showMessage(2,"Los Lotes ya existen en la Campaña seleccionada.")
+                    self.conn.rollback()
+            except Exception as ex:
+                self.showMessage(2,'Ocurrio un error, revisa el panel de registro de mensajes.', str(ex))
+
+                pass
+
+            finally:
+                ids = []
+                values = []
+                
+
+        # for i in sorted(idx): 
+        #     idlotecampania =  self.tableWidget.item(i.row(), 0).text()
+
+
+        pass
+
+    def dropRelationCampaniaLote(self):
+        pass
+    def cloneRelationCampaniaLote(self):
+        pass
+
+
+    def testTreeWidget(self):
+        with self.conn.cursor(cursor_factory = extras.RealDictCursor) as cursor:
+        # with self.conn.cursor() as cursor:
+            sql = '''select  nombre_campania camp, exp_nombre exp , lote
+            from lotes l 
+            where id_campania notnull 
+            order by nombre_campania, exp_nombre asc   '''
+            cursor.execute(sql)
+            data = cursor.fetchall()
+            # d = {e[0]:e for e in cursor.fetchall() }
+            
+            d = {}
+            for e in data:
+                d[e['camp']] = {}
+
+               
+
+                
+
+            
+            
 
 
 
@@ -3730,10 +4116,104 @@ class verifyGeometryDialog(QtWidgets.QDialog,agraeVerifyGeomDialog):
         #     print(ex)
         
 
+class appliedLayerDialog(QtWidgets.QDialog,agraeAppliedLayerDialog):
+    closingPlugin = pyqtSignal()
+    def __init__(self,parent=None)-> None:
+        super(appliedLayerDialog,self).__init__(parent)
+        uic.loadUi(os.path.join(os.path.dirname(__file__),'ui/dialogs/applied_dialog.ui'),self)
+        self.utils = AgraeUtils()
+        self.tools = AgraeToolset()
+        self.conn = self.utils.Conn()
+
+        
+        self.UIComponents()
+        
+
+    def closeEvent(self,event):
+        self.closingPlugin.emit()
+
+    def UIComponents(self):
+        self.layer = self.combo_layer.currentLayer()
+        self.fields = [self.combo_date,self.combo_date_2,self.combo_product,self.combo_applied,self.combo_volumen]
+        self.updateFields(self.layer)
+        self.combo_layer.layerChanged.connect(self.updateFields)
+        self.pushButton.clicked.connect(self.saveAppliedData)
+        self.pushButton_2.clicked.connect(self.saveRindesData)
 
 
 
+    def updateFields(self,l):
+        self.layer = l
+
+        for f in self.fields:
+            f.setLayer(l)
+
+
+
+
+    def saveAppliedData(self):
+        date =  self.combo_date.currentField()
+        product =  self.combo_product.currentField()
+        applied =  self.combo_applied.currentField()
+        values = ''
+        base = '''INSERT INTO field.data_applied (appliend_date, applied_product, applied_rate, geom) VALUES\n'''
+        srid = self.layer.crs().authid()[5:]
+        # features = [f for f in layer.getFeautures()]
+        # step = 1000
+        # for i in range(0,len(features),1000):
+        #     print(features[i:i+1000])
+        
+        for f in self.layer.getFeatures():
+            geom = f.geometry().asWkt()
+            values = values + '''('{}','{}',{},st_geomFromText('{}')),\n'''.format(f[date],f[product],f[applied],geom)
+        
+        sql = base + values
+
+        with self.conn.cursor() as cursor:
+            try:
+                cursor.execute(sql[:-2])
+                self.conn.commit()
+                iface.messageBar().pushMessage(
+                            'aGraes GIS', 'Data de Aplicacion cargada Correctamente', level=3, duration=3)
+            except Exception as ex:
+                iface.messageBar().pushMessage(
+                            'aGraes GIS', 'Ocurrio un  Error', level=3, duration=3)
+                print(ex)
+                self.conn.rollback()
+            
+              
+
+        # print(sql[:-2])
+        pass
+        
     
+    def saveRindesData(self):
+        date =  self.combo_date_2.currentField()
+        volumen =  self.combo_volumen.currentField()
+        values = ''
+        base = '''INSERT INTO field.data_rindes(fecha, volumen, geom) VALUES\n'''
+
+        for f in self.layer.getFeatures():
+            try:
+                fecha = f[date].toString("dd/MM/yyyy")
+            except:
+                fecha = f[date]
+            
+            geom = f.geometry().asWkt()
+            values = values + '''('{}',{},st_geomFromText('{}')),\n'''.format(fecha,f[volumen],geom)
+        
+        sql = base + values
+
+        with self.conn.cursor() as cursor:
+            try:
+                cursor.execute(sql[:-2])
+                self.conn.commit()
+            except:
+                self.conn.rollback()
+        
+        
+        # print(sql)
+        pass
    
 
 

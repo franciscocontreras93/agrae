@@ -1,4 +1,7 @@
 import os, sys, re
+from zipfile import ZipFile
+import shutil
+from os.path import basename
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QThread, QAbstractTableModel
@@ -326,6 +329,8 @@ class AgraeToolset():
             srid = lyr.crs().authid()[5:]
             features = lyr.selectedFeatures()
             # print(features)
+            sql = '''insert into ambiente(ambiente,ndvimax,geometria)
+                values '''
             
             with self.conn as conn:
                 try:
@@ -341,14 +346,11 @@ class AgraeToolset():
                                 
                             ndvimax = f['ndvimax']
                             geometria = f.geometry().asWkt()
-                            sql = f''' insert into ambiente(ambiente,ndvimax,geometria)
-                                    values(
-                                    {amb},
-                                    {ndvimax},
-                                    st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))'''
+                            sql =sql +  f'''({amb},{ndvimax}, st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326)))),'''
                             # print(f'{oa}-{amb}-{ndvimax}-{atlas}')
-                            cursor.execute(sql)
-                            
+                        sql = sql[:-1]
+                        # print(sql)
+                        cursor.execute(sql)    
                         conn.commit()
                             
                         QMessageBox.about(widget, 'aGrae GIS', 'Ambiente Cargado Correctamente \na la base de datos')
@@ -382,10 +384,12 @@ class AgraeToolset():
     def crearParcela(self,widget=None):
         count = 0
         _count = 0
+        sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria,idsigpac) VALUES '''
         with self.conn as conn:
             try:
                 cur = conn.cursor()
                 layer = self.iface.activeLayer()
+                srid = layer.crs().authid()[5:]
                 # print(layer.name())
                 if len(layer.selectedFeatures()) > 0:
                     features = layer.selectedFeatures()
@@ -398,7 +402,6 @@ class AgraeToolset():
                     for feat in features: 
                         
                         ls = feat.geometry().asWkt()
-                        srid = layer.crs().authid()[5:]
                         name = ''
                         #* update select of features attributes
                         
@@ -434,19 +437,21 @@ class AgraeToolset():
                         
                         idsigpac = f'{prov:02d}{mcpo:03d}{aggregate:02d}{zone:02d}{poly:03d}{allotment:05d}{inclosure:05d}'
 
-                        sql = f'''INSERT INTO parcela(nombre,provincia,municipio,agregado,zona,poligono,parcela,recinto,geometria,idsigpac) VALUES('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))),'{idsigpac}')'''
-                        try:
-                            cur.execute(sql)
-                            conn.commit()
-                            count += 1
-                            # print('agregado correctamente')
-                            # QgsMessageLog.logMessage(str(idsigpac))
-                        except errors.lookup('23505'):
-                            # errors.append(idParcela)
-                            _count += 1
-                            # print(f'La parcela {feat[0]} ya existe.')
-                            QMessageBox.about(widget, f"aGrae GIS:",f'La parcela: {feat[0]} ya existe.')
-                            # conn.rollback()
+                        sql = sql + f'''('{name}',{prov},{mcpo},{aggregate},{zone},{poly},{allotment},{inclosure},st_multi(st_force2d(st_transform(st_geomfromtext('{ls}',{srid}),4326))),'{idsigpac}'),\n'''
+                        # print(sql)
+                    try:
+                        cur.execute(sql[:-2])
+                        conn.commit()
+                        count += 1
+                        # print('agregado correctamente')
+                        # print(sql[:-2])
+                        # QgsMessageLog.logMessage(str(idsigpac))
+                    except errors.lookup('23505'):
+                        # errors.append(idParcela)
+                        _count += 1
+                        # print(f'La parcela {feat[0]} ya existe.')
+                        QMessageBox.about(widget, f"aGrae GIS:",f'La parcela: {feat[0]} ya existe.')
+                        # conn.rollback()
 
                     QMessageBox.about(widget, f"aGrae GIS:",
                                         f"Se agregaron {count} parcelas correctamente.\nErroneas = {_count}")
@@ -460,7 +465,7 @@ class AgraeToolset():
                 conn.rollback()
 
             except Exception as ex:
-                # print(ex)
+                print(ex)
                 QMessageBox.about(widget, f"aGrae GIS", f"No se pudo almacenar el registro {ex}")
                 # conn.rollback()
     def renameParcela(self,widget): 
@@ -529,10 +534,12 @@ class AgraeToolset():
         QgsProject.instance().addMapLayer(layer)
         self.iface.setActiveLayer(layer)
         self.iface.zoomToActiveLayer()
-    def buscarLotes(self,widget,status):
-        nombre = widget.line_buscar.text()
-        sinceDate = widget.sinceDate.date().toString('yyyy-MM-dd')
-        untilDate = widget.untilDate.date().toString('yyyy-MM-dd')
+    def  buscarLotes(self,parent,status):
+        nombre = parent.line_buscar.text()
+        idCampania = parent.combo_camp.currentData()
+        idExp = parent.combo_exp.currentData()
+        sinceDate = parent.sinceDate.date().toString('yyyy-MM-dd')
+        untilDate = parent.untilDate.date().toString('yyyy-MM-dd')
 
         sqlQuery = ''
         
@@ -549,12 +556,13 @@ class AgraeToolset():
                     left join parcela p on p.idparcela = lp.idparcela 
                     left join campania ca on ca.idcampania = lc.idcampania 
                     left join cultivo cu on cu.idcultivo = ca.idcultivo 
-                    left join explotacion ex on ex.idexplotacion = ca.idexplotacion 
+                    left join explotacion ex on ex.idexplotacion = ca.idexplotacion
+                    where ls.id_campania = {idCampania} and ls.idexp = {idExp}
                     group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
                     order by ex.nombre, cu.nombre, ca.fechasiembra desc'''
-                    widget.btn_add_layer.setEnabled(False)
+                    parent.btn_add_layer.setEnabled(False)
                     try:
-                        widget.btn_chart.setEnabled(True)
+                        parent.btn_chart.setEnabled(True)
                     except:
                         pass
                     
@@ -573,9 +581,9 @@ class AgraeToolset():
                     group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
                     order by ex.nombre, cu.nombre, ca.fechasiembra desc;                        
                     """
-                    widget.btn_reload.setEnabled(True)
+                    parent.btn_reload.setEnabled(True)
                     try:
-                        widget.btn_chart.setEnabled(True)
+                        parent.btn_chart.setEnabled(True)
                     except:
                         pass
 
@@ -593,9 +601,9 @@ class AgraeToolset():
                     group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
                     order ex.nombre, by cu.nombre, ca.fechasiembra desc
                     """
-                    widget.btn_reload.setEnabled(True)
+                    parent.btn_reload.setEnabled(True)
                     try:
-                        widget.btn_chart.setEnabled(True)
+                        parent.btn_chart.setEnabled(True)
                     except:
                         pass
 
@@ -614,7 +622,7 @@ class AgraeToolset():
                     group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
                     order by ex.nombre,cu.nombre, ca.fechasiembra desc 
                     """
-                    widget.btn_reload.setEnabled(True)
+                    parent.btn_reload.setEnabled(True)
                 
                 
 
@@ -626,21 +634,21 @@ class AgraeToolset():
                 # print(data)
                 if len(data) == 0:
                     QMessageBox.about(
-                        widget, "aGrae GIS:", "No existen registros con los parametros de busqueda")
-                    widget.tableWidget.setRowCount(0)
+                        parent, "aGrae GIS:", "No existen registros con los parametros de busqueda")
+                    parent.tableWidget.setRowCount(0)
                 else:
-                    widget.btn_add_layer.setEnabled(True)
-                    # widget.btn_add_layer_2.setEnabled(True)
-                    widget.sinceDateStatus = False
-                    widget.untilDate.setEnabled(False)
+                    parent.btn_add_layer.setEnabled(True)
+                    # parent.btn_add_layer_2.setEnabled(True)
+                    parent.sinceDateStatus = False
+                    parent.untilDate.setEnabled(False)
                     self.queryCapaLotes = sqlQuery
                     try:
-                        widget.combo_cultivos.clear()
+                        parent.combo_cultivos.clear()
                         cultivos = list(set([i[7] for i in data]))
                         # print(cultivos)
-                        widget.combo_cultivos.addItems(cultivos)
-                        widget.check_cultivos.setEnabled(True)
-                        widget.combo_cultivos.setEnabled(True)
+                        parent.combo_cultivos.addItems(cultivos)
+                        parent.check_cultivos.setEnabled(True)
+                        parent.combo_cultivos.setEnabled(True)
                     except Exception as ex: 
                         QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
                         pass
@@ -650,17 +658,17 @@ class AgraeToolset():
                     j = 1
                 
                 
-                    widget.tableWidget.setRowCount(a)
-                    widget.tableWidget.setColumnCount(b)
+                    parent.tableWidget.setRowCount(a)
+                    parent.tableWidget.setColumnCount(b)
                     for j in range(a):
                         for i in range(b):
                             item = QTableWidgetItem(str(data[j][i]))
-                            widget.tableWidget.setItem(j,i,item)
-                        # obj = widget.tableWidget.item(j,1).text()
+                            parent.tableWidget.setItem(j,i,item)
+                        # obj = parent.tableWidget.item(j,1).text()
             except Exception as ex:
                 # print(ex)
                 print(ex)
-                QMessageBox.about(widget, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")
+                QMessageBox.about(parent, "Error:", f"Verifica el Parametro de Consulta (ID o Nombre)")
 
     def filtrarCultivo(self,widget,cultivo:str,status:bool):
         nombre = widget.line_buscar.text()
@@ -782,6 +790,7 @@ class AgraeToolset():
     def crearSegmento(self,widget):
         lyr = self.iface.activeLayer()
         srid = lyr.crs().authid()[5:]
+        sql = """ insert into segmento(segmento,geometria) values """
         if len(lyr.selectedFeatures()) > 0: features = lyr.selectedFeatures() 
         else: features = lyr.getFeatures()
         try:
@@ -791,13 +800,10 @@ class AgraeToolset():
                     for f in features :
                         segm = f['segmento']            
                         geometria = f.geometry() .asWkt()
-                        sql = f""" insert into segmento(segmento,geometria)
-                                            values
-                                            ({segm},
-                                            st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326))))"""                   
+                        sql = sql + f""" ({segm},st_multi(st_force2d(st_transform(st_geomfromtext('{geometria}',{srid}),4326)))),"""                   
                         # print(sql)
-                        cursor.execute(sql)
-                        
+                    
+                    cursor.execute(sql[:-1])   
                     conn.commit() 
                     QMessageBox.about(widget, 'aGrae GIS', 'Segmentos Cargados Correctamente \na la base de datos')
                 except Exception as ex:
@@ -1062,6 +1068,32 @@ class AgraeToolset():
             except Exception as ex: 
                 QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
 
+    def crearRetiticula(self,idlotecampania):
+               
+        conn = connect(dbname=self.dns['dbname'], user=self.dns['user'],
+                       password=self.dns['password'], host=self.dns['host'], port=self.dns['port'])
+        with conn:
+            try:
+                sql = '''insert into public.reticulabase (geometria,idlotecampania)
+                with grid as (
+                select (st_squaregrid(10, st_transform(geometria,25830))).* 
+                from public.lotes 
+                where idlotecampania  = {}
+                ) 
+                select st_transform(g.geom,4326) as geometria, l.idlotecampania from grid g
+                join public.lotes l on st_intersects(l.geometria , st_transform(g.geom,4326))
+            where l.idlotecampania not in (select r.idlotecampania from (select distinct idlotecampania from public.reticulabase) r);'''.format(idlotecampania)
+                cursor = conn.cursor()
+                cursor.execute(sql)
+
+                print('Grilla Creada exitosamente')
+
+
+            except Exception as ex:
+                QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
+                print(ex)
+
+
     def populateTable(self,sql,widget, action=False):
         
         with self.conn:
@@ -1072,6 +1104,7 @@ class AgraeToolset():
                     # print(data)
                     widget.setRowCount(0)
                     if len(data) > 0:
+                        # print(data)
                         a = len(data)
                         b = len(data[0])
                         i = 1
@@ -1080,7 +1113,14 @@ class AgraeToolset():
                         widget.setColumnCount(b)
                         for j in range(a):
                             for i in range(b):
-                                item = QTableWidgetItem(str(data[j][i]))
+                                if str(data[j][i]) != 'None':
+                                    item = QTableWidgetItem(str(data[j][i]))
+                                else:
+                                    item  = QTableWidgetItem(str('N/D'))
+                                # print(item.text())
+                                # if item.text() == 'None':
+                                #     item = 'N/D'
+                                 
                                 widget.setItem(j, i, item)
                 except IndexError as ie:
                     pass
@@ -1099,6 +1139,18 @@ class AgraeToolset():
             button.setEnabled(False)
             # print('nada')
 
+    def crearRindes(self,idlotecampania):
+        sql = '''
+        insert into public.reticulabase (geometria,idlotecampania)
+            with grid as (
+            select (st_squaregrid(10, st_transform(geometria,25830))).* 
+            from public.lotes 
+            where idlotecampania  = {}
+            ) 
+            select st_transform(g.geom,4326) as geometria, l.idlotecampania from grid g
+            join public.lotes l on st_intersects(l.geometria , st_transform(g.geom,4326)) ;
+        '''.format(idlotecampania)
+        print(sql)
 
 class AgraeAnalitic(): 
     def __init__(self):
@@ -1677,6 +1729,43 @@ class AppDemo(QtWidgets.QWidget):
                 # print('FINALIZADO UNIDADES FERTILIZANTES') 
             except Exception as ex: 
                 print(ex)
+
+
+class AgraeZipper():
+    
+
+    def __init__(self) -> None:
+
+        pass
+
+    def zipFiles(self,dirName, remove=False):
+        # create a ZipFile object
+      
+        with ZipFile(f'{dirName}.zip', 'w') as zipObj:
+            # Iterate over all the files in directory
+            for folderName, subfolders, filenames in os.walk(dirName):
+                for filename in filenames:
+                    #create complete filepath of file in directory
+                    filePath = os.path.join(folderName, filename)
+                    # Add file to zip
+                    zipObj.write(filePath, basename(filePath))
+        
+        if remove:
+            self.remove(dirName)
+
+
+       
+
+    def remove(self,path):
+        """ param <path> could either be relative or absolute. """
+        if os.path.isfile(path) or os.path.islink(path):
+            os.remove(path)  # remove the file
+        elif os.path.isdir(path):
+            shutil.rmtree(path)  # remove dir and all contains
+        else:
+            raise ValueError("file {} is not a file or dir.".format(path))
+        
+
 
 
 

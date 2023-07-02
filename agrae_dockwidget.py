@@ -27,6 +27,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+
+
 # from datetime import date
 from psycopg2 import InterfaceError, errors, extras
 from PyQt5.QtCore import QRegExp, QDate, QDateTime, QThreadPool
@@ -38,7 +40,8 @@ from qgis.core import *
 from qgis.utils import iface
 from qgis.PyQt.QtXml import QDomDocument
 from .agrae_dialogs import expFindDialog, agraeSegmentoDialog, agraeParametrosDialog, cultivoFindDialog, agricultorDialog
-from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic, TableModel, PanelRender, AppDemo
+
+from .utils import AgraeUtils, AgraeToolset,  AgraeAnalitic, TableModel, PanelRender, AgraeZipper
 from .agrae_worker import Worker
 
 from .resources import *
@@ -610,6 +613,7 @@ class loteFindDialog(QtWidgets.QDialog, agraeLoteDialog):
             
             if len(error) == 0:
                 self.tools.actualizarNecesidades()
+                self.tools.crearRetiticula(idLote)
                 QMessageBox.about(self, 'aGrae GIS', f'Se creo la Relacion sin errores ') 
             elif len(error) >0 and len(error) <len(features):
                 self.tools.actualizarNecesidades()
@@ -693,6 +697,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
             
         
         self.threadpool = QThreadPool()
+        print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
         self.utils = AgraeUtils()
         self.tools = AgraeToolset()
         self.analitic = AgraeAnalitic()
@@ -719,6 +724,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
               
         self.setupUi(self)
         self.UIcomponents()
+        self.getCampanias()
+        self.getExpCampanias()
+        self.buscarLotes()
 
 
     def UIcomponents(self):
@@ -775,9 +783,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                     QIcon(icons_path['search_icon_path']), self.line_buscar.TrailingPosition)
         line_buscar_action.triggered.connect(self.buscarLotes)
 
-
+        #* SIGNALS
         self.combo_cultivos.currentTextChanged.connect(self.filtrarCultivo) #* FILTRAR CULTIVOS
-        
+        self.combo_camp.currentIndexChanged.connect(self.getExpCampanias)
+        self.combo_exp.currentIndexChanged.connect(self.buscarLotes)
 
         self.btn_add_layer.setIcon(QIcon(icons_path['add_layer_to_map']))
         self.btn_add_layer.setIconSize(QtCore.QSize(20, 20))
@@ -900,7 +909,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.utils.add_action(
             icons_path['print'],
             text=self.tr(u'aGrae GIS'),
-            callback=self.WorkerAtlas,
+            callback=self.exportAtlasReport,
             toolbar=self.toolbarAtlas,
             parent=self)
         
@@ -1524,8 +1533,41 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.lote_dateCosecha.setMinimumDate(d1)
         self.lote_dateCosecha.setDate(d1)
 
+    def getCampanias(self):
+        # self.combo_camp.clear()
+        # print(self.combo_camp.currentData())
+        with self.conn.cursor(cursor_factory = extras.RealDictCursor) as cursor: 
+            sql = '''select id,nombre FROM datos.campanias ORDER BY nombre'''
+            cursor.execute(sql)
+            data = cursor.fetchall()
+            # self.combo_camp.addItem('Seleccionar...')
+
+            for e in data:
+                self.combo_camp.addItem(e['nombre'],e['id'])
+
+    def getExpCampanias(self):
+        idCampania = self.combo_camp.currentData()
+        # print(idCampania)
+        self.combo_exp.clear()
+        
+        with self.conn.cursor(cursor_factory = extras.RealDictCursor) as cursor: 
+            sql = '''SELECT distinct e.idexplotacion id, e.nombre FROM public.explotacion e 
+            JOIN public.campania cmp ON cmp.idexplotacion = e.idexplotacion 
+            JOIN public.lotecampania lc1 ON lc1.idcampania = cmp.idcampania 
+            JOIN datos.lotescampania lc2 ON lc2.idlotecampania  = lc1.idlotecampania  
+            JOIN datos.campanias camp ON camp.id = lc2.idcampania
+            WHERE camp.id = {}; '''.format(idCampania)
+            cursor.execute(sql)
+            data = cursor.fetchall()
+            # print(data)
+
+            for e in data:
+                self.combo_exp.addItem(e['nombre'],e['id'])
+
+
     def buscarLotes(self):
-        self.tools.buscarLotes(self, self.sinceDateStatus)
+        if self.combo_exp.currentData() != None:
+            self.tools.buscarLotes(self, self.sinceDateStatus)
 
     def reloadLotes(self):
         self.tools.buscarLotes(self, False)
@@ -1537,19 +1579,19 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         uriSegmentos = QgsDataSourceUri()
         uriSegmentos.setConnection(dns['host'], dns['port'],
                           dns['dbname'], dns['user'], dns['password'])
-        uriSegmentos.setDataSource(
-            'public', 'segmentos', 'geometria', f'{exp}', 'id')
+        sql = '''select * from segmentos where {}'''.format(exp)
+        uriSegmentos.setDataSource('',f'({sql})','geometria','','id')
         lyrSegmentos = QgsVectorLayer(uriSegmentos.uri(
             False), f'''Segmentos''', 'postgres')
-        
+        # print(lyrSegmentos)
         uriAmbientes = QgsDataSourceUri() 
         uriAmbientes.setConnection(dns['host'], dns['port'],
                                    dns['dbname'], dns['user'], dns['password'])
-        uriAmbientes.setDataSource(
-            'public', 'ambientes', 'geometria', f'{exp}', 'id')
+        sql = '''select * from ambientes where {}'''.format(exp)
+        uriAmbientes.setDataSource('',f'({sql})','geometria','','id')
         lyrAmbientes = QgsVectorLayer(uriAmbientes.uri(
             False), f'''Ambientes''', 'postgres')
-        
+        # print(lyrAmbientes)
 
         # uriParcelas = QgsDataSourceUri()
         # uriParcelas.setConnection(dns['host'], dns['port'],
@@ -1562,29 +1604,77 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         uriUnidades = QgsDataSourceUri() 
         uriUnidades.setConnection(dns['host'], dns['port'],
                                    dns['dbname'], dns['user'], dns['password'])
-        uriUnidades.setDataSource(
-            'public', 'unidades', 'geometria', f'{exp}', 'id')
+        sql = '''select * from unidades where {}'''.format(exp)
+        uriUnidades.setDataSource('',f'({sql})','geometria','','id')
         lyrUnidades = QgsVectorLayer(uriUnidades.uri(
-            False), f'''UNIDADES''', 'postgres')
+            False), f'''Unidades''', 'postgres')
+        # print(lyrUnidades)
         
         
         uriLotes = QgsDataSourceUri() 
         uriLotes.setConnection(dns['host'], dns['port'],
                                    dns['dbname'], dns['user'], dns['password'])
-        uriLotes.setDataSource(
-            'public', 'lotes', 'geometria', f'{exp}', 'id')
+        sql = '''select * from lotes where {} '''.format(exp)
+        uriLotes.setDataSource('',f'({sql})','geometria','','id')
         lyrLotes = QgsVectorLayer(uriLotes.uri(
             False), f'Lote', 'postgres')
+        # print(lyrLotes)
         
-        if lyrUnidades.isValid():
-            QgsProject.instance().addMapLayer(lyrUnidades)
+
+        # uriReticulaRindes = QgsDataSourceUri()
+        # uriReticulaRindes.setConnection(dns['host'], dns['port'],
+        #                            dns['dbname'], dns['user'], dns['password'])
+        # sql = '''select distinct  
+        # on (r.id) r.id,
+        # r.idlotecampania,
+        # da.median as rinde,
+        # r.geometria as geom
+        # from public.reticulabase r
+        # join (select geom,
+        #     percentile_cont(0.5) within group (order by volumen ) as median 
+        #     from field.data_rindes da group by geom) as da on st_intersects(da.geom,r.geometria)
+        # where r.{} '''.format(exp)
+        # # print(exp)
+        # uriReticulaRindes.setDataSource('',f'({sql})','geom','','id')
+        # lyrReticulaRindes = QgsVectorLayer(uriReticulaRindes.uri(), f'Reticula_Rindes', 'postgres')
+        # print(lyrReticulaRindes)
+        
+        # uriReticulaAplicacion = QgsDataSourceUri()
+        # uriReticulaAplicacion.setConnection(dns['host'], dns['port'],
+        #                            dns['dbname'], dns['user'], dns['password'])
+        # sql = '''select distinct  
+        # on (r.id) r.id,
+        # r.idlotecampania,
+        # da.median as aplicado,
+        # r.geometria as geom
+        # from public.reticulabase r
+        # join (select geom,
+        #     percentile_cont(0.5) within group (order by da.applied_rate ) as median 
+        #     from field.data_applied da group by geom) as da on st_intersects(da.geom,r.geometria)
+        # where r.{} '''.format(exp)
+        # print(sql)
+        # uriReticulaAplicacion.setDataSource('',f'({sql})','geom','','id')
+        # lyrReticulaAplicacion = QgsVectorLayer(uriReticulaAplicacion.uri(), f'Reticula_Aplicacion', 'postgres')
+        # print(lyrReticulaAplicacion)
+
+
+
+        
+        # layers = [lyrReticulaRindes, lyrReticulaAplicacion, lyrAmbientes, lyrUnidades, lyrSegmentos, lyrLotes]
+        layers = [ lyrAmbientes, lyrUnidades, lyrSegmentos, lyrLotes]
+        for lyr in layers:
+            if lyr.isValid():
+                QgsProject.instance().addMapLayer(lyr)
+            else:
+                QgsProject.instance().addMapLayer(lyr)
+            
            
-        if lyrAmbientes.isValid(): 
-            QgsProject.instance().addMapLayer(lyrAmbientes)
-        if lyrSegmentos.isValid():
-            QgsProject.instance().addMapLayer(lyrSegmentos)
-        if lyrLotes.isValid():
-            QgsProject.instance().addMapLayer(lyrLotes)
+        # if lyrAmbientes.isValid(): 
+        #     QgsProject.instance().addMapLayer(lyrAmbientes)
+        # if lyrSegmentos.isValid():
+        #     QgsProject.instance().addMapLayer(lyrSegmentos)
+        # if lyrLotes.isValid():
+        #     QgsProject.instance().addMapLayer(lyrLotes)
         
     
     def filterLote(self):
@@ -1700,7 +1790,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
     
     def setAtlasFeature(self):
 
-        self.layout = self.manager.layoutByName('Prescripcion')
+        # self.layout = self.manager.layoutByName('Prescripcion')
         self.atlas = self.layout.atlas()       
         self.atlas.setFilterFeatures(True)
         self.atlas.setFilterExpression(self.atlasExp)
@@ -1710,8 +1800,9 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         nombres = [f['lote'] for f in self.atlas.coverageLayer().getFeatures()]
         for i in nombres:
             self.comboAtlas.addItem(f'{i}')
-            QgsMessageLog.logMessage(f'{self.atlas.currentFeatureNumber()}-{self.atlas.currentFilename()}', 'aGrae GIS', level=3)
-            self.atlas.next()
+            # QgsMessageLog.logMessage(f'{self.atlas.currentFeatureNumber()}-{self.atlas.currentFilename()}', 'aGrae GIS', level=3)
+            # time.sleep(1)
+            # self.atlas.next()
             
         self.atlas.seekTo(0)
         self.moveCanvas()
@@ -1745,28 +1836,60 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         """        
         s = QSettings('agrae','dbConnection')
         path = s.value('reporte_path')
+        directory = list(set([f['exp_nombre'] for f in self.atlas.coverageLayer().getFeatures()]))[0]
+        directory = directory.replace(' ','_')
+        path = os.path.join(path,directory+'_' + QDateTime.currentDateTime().toString('yyyyMMddHHmmss'))
+        zipper = AgraeZipper()
+        try:
+            os.makedirs(path)
+            self.atlas.beginRender()
+            settings = QgsLayoutExporter.PdfExportSettings()
+            settings.appendGeoreference = False
+            settings.simplifyGeometries = True
+            
+            exporter = QgsLayoutExporter(self.atlas.layout())
+            
+            for i in range(0,self.atlas.count()):
+                self.atlas.seekTo(i)
+                name = self.atlas.currentFilename().replace(' ','_')
+                name = name + '_' + QDateTime.currentDateTime().toString('yyyyMMddHHmmss')+".pdf"
+                exporter.exportToPdf(path+r'\\'+name,settings)
+                iface.messageBar().pushMessage('Reporte generado correctamente: <a href="{}">{}</a>'.format(path+r'\\'+name,name), 3, 5)
+                # time.sleep(1)
+                # self.atlas.next()
+            self.atlas.endRender()
+            zipper.zipFiles(path,True)
+        except Exception as ex:
+            print(ex)
+        
+    
+
      
-        self.atlas.beginRender()
-        settings = QgsLayoutExporter.PdfExportSettings()
-        settings.appendGeoreference = False
-        settings.simplifyGeometries = True
         
-        exporter = QgsLayoutExporter(self.atlas.layout())
-        
-        for i in range(0,self.atlas.count()):
-            self.atlas.seekTo(i)
-            name = self.atlas.currentFilename().replace(' ','_')
-            name = name + '_' + QDateTime.currentDateTime().toString('yyyyMMddHHmmss')+".pdf"
-            exporter.exportToPdf(path+r'\\'+name,settings)
-            time.sleep(1)
-            self.atlas.next()
-        self.atlas.endRender()
-        # iface.messageBar().pushMessage('Reporte generado correctamente: <a href="{}">{}</a>'.format(path+r'\\'+name,name), 3, 5)
+       
+    def WorketSetAtlas(self):
+        print('worker')
+        worker = Worker(self.setAtlasFeature)
+        worker.signals.finished.connect(lambda: print('done'))
+        self.threadpool.start(worker)
+
+    def testWorker(self): 
+        for e in range(0,300):
+            print(e)
+            time.sleep(0.3)
+
 
     def WorkerAtlas(self):
+        s = QSettings('agrae','dbConnection')
+        path = s.value('reporte_path')
+        iface.messageBar().pushMessage('Generando reportes en: <a href="{}">{}</a>'.format(path,path), 0, 10)
         worker = Worker(self.exportAtlasReport)
         worker.signals.finished.connect(lambda: iface.messageBar().pushMessage('Reporte generado correctamente', 3, 5))
         self.threadpool.start(worker)
+
+        # x = Worker()
+        # x.run(self.exportAtlasReport)
+
          
 
 
@@ -1975,7 +2098,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.k_f_lbl.setText('')
         self.na_f_lbl.setText('')
 
-    def valueClass(self, table, value, clase, li, ls, widget, row, column, id='id'):
+    def valueClass(self, table, value, clase, li, ls, widget, row, column  , id='id'):
         clase = self.analitic.classification(table=table,value=value,clase=clase,li=li,ls=ls)
         # id = self.analitic.classification(
         #     table=table, value=value, clase=id)
@@ -3356,7 +3479,8 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
 
     #* MAIN FUNCTIONS
     def buscarLotes(self):
-        self.tools.buscarLotes(self, self.sinceDateStatus)
+        # self.tools.buscarLotes(self, self.sinceDateStatus)
+        pass
 
     def reloadLotes(self):
         self.tools.buscarLotes(self, False)

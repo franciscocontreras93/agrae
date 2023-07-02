@@ -6,6 +6,8 @@ import time
 import traceback, sys
 
 
+
+
 class WorkerSignals(QObject):
     '''
     Defines the signals available from a running worker thread.

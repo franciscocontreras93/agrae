@@ -37,8 +37,19 @@ from .dbconn import DbConnection
 from .utils import AgraeUtils, AgraeToolset
 
 # Import the code for the DockWidget
-from .agrae_dockwidget import agraeDockWidget, agraeConfigWidget, agraeMainWidget, loteFindDialog, loteFilterDialog, parcelaFindDialog, agraeAnaliticaDialog, expFindDialog
-from .agrae_dialogs import ceapPrevDialog, verifyGeometryDialog, gestionDatosDialog
+from .agrae_dockwidget import (
+    agraeDockWidget, 
+    agraeConfigWidget, 
+    agraeMainWidget, 
+    loteFindDialog, 
+    loteFilterDialog, 
+    parcelaFindDialog,  
+    expFindDialog)
+
+from .agrae_dosificacion import agraeDosificacion
+
+
+from .agrae_dialogs import ceapPrevDialog, verifyGeometryDialog, gestionDatosDialog, appliedLayerDialog
 import os.path
 from PIL import Image
 from qgis.core import QgsDataSourceUri
@@ -130,9 +141,11 @@ class agrae:
         self.loteFilterDialog = None
         self.parcelaFilterDialog = None
         self.analiticaDialog = None
-        self.personaDialog = None
+        self.datosDialog = None
         self.verisDataDialog = None
         self.verifyGeomDialog = None
+        self.appliedDataDialog = None
+        self.dosisDialog = None
 
         self.dataSuelo = None
         self.dataExtracciones = None
@@ -276,7 +289,7 @@ class agrae:
             user_icon_path,
             text=self.tr(u'Gestion Datos de Trabajo'),
             status_tip=self.tr(u'Gestionar Datos de Trabajo'),
-            callback=self.runPersonas,
+            callback=self.runDatos,
             parent=self.iface.mainWindow())
         veris_icon_path = self.icons_path['ceap']
         self.add_action(
@@ -292,7 +305,22 @@ class agrae:
             status_tip=self.tr(u'Preprocesamiento datos Veris'),
             callback=self.runVerifyGeometry,
             parent=self.iface.mainWindow())
+        icon = self.plugin_dir + "/ui/icons/grilla.png"
+        self.add_action(
+            icon,
+            text=self.tr(u'Chequear Geometrias'),
+            status_tip=self.tr(u'Preprocesamiento datos Veris'),
+            callback=self.runApplied,
+            parent=self.iface.mainWindow())
+        icon = self.plugin_dir + "/ui/icons/fertilizante.png"
+        self.add_action(
+            icon,
+            text=self.tr(u'Chequear Geometrias'),
+            status_tip=self.tr(u'Preprocesamiento datos Veris'),
+            callback=self.runDosis ,
+            parent=self.iface.mainWindow())
 
+       
         self.add_action(
             '',
             text=self.tr(u'Ajustes'),
@@ -350,8 +378,8 @@ class agrae:
         self.cultivo = None
         pass
 
-    def onClosePersonaDialog(self): 
-        self.personaDialog.closingPlugin.disconnect(self.onClosePersonaDialog)
+    def onCloseDatosDialog(self): 
+        self.datosDialog.closingPlugin.disconnect(self.onCloseDatosDialog)
         self.pluginIsActive = False
         pass
     
@@ -364,6 +392,13 @@ class agrae:
 
         self.pluginIsActive = False
         pass
+
+    def onCloseAppliedDialog(self):
+        self.appliedDataDialog.closingPlugin.disconnect(self.onCloseAppliedDialog)
+        self.pluginIsActive = False
+    def onCloseDosisDialog(self):
+        self.dosisDialog.closingPlugin.disconnect(self.onCloseDosisDialog)
+        self.pluginIsActive = False
 
     def onCloseCeapDialog(self): 
         self.verisDataDialog.closingPlugin.disconnect(self.onCloseCeapDialog)
@@ -906,19 +941,19 @@ class agrae:
 
     
 
-    def runPersonas(self): 
+    def runDatos(self): 
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
-            if self.personaDialog == None:
-                self.personaDialog = gestionDatosDialog()
+            if self.datosDialog == None:
+                self.datosDialog = gestionDatosDialog()
                 # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
 
-                # self.personaDialog.test_btn.clicked.connect(dbTestConn)
-                # self.personaDialog.pushButton.clicked.connect(saveConn)
+                # self.datosDialog.test_btn.clicked.connect(dbTestConn)
+                # self.datosDialog.pushButton.clicked.connect(saveConn)
 
-            self.personaDialog.closingPlugin.connect(self.onClosePersonaDialog)
-            self.personaDialog.show()
+            self.datosDialog.closingPlugin.connect(self.onCloseDatosDialog)
+            self.datosDialog.show()
 
     def runVerifyGeometry(self): 
 
@@ -939,15 +974,60 @@ class agrae:
                 self.verisDataDialog = ceapPrevDialog()
                 # self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
 
-                # self.personaDialog.test_btn.clicked.connect(dbTestConn)
-                # self.personaDialog.pushButton.clicked.connect(saveConn)
+                # self.datosDialog.test_btn.clicked.connect(dbTestConn)
+                # self.datosDialog.pushButton.clicked.connect(saveConn)
 
             self.verisDataDialog.closingPlugin.connect(
                 self.onCloseCeapDialog)
             self.verisDataDialog.show()
 
 
-    def testFunction(self): 
-        sql = f'select * from lotes'
-        nombre = 'aGrae Lotes'
-        self.tools.addMapLayer(sql, nombre)
+    def runApplied(self):
+        if not self.pluginIsActive:
+            self.pluginIsActive = True
+
+            if self.appliedDataDialog == None: 
+                self.appliedDataDialog = appliedLayerDialog()
+
+            
+            self.appliedDataDialog.closingPlugin.connect(self.onCloseAppliedDialog)
+            self.appliedDataDialog.show()
+
+        # lyr = self.iface.activeLayer() 
+        # feat = [f for f in lyr.getSelectedFeatures()]
+        # ids = set([str(f[1]) for f in feat])
+        # values = '( ' + ', '.join(ids) + ' )'
+        # # print(values)
+
+        # sql = '''insert into public.reticulabase (geometria,idlotecampania)
+        #     with grid as (
+        #     select (st_squaregrid(10, st_transform(geometria,25830))).* 
+        #     from public.lotes 
+        #     where idlotecampania in {}
+        #     ) 
+        #     select st_transform(g.geom,4326) as geometria, l.idlotecampania from grid g
+        #     join public.lotes l on st_intersects(l.geometria , st_transform(g.geom,4326)) ;'''.format(values)
+        
+        # print(sql)
+
+        # with self.utils.conn().cursor() as cursor:
+
+
+            
+        
+
+        # self.tools.crearRindes()
+            
+        pass
+
+    def runDosis(self):
+        if not self.pluginIsActive:
+            self.pluginIsActive = True
+
+            if self.dosisDialog == None: 
+                self.dosisDialog = agraeDosificacion()
+
+            
+            self.dosisDialog.closingPlugin.connect(self.onCloseDosisDialog)
+            self.dosisDialog.show()
+
