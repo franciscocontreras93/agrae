@@ -13,3 +13,8 @@
 /env
 
 /ui/img/
+
+/tools/templates/prescripcion_dev.qpt
+/tools/templates/prescripcion_dev.qpt
+/tools/ceap_style.qml
+/tools/estilos_completos.qml

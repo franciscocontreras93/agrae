@@ -6,7 +6,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QRegExp, QDate, Qt, QObject, QThread, QAbstractTableModel
 from PyQt5.QtGui import QGuiApplication,QIcon
-from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtCore import QSettings, QVariant
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 
@@ -321,6 +321,92 @@ class AgraeToolset():
         self.conn = DbConnection.connection(
             self.dns['dbname'], self.dns['user'], self.dns['password'], self.dns['host'], self.dns['port'])
         pass
+    
+    def getDataBaseLayer(self, layerName:str, sql:str, styleName:str) -> QgsVectorLayer:
+        
+        col_types = {
+            20 : QVariant.Int,
+            21: QVariant.Int,
+            23: QVariant.Int,
+            25: QVariant.String,
+            701: QVariant.Double,
+            1700: QVariant.Double,
+            1043: QVariant.String,
+        }
+        styleUri = os.path.join(os.path.dirname(__file__), 'tools/styles/{}.qml'.format(styleName))
+
+
+        with self.conn.cursor(cursor_factory=extras.RealDictCursor) as cursor:
+            lyr = QgsVectorLayer('MultiPolygon?crs=epsg:4326',layerName,'memory')
+            provider = lyr.dataProvider()
+            try:
+
+                cursor.execute(sql)
+                coldesc = tuple(c for c in cursor.description if c[0] != 'geom')
+                # QgsMessageLog.logMessage('{}'.format(sql), 'aGrae GIS Debug', level=Qgis.Warning) #! DEBUG
+                # QgsMessageLog.logMessage('{}'.format(coldesc), 'aGrae GIS Debug', level=Qgis.Warning) #! DEBUG
+                data = cursor.fetchall()
+                fields = [QgsField(c[0],col_types[c[1]]) for c in coldesc]
+                provider.addAttributes(fields)
+                lyr.updateFields()
+                geom = QgsGeometry()
+                lyr.startEditing()
+                features = []
+                for r in data:
+                    feat = QgsFeature()
+                    feat.setFields(lyr.fields())
+                    for c in fields:
+                        feat.setAttribute(c.name(),r[c.name()])
+                    feat.setGeometry(geom.fromWkt(r['geom']))
+                    features.append(feat)
+
+                provider.addFeatures(features)
+                lyr.commitChanges()
+                lyr.loadNamedStyle(styleUri)
+
+                if lyr.isValid():
+                    QgsMessageLog.logMessage('Capa: <b>{}</b> CORRECTA'.format(lyr.name()), 'aGrae GIS', level=Qgis.Info)
+                    return lyr
+                else: 
+                    QgsMessageLog.logMessage('Capa: <b>{}</b> INCORRECTA'.format(lyr.name()), 'aGrae GIS', level=Qgis.Warning) 
+            
+            except Exception as ex:
+                iface.messageBar().pushMessage("Error:", "Ocurrio un Error, revisa el panel de mensajes del Registro", level=Qgis.Critical)
+                QgsMessageLog.logMessage('{}'.format(ex), 'aGrae GIS', level=Qgis.Critical)
+    
+    def getBaseMap(self,name:str,basemaps:dict) -> QgsRasterLayer:
+        basemap = basemaps[name]
+        url = basemap['url']
+        options = basemap['options']
+        urlWithParams = 'url={}&{}'.format(url,options)
+        return QgsRasterLayer(urlWithParams,name,'wms')
+    
+    def UserMessages(self,text,duration=10,level=Qgis.Info):
+        iface.messageBar().pushInfo("aGrae GIS", "{}".format(text))
+        QgsMessageLog.logMessage('*---{}---*'.format(text), 'aGrae GIS', duration, level)
+
+    def agraeComposer(self):
+        lyr_atlas = QgsProject.instance().mapLayersByName()
+        project = QgsProject.instance()
+        manager = project.layoutManager()
+        layout = QgsPrintLayout(project)
+        layoutName = "Preescripcion"
+        layouts_list = manager.printLayouts()
+        for layout in layouts_list:
+            if layout.name() == layoutName:
+                manager.removeLayout(layout)
+        
+        layout = QgsPrintLayout(project)
+        layout.initializeDefaults()                 #create default map canvas
+        layout.setName(layoutName)
+        manager.addLayout(layout)
+
+
+
+
+        tmpfile = self.plugin_dir + '/tools/templates/prescripcion.qpt'
+        with open(tmpfile) as f:
+            template_content = f.read()
 
     def crearAmbientes(self,widget):
         # print('test')

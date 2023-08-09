@@ -35,7 +35,7 @@ from PyQt5.QtCore import QRegExp, QDate, QDateTime, QThreadPool
 from PyQt5.QtGui import QRegExpValidator, QIcon, QPixmap
 from PyQt5.QtWidgets import *
 from qgis.PyQt import QtWidgets, uic
-from qgis.PyQt.QtCore import pyqtSignal, QSettings
+from qgis.PyQt.QtCore import pyqtSignal, QSettings, QVariant
 from qgis.core import *
 from qgis.utils import iface
 from qgis.PyQt.QtXml import QDomDocument
@@ -790,7 +790,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
         self.btn_add_layer.setIcon(QIcon(icons_path['add_layer_to_map']))
         self.btn_add_layer.setIconSize(QtCore.QSize(20, 20))
-        self.btn_add_layer.clicked.connect(self.filterLote)
+        # self.btn_add_layer.clicked.connect(self.cargarDataTest)
+        self.btn_add_layer.clicked.connect(self.WorkerFilterLote)
+
+        self.btn_print_test.clicked.connect(self.tools.agraeComposer)
 
         self.btn_export_layer.setIcon(QIcon(icons_path['tractor']))
         self.btn_export_layer.setToolTip('Exportar Archivo UFS')
@@ -1289,33 +1292,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         self.line_cob_ajustado_3.setStyleSheet(style)
         self.line_cob_aplicado_3.setStyleSheet(style)
 
-    def populateComboProv(self): 
-        conn = self.conn
-        cursor = conn.cursor(cursor_factory = extras.RealDictCursor)
-        cursor.execute('select nombre,idprovincia from datos.provincia order by nombre')
-        datos = cursor.fetchall()
-        for row in datos: 
-            self.prov_combo.addItem(row["nombre"],row["idprovincia"])        
-        self.prov_combo.setStyleSheet("QComboBox { combobox-popup: 0; font-size: 10pt}")
-    def indexProvUpdate(self):
-        idprov = str(self.prov_combo.currentData())
-        # print(idprov)
-        self.mcpo_combo.clear()
-        self.populateComboMcpo(idprov)   
-    def populateComboMcpo(self,idprov):
-        self.mcpo_combo.setStyleSheet("QComboBox { combobox-popup: 0; }")
-        conn = self.conn
-        try:
-            cursor = conn.cursor(cursor_factory = extras.RealDictCursor)
-            cursor.execute(f'''select nombre,idmunicipio from datos.municipio where idprovincia = '{idprov}' order by nombre ''')
-            datos = cursor.fetchall()
-            for row in datos:
-                self.mcpo_combo.addItem(row["nombre"], row["idmunicipio"])        
-        except errors.lookup('22P02'):
-            #  print('error')
-             conn.rollback()
-             pass
-
+   
     def crearAmbientes(self):
         # print('test')
         self.tools.crearAmbientes(self)
@@ -1394,7 +1371,10 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     def CalcularCEAP(self): 
         lyr = iface.activeLayer()
-        ids  = [f[1] for f in lyr.selectedFeatures()]
+        ids  = [f['idsegmento'] for f in lyr.selectedFeatures()]
+        lote = list(set([f['lote'] for f in lyr.selectedFeatures()]))
+        print(lote[0])
+        # print(ids)
         query = ', '.join(str(id) for id in ids)
         sql = f''' update public.segmento
         set ceap = q.ceap
@@ -1403,11 +1383,21 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         where s.idsegmento in ({query})
         group by s.idsegmento ) as q
         where  segmento.idsegmento = q.idsegmento'''
+
         with self.conn: 
-            cursor = self.conn.cursor() 
-            cursor.execute(sql)
-            self.conn.commit()
-            print('CalcularCEAP DONE')
+            try: 
+                cursor = self.conn.cursor() 
+                cursor.execute(sql)
+                self.conn.commit()
+                iface.messageBar().pushMessage("aGrae GIS", "CEAP calculado exitosamente".format(), level=Qgis.Success)
+
+
+            except Exception as ex:
+                self.conn.rollback()
+                iface.messageBar().pushMessage("aGrae GIS", "Ocurrio un Error, revisa el panel de registros.".format(), level=Qgis.Critical)
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=Qgis.Critical)
+
+    
 
     def ExportarResumen(self):
         s = QSettings('agrae','dbConnection')
@@ -1462,11 +1452,12 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
     
     def crearReporte(self):
-        #! NO ESTA FUNCIONANDO EL CEAP NI EL REGIMEN
+        #! CREAR BASE DEL ANALISIS DE LABORATORIO
+        s = QSettings('agrae','dbConnection')
+        path = s.value('analisis_path')
         # print('Crear Reporte')
         idx = self.tableWidget_2.selectionModel().selectedRows()
         header = []
-        data = []
         # print(len(idx))
         if len(idx) >0: 
             reporte_path = self.saveFileDialog()
@@ -1474,7 +1465,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 with open(os.path.join(os.path.dirname(__file__), 'tools/reporte.csv'),'r',newline='') as base: 
                     csv_reader = csv.reader(base,delimiter=';')
                     header = next(csv_reader)
-                with open(reporte_path,'w',newline='') as file:
+                with open(reporte_path,'w',newline='') as file: 
                     csv_writer = csv.writer(file,delimiter=';')          
                     csv_writer.writerow(header)
                     for i in sorted(idx):
@@ -1483,14 +1474,46 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                         # print(idsegmento,idlotecampania)
 
                         with self.conn:
-                            select = "select idsegmentoanalisis, cod_muestra , regimen, ceap from segmentos where idsegmento = {} and idlotecampania = {}".format(
+                            query = "select idsegmentoanalisis, cod_muestra , regimen, ceap from segmentos where idsegmento = {} and idlotecampania = {}".format(
                                 idsegmento, idlotecampania)
+                            # cursor = self.conn.cursor(cursor_factory=extras.DictCursor)
                             cursor = self.conn.cursor() 
-                            cursor.execute(select)
-                            data = [r for r in list(cursor.fetchall())]
-                            # print(data)
-                    
-                        csv_writer.writerows(data)
+                            cursor.execute(query)
+                            data = cursor.fetchall()
+                            if data[0][3] != None:                            
+                                iter_data = [r for r in list(data)]
+                                csv_writer.writerows(iter_data)
+                            else:
+                                iter_data = []
+                                # print(data['ceap'])
+                                sql = f''' update public.segmento
+                                set ceap = q.ceap
+                                from (select s.idsegmento, percentile_cont(0.5) within group( order by c.ceap) ceap from ceap36 c 
+                                join segmento s on st_intersects(c.geom,s.geometria)
+                                where s.idsegmento in ({idsegmento})
+                                group by s.idsegmento ) as q
+                                where  segmento.idsegmento = q.idsegmento'''
+
+                                try:
+                                    # cursor = self.conn.cursor(cursor_factory=extras.DictCursor)
+                                    cursor.execute(sql)
+                                    self.conn.commit()
+                                    iface.messageBar().pushMessage("aGrae GIS", "Se Calculo el CEAP para el segmento {}".format(idsegmento), level=Qgis.Success)
+
+                                    cursor = self.conn.cursor() 
+                                    cursor.execute("select idsegmentoanalisis, cod_muestra , regimen, ceap from segmentos where idsegmento = {} and idlotecampania = {}".format(
+                                    idsegmento, idlotecampania))
+                                    data = cursor.fetchall()
+                                    csv_writer.writerows([r for r in list(data)])
+
+                                except Exception as ex:
+                                    self.conn.rollback()
+                                    # iface.messageBar().pushMessage("aGrae GIS", "Ocurrio un Error, revisa el panel de registros.".format(), level=Qgis.Critical)
+                                    QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=Qgis.Critical)
+                                
+                                
+
+
                     self.utils.msgBar('Archivo Creado Correctamente <a href="{}">{}</a>'.format(reporte_path,reporte_path),3,10)
             else:            
                 QMessageBox.about(self, 'aGrae GIS', 'La ruta ingresada no es valida')
@@ -1675,35 +1698,180 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         #     QgsProject.instance().addMapLayer(lyrSegmentos)
         # if lyrLotes.isValid():
         #     QgsProject.instance().addMapLayer(lyrLotes)
-        
-    
-    def filterLote(self):
-        lotes_ids = list()
-        idx = self.tableWidget.selectionModel().selectedRows() 
-        if len(idx) > 0: 
-            for i in sorted(idx): 
-                row = i.row() 
-                idlotecampania = self.tableWidget.item(row, 0).text()
-                lotes_ids.append(int(idlotecampania))
-          
-        query = ', '.join(str(id) for id in lotes_ids)
-        exp = f'"idlotecampania" in ({query})'
-        
+    def execFilterLote(self):
+        # QMessageBox.about(self, 'aGrae GIS', 'Generando paquete de capas, este proceso puede tardar unos minutos.'.format()) 
+        iface.messageBar().pushMessage("aGrae GIS", "Generando paquete de capas, este proceso puede tardar unos minutos, por favor espere un momento".format(), level=Qgis.Info)
+        x = threading.Thread(target=self.filterLote)
         try: 
-            lotes = QgsProject.instance().mapLayersByName('aGrae Lotes')[0]
-            lotes.setSubsetString(exp)
-            segmentos = QgsProject.instance().mapLayersByName('aGrae Segmentos')[0]
-            segmentos.setSubsetString(exp)
-            ambientes = QgsProject.instance().mapLayersByName('aGrae Ambientes')[0]
-            ambientes.setSubsetString(exp)
-            unidades = QgsProject.instance().mapLayersByName('aGrae Unidades')[0]
-            unidades.setSubsetString(exp)
-            ceap36 = QgsProject.instance().mapLayersByName('aGrae Ceap36')[0]
-            ceap36.setSubsetString(exp)
-            iface.mapCanvas().setExtent(lotes.extent())
-        except IndexError as ex:
-            self.cargarLote(exp) 
-            QgsMessageLog.logMessage(f'{ex}', 'aGrae GIS', level=1)
+            x.start()
+        except: 
+            pass
+    
+    
+
+    def WorkerFilterLote(self):
+        self.tools.UserMessages('Generando paquete de capas, espere un momento')
+        # print('worker')
+        worker = Worker(self.filterLote)
+        worker.signals.finished.connect(lambda: self.tools.UserMessages('Capas agregadas correctamente',level=Qgis.Success))
+        self.threadpool.start(worker)
+       
+
+            
+    def filterLote(self):
+        # QMessageBox.about(self, 'aGrae GIS', 'Generando paquete de capas, porfavor espere un momento.'.format())
+        # iface.messageBar().pushMessage("aGrae GIS", "Generando paquete de capas, espere un momento".format(), level=Qgis.Warning)
+        # self.close() 
+        # basemap = QgsRasterLayer('contextualWMSLegend=0&crs=EPSG:4326&dpiMode=7&featureCount=10&format=image/png&layers=OI.OrthoimageCoverage&styles&url=https://www.ign.es/wms-inspire/pnoa-ma','OrtoImagen PNOA','wms')
+        root = QgsProject.instance().layerTreeRoot()
+        # tree = root.children()
+
+        lotes_ids = list()
+        idx = self.tableWidget.selectionModel().selectedRows()
+        explotaciones = []
+        layers = []
+       
+
+        try: 
+            if len(idx) > 0:
+                for i in sorted(idx): 
+                    row = i.row() 
+                    idlotecampania = self.tableWidget.item(row, 0).text()
+                    lotes_ids.append(int(idlotecampania))
+                    explotaciones.append(self.tableWidget.item(row, 3).text())
+                explotaciones = list(set(explotaciones))
+                for e in explotaciones:
+                    group = root.addGroup('Exp. : {} : {} Lotes'.format(e,len(idx)))
+                
+                group.setIsMutuallyExclusive(True)
+                query = ', '.join(str(id) for id in lotes_ids)
+
+                sql_lotes = 'select id, UPPER(lote) as lote, UPPER(exp_nombre) as explotacion, INITCAP(exp_dir) as direccion, cultivo, regimen, prod_esperada, dist_icono,fertilizantefondoformula as formulafondo, fertilizantecob1formula as formulacob1,fertilizantecob2formula as formulacob2, fertilizantecob3formula as formulacob3, st_AsText(geometria) as geom from public.lotes l where l.idlotecampania in ({})'.format(query)
+                sql_segmentos = 'select id, UPPER(lote) as lote, segmento, ceap, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+
+                sql_ambientes = 'select id, UPPER(lote) as lote,  ambiente, ndvimax::double precision, st_asText(geometria) as geom from public.ambientes where idlotecampania in ({})'.format(query)
+                sql_unidades = 'select id,  UPPER(lote) as lote, uf, uf_etiqueta, prod_esperada, prod_ponderada, fertilizantefondoformula as aplicacion1formula, fertilizantefondocalculado as aplicacion1dosis, fertilizantecob1formula as aplicacion2formula, fertilizantecob1calculado as aplicacion2dosis, fertilizantecob2formula as aplicacion3formula, fertilizantecob2calculado as aplicacion3dosis, fertilizantecob3formula as aplicacion4formula, fertilizantecob3calculado as aplicacion4dosis, st_asText(geometria) as geom from public.unidades where idlotecampania in ({})'.format(query)
+
+                sql_nitrogeno = 'select id, UPPER(lote) as lote, lower(n_tipo) as tipo, n as valor, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_fosforo = 'select id, UPPER(lote) as lote, lower(p_tipo) as tipo, p as valor, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_potasio = 'select id, UPPER(lote) as lote, lower(k_tipo) as tipo, k as valor, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_ph = 'select id, UPPER(lote) as lote, lower(ph_tipo) as tipo, ph as valor, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_ce = 'select id, UPPER(lote) as lote, ce , cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_calcio = 'select id, UPPER(lote) as lote,lower(ca_tipo) as tipo, ca as valor, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_magnesio = 'select id, UPPER(lote) as lote,lower(mg_tipo) as tipo, mg as valor, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_sodio = 'select id, UPPER(lote) as lote,lower(na_tipo) as tipo, na as valor, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_azufre = 'select id, UPPER(lote) as lote, s as valor, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_cic = '''  select distinct  
+                row_number() OVER () AS id,
+                UPPER(lote) as lote, 
+                cod_muestra, 
+                (case 
+                    when segmento = 1 then 'Rojo' 
+                when segmento = 2 then 'Verde' 
+                when segmento = 3 then 'Azul' 
+                end ) as segmento,
+                round(cic::numeric,2)::double precision as cic, 
+                round(ca::numeric,2)::double precision as ca,
+                round(mg::numeric,2)::double precision as mg, 
+                round(k::numeric,2)::double precision as k, 
+                round(na::numeric,2)::double precision as na,
+                st_asText(st_union(geometria)) as geom 
+                from public.segmentos 
+                where idlotecampania in ({})  and st_area(geometria)*10000000 > 1
+                group by lote,  cic, cod_muestra, segmento, ca,mg,k,na, st_area(geometria)  order by segmento asc'''.format(query)
+                sql_fe = 'select id, UPPER(lote) as lote, fe, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_mn = 'select id, UPPER(lote) as lote, mn, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_al = 'select id, UPPER(lote) as lote, al, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_b = 'select id, UPPER(lote) as lote, b, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_zn = 'select id, UPPER(lote) as lote, zn, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_cu = 'select id, UPPER(lote) as lote, cu, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_organica = 'select id, UPPER(lote) as lote, organi, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+                sql_relcn = 'select id, UPPER(lote) as lote, rel_cn, cod_muestra, st_asText(geometria) as geom from public.segmentos where idlotecampania in ({})'.format(query)
+
+                sql_ceap36_textura = '''SELECT row_number() OVER () AS id, UPPER(ls.lote) as lote,c.ceap, st_asText(st_collectionextract(st_multi(st_union(st_intersection(ls.geometria, st_makevalid(c.geom)))), 3)) as geom FROM ceap36 c LEFT JOIN lotes ls ON ls.geometria && c.geom WHERE NOT st_isempty(st_multi(st_intersection(ls.geometria, st_makevalid(c.geom)))) and ls.idlotecampania in ({}) GROUP BY ls.lote, c.ceap, c.kf '''.format(query)
+                sql_ceap36_infiltracion = '''SELECT row_number() OVER () AS id, UPPER(ls.lote) as lote,c.kf, st_asText(st_collectionextract(st_multi(st_union(st_intersection(ls.geometria, st_makevalid(c.geom)))), 3)) as geom FROM ceap36 c LEFT JOIN lotes ls ON ls.geometria && c.geom WHERE NOT st_isempty(st_multi(st_intersection(ls.geometria, st_makevalid(c.geom)))) and ls.idlotecampania in ({}) GROUP BY ls.lote, c.ceap, c.kf '''.format(query)
+                sql_ceap90_textura = '''SELECT row_number() OVER () AS id, UPPER(ls.lote) as lote,c.ceap, st_asText(st_collectionextract(st_multi(st_union(st_intersection(ls.geometria, st_makevalid(c.geom)))), 3)) as geom FROM ceap90 c LEFT JOIN lotes ls ON ls.geometria && c.geom WHERE NOT st_isempty(st_multi(st_intersection(ls.geometria, st_makevalid(c.geom)))) and ls.idlotecampania in ({}) GROUP BY ls.lote, c.ceap, c.kf '''.format(query)
+                sql_ceap90_infiltracion = '''SELECT row_number() OVER () AS id, UPPER(ls.lote) as lote,c.kf, st_asText(st_collectionextract(st_multi(st_union(st_intersection(ls.geometria, st_makevalid(c.geom)))), 3)) as geom FROM ceap90 c LEFT JOIN lotes ls ON ls.geometria && c.geom WHERE NOT st_isempty(st_multi(st_intersection(ls.geometria, st_makevalid(c.geom)))) and ls.idlotecampania in ({}) GROUP BY ls.lote, c.ceap, c.kf '''.format(query)
+
+                sql_grilla_aplicacion_calculada ='''  select distinct  
+                on (r.id) r.id,
+                ls.lote,
+                da.median_1 as volumen_1,
+                da.median_2 as volumen_2,
+                da.median_3 as volumen_3,
+                da.median_4 as volumen_4,
+                st_asText(r.geometria) as geom
+                from public.reticulabase r
+                join (select geometria,
+                    percentile_cont(0.5) within group (order by da.fertilizantefondocalculado  ) as median_1,
+                    percentile_cont(0.5) within group (order by da.fertilizantecob1calculado  ) as median_2,
+                    percentile_cont(0.5) within group (order by da.fertilizantecob2calculado  ) as median_3,
+                    percentile_cont(0.5) within group (order by da.fertilizantecob3calculado  ) as median_4
+                    from public.unidades da group by geometria) as da on st_intersects(da.geometria,r.geometria)
+                join public.lotes ls on ls.idlotecampania = r.idlotecampania
+                where r.idlotecampania in ({});'''.format(query)
+
+                sql_grilla_rindes = ''' select distinct  
+                on (r.id) r.id,
+                ls.lote,
+                da.median as rinde,
+                st_asText(r.geometria) as geom
+                from public.reticulabase r
+                join (select geom,
+                    percentile_cont(0.5) within group (order by volumen ) as median 
+                    from field.data_rindes da group by geom) as da on st_intersects(da.geom,r.geometria)
+                join public.lotes ls on ls.idlotecampania = r.idlotecampania
+                where r.idlotecampania in ({})'''.format(query)
+
+                dict_layers = {
+                    'lotes' :{'sql':sql_lotes,'style': 'lote'},
+                    'segmentos' : {'sql':sql_segmentos,'style': 'segmentos'},
+                    'nitrogeno' : {'sql':sql_nitrogeno,'style': 'nitrogeno'},
+                    'fosforo' : {'sql':sql_fosforo,'style': 'analisis_ppm'},
+                    'potasio' : {'sql':sql_potasio,'style': 'analisis_ppm'},
+                    'ph' : {'sql':sql_ph,'style': 'ph'},
+                    'conductividad electrica' : {'sql':sql_ce,'style': 'conductividad_electrica'},
+                    'calcio' : {'sql':sql_calcio,'style': 'analisis_ppm'},
+                    'magnesio' : {'sql':sql_magnesio,'style': 'analisis_ppm'},
+                    'sodio' : {'sql':sql_sodio,'style': 'analisis_ppm'},
+                    'azufre' : {'sql':sql_azufre,'style': 'azufre'},
+                    'cic' : {'sql':sql_cic,'style': 'cic'},
+                    'hierro' : {'sql':sql_fe,'style': 'hierro'},
+                    'manganeso' :{'sql':sql_mn,'style': 'manganeso'},
+                    'aluminio' : {'sql':sql_al,'style': 'aluminio'},
+                    'boro' : {'sql':sql_b,'style': 'boro'},
+                    'cinq' : {'sql':sql_zn,'style': 'cinq'},
+                    'cobre' : {'sql':sql_cu,'style': 'cobre'},
+                    'materia organica' : {'sql':sql_organica,'style': 'organica'},
+                    'relacion CN' : {'sql':sql_relcn,'style': 'rel_cn'},
+                    'ambientes productivos' : {'sql':sql_ambientes,'style': 'ambientes'},
+                    'fert. variable intraparcelaria' : {'sql':sql_unidades,'style': 'unidades_1'},
+                    'fert. variable parcelaria' : {'sql':sql_unidades,'style': 'unidades_2'},
+                    'ceap36 textura':{'sql':sql_ceap36_textura,'style':'ceap_textura',},
+                    'ceap36 infiltracion':{'sql':sql_ceap36_infiltracion,'style':'ceap_infiltracion',},
+                    'ceap90 textura':{'sql':sql_ceap90_textura,'style':'ceap_textura',},
+                    'ceap90 infiltracion':{'sql':sql_ceap90_infiltracion,'style':'ceap_infiltracion',},
+                    'Aplicacion Calculada ':{'sql':sql_grilla_aplicacion_calculada,'style':'',},
+                    'Rindes ':{'sql':sql_grilla_rindes,'style':'',},
+                }
+
+                layers = [self.tools.getDataBaseLayer(e.upper(),dict_layers[e]['sql'],dict_layers[e]['style']) for e in dict_layers]
+                for l in layers:
+                    QgsProject.instance().addMapLayer(l,False)
+                    group.addLayer(l)
+                for c in group.children():
+                    if c.name() == 'LOTES':
+                        iface.mapCanvas().setExtent(c.layer().extent())
+
+                # QgsMessageLog.logMessage('Capas agregadas correctamente'.format(), 'aGrae GIS', level=Qgis.Sucess) 
+
+                
+        except Exception as ex:
+            iface.messageBar().pushMessage("Error", "{}".format(ex), level=Qgis.Critical)
+            QgsMessageLog.logMessage('{}'.format(ex), 'aGrae GIS', level=Qgis.Critical)
+        
+        # finally:
+        #     del(layers)
             
         
         
@@ -1728,7 +1896,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         
 
         sql = ''' select row_number() OVER (ORDER BY (st_dump(geometria)).geom) as id, 
-        u.idlotecampania, u.lote,u.prod_esperada, u.prod_ponderada, u.uf,u.uf_etiqueta,
+        u.lote,u.prod_esperada, u.prod_ponderada, u.uf,u.uf_etiqueta,
         u.fertilizantefondoformula as aplicacion1formula,
         u.fertilizantefondocalculado as aplicacion1dosis,
         u.fertilizantecob1formula as aplicacion2formula,
@@ -1955,31 +2123,39 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         else: 
             pass
 
-    def crearAnalitica(self):        
+    def crearAnalitica(self):
+        QMessageBox.about(self, 'aGrae GIS', f'Asignando parcelas al Lote, este proceso puede demorar un momento.')        
         file_path = str(self.an_lbl_file.text())        
         df = pd.read_csv(file_path,delimiter=';')
         df1 = df.astype(object).replace(np.nan, 'NULL')
         columns = [c for c in df.columns]
+        _SQL = '''INSERT INTO analisis.analitica (idsegmentoanalisis,ceap,ph,ce,carbon,caliza,ca,mg,k,na,n,p,organi,al,b,fe,mn,cu,zn,s,mo,arcilla,limo,arena,ni,co,ti,"as",pb,cr,metodo) VALUES\n'''
+        _VALUES = list()
         # print(columns)   
         with self.conn: 
             cursor = self.conn.cursor()
             try:                
                 for index, row in df1.iterrows():
-                    try: 
-                        _SQL = f'''INSERT INTO analisis.analitica (idsegmentoanalisis,ceap,ph,ce,carbon,caliza,ca,mg,k,na,n,p,organi,al,b,fe,mn,cu,zn,s,mo,arcilla,limo,arena,ni,co,ti,"as",pb,cr,metodo) VALUES ({row['id']},{row['ceap']},{row['PH']},{row['CE']},{row['CARBON']},{row['CALIZA']},{row['CA']},{row['MG']},{row['K']},{row['NA']},{row['N']},{row['P']},{row['ORGANI']},{row['AL']},{row['B']},{row['FE']},{row['MN']},{row['CU']},{row['ZN']},{row['S']},{row['MO']},{row['ARCILLA']},{row['LIMO']},{row['ARENA']},{row['NI']},{row['CO']},{row['TI']},{row['AS']},{row['PB']},{row['CR']},{row['METODO_P']}); '''
+                    values = f'''({row['id']},{row['ceap']},{row['PH']},{row['CE']},{row['CARBON']},{row['CALIZA']},{row['CA']},{row['MG']},{row['K']},{row['NA']},{row['N']},{row['P']},{row['ORGANI']},{row['AL']},{row['B']},{row['FE']},{row['MN']},{row['CU']},{row['ZN']},{row['S']},{row['MO']},{row['ARCILLA']},{row['LIMO']},{row['ARENA']},{row['NI']},{row['CO']},{row['TI']},{row['AS']},{row['PB']},{row['CR']},{row['METODO_P']})'''
 
-                        # print(_SQL)   
-                        cursor.execute(_SQL)
-                        self.conn.commit()  
-                    except errors.lookup('23505'):
-                        QMessageBox.about(self, 'aGrae GIS','El analisis: {} con codigo: {} ya existe en la base de datos.\nComprueba la informacion'.format(row['id'],row['COD']))
-                        self.conn.rollback()
-                        pass 
+                    _VALUES.append(values)
+
                 
+                try: 
+                    
+                        
+                    cursor.execute(_SQL + ' ,\n'.join(_VALUES))
+                    self.conn.commit()
+                    self.tools.actualizarNecesidades()
+                    iface.messageBar().pushMessage('aGrae GIS', 'Analitica Cargada Correctamente', level=Qgis.Success)
+                    QgsMessageLog.logMessage('Analitica Cargada Correctamente', 'aGrae GIS', level=Qgis.Warning)
+                except errors.lookup('23505'):
+                    QMessageBox.about(self, 'aGrae GIS','Ocurrio un error, revisar el panel de registros para mas informacion.')
+                    QgsMessageLog.logMessage('El analisis: {} con codigo: {} ya existe en la base de datos.\nComprueba la informacion'.format(row['id'],row['COD']), 'aGrae GIS', level=Qgis.Warning)
+                    self.conn.rollback()
+
                 self.an_save_bd.setEnabled(False)
                 QMessageBox.about(self, f"aGrae GIS:",f"Analitica almacenada correctamente")
-                
-                self.tools.actualizarNecesidades()
                 # self.close()          
             except Exception as ex:
                 QMessageBox.about(self, 'aGrae GIS', 'Ocurrio un error, revisa el panel de registros para más información')
@@ -2021,7 +2197,7 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         # print(i)
         pass
     
-    def precalculo(self,i):
+    def  precalculo(self,i):
         try:
             organi = float(self.tableWidget_3.item(i, 13).text())
             cox = organi / 1.32  # ! CONSTANTE 1.32 COX
@@ -2146,11 +2322,12 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
 
 
     def getDataSuelo(self,id:int): 
-        sql = 'select s.segmento, s.n_tipo, s.p_tipo, s.k_tipo, s.carb_tipo from segmentos s where s.idlotecampania = {} order by  s.segmento'.format(id)
+        sql = 'select distinct s.segmento, s.n_tipo, s.p_tipo, s.k_tipo, s.carb_tipo from segmentos s where s.idlotecampania = {} order by  s.segmento'.format(id)
         with self.conn: 
             cursor = self.conn.cursor()
             cursor.execute(sql)
             data = cursor.fetchall()
+            print(sql)
             # print(data)
             # self.dataSignal.emit(data)
         return data
@@ -2167,44 +2344,64 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
         (u.totaln || ' / ' ||
         u.totalp || ' / ' ||
         u.totalk) aportes_npk,
-        round(cast(u.area_has as numeric),2) area
+        sum(round(cast(u.area_has as numeric),2)) area
         from unidades u
         join lotes ls on ls.idlotecampania = u.idlotecampania
         join cultivo c on c.nombre = ls.cultivo
         where u.idlotecampania = {idLote}
+        group by  u.uf_etiqueta, u.prod_ponderada,(u.extraccioncosechan || ' / ' ||
+        u.extraccioncosechap || ' / ' ||
+        u.extraccioncosechak),(u.extraccionresiduon || ' / ' ||
+        u.extraccionresiduop || ' / ' ||
+        u.extraccionresiduok), (u.totaln || ' / ' ||
+        u.totalp || ' / ' ||
+        u.totalk)
         order by uf_etiqueta'''
         with self.conn: 
             cursor = self.conn.cursor()
             cursor.execute(sql)
             data = cursor.fetchall()
-            # print(data)
+            # print(sql)
             # self.dataSignal.emit(data)
 
         
         
-        ufs = ['UF1', 'UF2', 'UF3','UF5','UF6','UF9']
-        for e in ufs: 
-            data2 = self.checkData(data, e)
+       
+        data2 = self.checkData(data)
             # print(data2) 
         data = sorted(data2)
         # print('function getDataExtracciones: ')
-        # print(type(data),data)
+        print(data)
         return data
 
-    def checkData(self,data,uf):
+    def checkData(self,data):
         """checkData  function to check the UF values in sql query, if not exist, add to an array with valid data
 
         :param str data: fetch data with sql
         :param list uf: uf value array
         :return list: array with data structured
-        """        
-        for e in data: 
-            # print(e[0])
-            if uf not in e[0] and len(data) < 9:
+        """
+        ufs = ['UF1', 'UF2', 'UF3','UF4','UF5','UF6','UF7','UF8','UF9']
+
+
+        validate = [e[0] for e in data]
+        # print(validate)
+
+        for uf in ufs:
+           if uf not in validate:
                 data.append((uf, 0, '0 / 0 / 0', '0 / 0 / 0', '0 / 0 / 0', 0,''))
-                break
-            else:
-                break
+
+        # print(data)
+               
+        
+        # for e in data: 
+        #     # print(e)
+        #     if uf not in e[0] and len(data) < 9:
+        #         data.append((uf, 0, '0 / 0 / 0', '0 / 0 / 0', '0 / 0 / 0', 0,''))
+        #         break
+            # else:
+            #     print(e)
+                # break
         # print('function checkData: ')
         # print(data)
 
@@ -2936,6 +3133,7 @@ class agraeAnaliticaDialog(QtWidgets.QDialog, agraeAnaliticaDialog_):
             #! CALCULO HUELLA CARBONO FERTILIZACION INTRAPARCELARIA
             sql = ''' select (necesidad_n+(-1*necesidad_nf)) n,  (necesidad_p+(-1*necesidad_pf)),  (necesidad_k+(-1*necesidad_kf)) k, area_has
             from unidades where idlotecampania = {}'''.format(self.idlotecampania)
+            # print(sql)
             cursor.execute(sql)
             data = cursor.fetchall() 
             # print('DEBUG',data)
@@ -3033,7 +3231,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
-        self.UIclear()
+        # self.UIclear()
         
         event.accept()
     def UIclear(self): 
@@ -3238,10 +3436,9 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
         
 
         
-        if self.cmb_moneda.currentIndex() > 0:
-            moneda = self.cmb_moneda.currentText()
-        else:
-            moneda = ''
+        
+        moneda = self.cmb_moneda.currentText()
+  
 
 
        
@@ -3317,14 +3514,14 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
                 print(ex)
 
         sql2 = f'''insert into lotecampania(idlote,idcampania) 
-        select ql.idlote, qc.idcampania from (select idlote from lote where nombre = '{lote}') as ql, (select idcampania from campania order by idcampania desc limit 1) as qc; '''
+        select ql.idlote, qc.idcampania from (select idlote from lote where nombre = '{lote}' order by idlote desc limit 1) as ql, (select idcampania from campania order by idcampania desc limit 1) as qc; '''
        
        
         conn = self.conn
         
         _sqlParcelas = '''select distinct l.idparcela from loteparcela l 
         join lotecampania lc on lc.idlotecampania = l.idlotecampania 
-        where lc.idlote =  (select idlote from lote where nombre = '{}') '''.format(lote)
+        where lc.idlote =  (select idlote from lote where nombre = '{}' order by idlote desc limit 1 ) '''.format(lote)
         
         _sqlLotecampania = '''select idlotecampania from lotecampania order by idlotecampania desc limit 1'''
         with conn:
@@ -3771,6 +3968,7 @@ class MplCanvas(FigureCanvasQTAgg):
         plt.savefig(path)
 
     def plot(self,data):
+        print(data)
         
 
         def valores(suelo):

@@ -47,6 +47,7 @@ from .agrae_dockwidget import (
     expFindDialog)
 
 from .agrae_dosificacion import agraeDosificacion
+from .agrae_composer import agraeComposer
 
 
 from .agrae_dialogs import ceapPrevDialog, verifyGeometryDialog, gestionDatosDialog, appliedLayerDialog
@@ -146,6 +147,7 @@ class agrae:
         self.verifyGeomDialog = None
         self.appliedDataDialog = None
         self.dosisDialog = None
+        self.preescripcionDialog = None
 
         self.dataSuelo = None
         self.dataExtracciones = None
@@ -284,7 +286,7 @@ class agrae:
             status_tip=self.tr(u'Crear Relacion'),
             callback=self.relLote,
             parent=self.iface.mainWindow())
-        user_icon_path = self.icons_path['users']
+        user_icon_path = self.plugin_dir + "/ui/icons/data.png"
         self.add_action(
             user_icon_path,
             text=self.tr(u'Gestion Datos de Trabajo'),
@@ -308,16 +310,23 @@ class agrae:
         icon = self.plugin_dir + "/ui/icons/grilla.png"
         self.add_action(
             icon,
-            text=self.tr(u'Chequear Geometrias'),
-            status_tip=self.tr(u'Preprocesamiento datos Veris'),
+            text=self.tr(u'Datos Rindes y Aplicaciones'),
+            status_tip=self.tr(u'Datos Rindes y Aplicaciones'),
             callback=self.runApplied,
             parent=self.iface.mainWindow())
         icon = self.plugin_dir + "/ui/icons/fertilizante.png"
         self.add_action(
             icon,
-            text=self.tr(u'Chequear Geometrias'),
-            status_tip=self.tr(u'Preprocesamiento datos Veris'),
+            text=self.tr(u'Reporte de Dosis'),
+            status_tip=self.tr(u'Reporte de Dosififacion'),
             callback=self.runDosis ,
+            parent=self.iface.mainWindow())
+        icon = self.plugin_dir + "/ui/icons/impresora.png"
+        self.add_action(
+            icon,
+            text=self.tr(u'Reporte de Dosis'),
+            status_tip=self.tr(u'Reporte de Dosififacion'),
+            callback=self.runPreescripcion ,
             parent=self.iface.mainWindow())
 
        
@@ -399,10 +408,17 @@ class agrae:
     def onCloseDosisDialog(self):
         self.dosisDialog.closingPlugin.disconnect(self.onCloseDosisDialog)
         self.pluginIsActive = False
+    def onClosePreescripcionDialog(self):
+        self.preescripcionDialog.closingPlugin.disconnect(self.onClosePreescripcionDialog)
+        self.preescripcionDialog = None
+        
+        self.pluginIsActive = False
 
     def onCloseCeapDialog(self): 
         self.verisDataDialog.closingPlugin.disconnect(self.onCloseCeapDialog)
         self.pluginIsActive = False
+    
+    
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
 
@@ -624,10 +640,12 @@ class agrae:
             paneles_path = self.configDialog.panel_path.text()
             uf_path = self.configDialog.uf_path.text()
             reporte_path = self.configDialog.reporte_path.text()
+            analisis_path = self.configDialog.analisis_path.text()
             
             self.utils.settingPath('paneles_path',paneles_path)
             self.utils.settingPath('ufs_path',uf_path)
             self.utils.settingPath('reporte_path',reporte_path)
+            self.utils.settingPath('analisis_path',analisis_path)
             self.configDialog.pushButton_2.setEnabled(False)
                   
         def readSettings(): 
@@ -636,6 +654,7 @@ class agrae:
             self.configDialog.panel_path.setText(str(s.value('paneles_path')))
             self.configDialog.uf_path.setText(str(s.value('ufs_path')))
             self.configDialog.reporte_path.setText(str(s.value('reporte_path')))
+            self.configDialog.analisis_path.setText(str(s.value('analisis_path')))
             self.configDialog.host.setText(str(s.value('dbhost')))
             self.configDialog.dbname.setText(str(s.value('dbname')))
             self.configDialog.user.setText(str(s.value('dbuser')))
@@ -657,6 +676,7 @@ class agrae:
                 self.configDialog.pushButton_3.clicked.connect(lambda: getPanelsDirectory(self.configDialog.panel_path))
                 self.configDialog.pushButton_4.clicked.connect(lambda: getPanelsDirectory(self.configDialog.uf_path))
                 self.configDialog.pushButton_5.clicked.connect(lambda: getPanelsDirectory(self.configDialog.reporte_path))
+                self.configDialog.pushButton_6.clicked.connect(lambda: getPanelsDirectory(self.configDialog.analisis_path))
             
             self.configDialog.closingPlugin2.connect(self.onClosePluginConfig)
             self.configDialog.show()
@@ -1026,8 +1046,20 @@ class agrae:
 
             if self.dosisDialog == None: 
                 self.dosisDialog = agraeDosificacion()
+                # self.dosisDialog = agraeComposer()
 
             
             self.dosisDialog.closingPlugin.connect(self.onCloseDosisDialog)
             self.dosisDialog.show()
+    def runPreescripcion(self):
+        if not self.pluginIsActive:
+            self.pluginIsActive = True
+
+            if self.preescripcionDialog == None: 
+                self.preescripcionDialog = agraeComposer()
+                self.preescripcionDialog.populateCombos()
+
+            
+            self.preescripcionDialog.closingPlugin.connect(self.onClosePreescripcionDialog)
+            self.preescripcionDialog.show()
 

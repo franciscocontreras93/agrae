@@ -1,5 +1,10 @@
+from io import BytesIO
+import sys
+from PIL import Image
 import os
-from PyQt5.QtCore import QDate,QSize
+
+import psycopg2
+from PyQt5.QtCore import QDate,QSize, QVariant
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import * 
@@ -44,6 +49,12 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
 
 
         self.completerExp = self.dataAuto('select nombre,direccion from public.explotacion')
+        self.completerLote = self.dataAuto('''select  l.nombre lote,ex.nombre explotacion
+            from lote l
+            left join lotecampania lc on lc.idlote = l.idlote 
+            left join campania ca on ca.idcampania = lc.idcampania
+            left join explotacion ex on ca.idexplotacion = ex.idexplotacion 
+            order by l.nombre, ex.nombre asc''')
         self.completerDist = self.dataAuto('select cif,nombre,personacontacto from public.distribuidor')
         self.completerPer = self.dataAuto('select nombre, apellidos, direccion from public.persona')
         self.completerAgri = self.dataAuto('''select a.nombre, e.nombre, d.nombre from agricultor a 
@@ -56,11 +67,13 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         self.idPersona = None
         self.idAgricultor = None
         self.idCampania = None
+        self.iconDist = None
 
 
         self.setupUi(self)
         self.UIcomponents()
         self.dataExp()
+        self.dataLote()
         self.dataDist()
         self.dataPer()
         self.dataAgri()
@@ -100,6 +113,8 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         self.date_desde.setDate(QDate.currentDate())
         self.date_hasta.setDate(QDate.currentDate())
 
+
+
         
         self.btn_save_exp.clicked.connect(self.createExplotacion)
         self.btn_save_exp.setIconSize(QtCore.QSize(20, 20))
@@ -108,6 +123,9 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         self.btn_delete_exp.clicked.connect(self.deleteExplotacion)
         self.btn_delete_exp.setIconSize(QtCore.QSize(20, 20))
         self.btn_delete_exp.setIcon(QIcon(self.icons_path['trash']))
+
+        self.btn_lote_crear_2.clicked.connect(self.crearLoteFromFile)
+
 
         self.btn_save_dist.clicked.connect(self.createDistribuidor)
         self.btn_save_dist.setIconSize(QtCore.QSize(20, 20))
@@ -170,6 +188,7 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         #* TABLE WIDGET ACTIONS
         # hidden
         self.table_exp.setColumnHidden(0, True)
+        self.table_lote.setColumnHidden(0, True)
         self.table_dist.setColumnHidden(0,True)
         self.table_per.setColumnHidden(0,True)
         self.table_agri.setColumnHidden(0,True)
@@ -191,6 +210,7 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         #* TAB WIDGET ACTIONS
         self.tab_main.setCurrentIndex(0)
         self.tab_exp.setCurrentIndex(0)
+        self.tab_lote.setCurrentIndex(0)
         self.tab_dist.setCurrentIndex(0)
         self.tab_per.setCurrentIndex(0)
         self.tab_agri.setCurrentIndex(0)
@@ -201,6 +221,10 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
 
         self.tab_exp.setTabIcon(0, QIcon(self.icons_path['search_icon_path']))
         self.tab_exp.setTabIcon(1, QIcon(self.icons_path['pen-to-square']))
+        
+        self.tab_lote.setTabIcon(0, QIcon(self.icons_path['search_icon_path']))
+        self.tab_lote.setTabIcon(1, QIcon(self.icons_path['pen-to-square']))
+        self.tab_lote.setTabIcon(2, QIcon(self.icons_path['pen-to-square']))
 
         self.tab_dist.setTabIcon(0, QIcon(self.icons_path['search_icon_path']))
         self.tab_dist.setTabIcon(1, QIcon(self.icons_path['pen-to-square']))
@@ -224,6 +248,8 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
 
         self.combo_exp.currentIndexChanged.connect(self.onChangeComboExp)
 
+        self.combo_lote_layer.layerChanged.connect(self.onChangeLote)
+
 
         # self.desde_check.stateChanged.connect(self.onChangeState)
         
@@ -236,6 +262,16 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         line_buscar_action = self.search_exp.addAction(
             QIcon(self.icons_path['search_icon_path']), self.search_exp.TrailingPosition)
         line_buscar_action.triggered.connect(self.dataExp)
+        
+        self.search_lote.setCompleter(self.completerLote)
+        self.search_lote.returnPressed.connect(self.dataLote)
+        self.search_lote.textChanged.connect(self.dataLote)
+        self.search_lote.setClearButtonEnabled(True)
+        line_open_lote_dialog = self.line_nombre_lote.addAction(QIcon(self.icons_path['search_icon_path']),self.line_nombre_lote.TrailingPosition)
+        line_open_lote_dialog.triggered.connect(lambda: self.openDatosDialog(4))
+
+
+        
 
 
         self.search_dist.setCompleter(self.completerDist)
@@ -277,19 +313,29 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         line_open_dialog = self.icon_dist.addAction(QIcon(self.icons_path['menu']),self.icon_dist.TrailingPosition)
         line_open_dialog.triggered.connect(self.openImageDialog)
 
+
         line_open_per_dialog = self.agri_name.addAction(QIcon(self.icons_path['search_icon_path']),self.agri_name.TrailingPosition)
         line_open_per_dialog.triggered.connect(lambda: self.openDatosDialog(0))
         line_open_per_dialog = self.agri_exp.addAction(QIcon(self.icons_path['search_icon_path']),self.agri_exp.TrailingPosition)
+        line_open_per_dialog.triggered.connect(lambda: self.openDatosDialog(1))
+        line_open_per_dialog = self.line_exp_lote.addAction(QIcon(self.icons_path['search_icon_path']),self.line_exp_lote.TrailingPosition)
+        line_open_per_dialog.triggered.connect(lambda: self.openDatosDialog(1))
+        line_open_per_dialog = self.line_cult_lote.addAction(QIcon(self.icons_path['search_icon_path']),self.line_cult_lote.TrailingPosition)
+        line_open_per_dialog.triggered.connect(lambda: self.openDatosDialog(3))
+        line_open_per_dialog = self.line_exp_lote_2.addAction(QIcon(self.icons_path['search_icon_path']),self.line_exp_lote_2.TrailingPosition)
         line_open_per_dialog.triggered.connect(lambda: self.openDatosDialog(1))
         line_open_per_dialog = self.agri_dist.addAction(QIcon(self.icons_path['search_icon_path']),self.agri_dist.TrailingPosition)
         line_open_per_dialog.triggered.connect(lambda: self.openDatosDialog(2))
         line_open_per_dialog = self.agri_cult.addAction(QIcon(self.icons_path['search_icon_path']),self.agri_cult.TrailingPosition)
         line_open_per_dialog.triggered.connect(lambda: self.openDatosDialog(3))
 
+        
+
+        
 
 
 
-        # self.pushButton_2.clicked.connect(self.dataAutoExp)
+
 
     def dataAuto(self,sql:str) -> list:
         cursor = self.conn.cursor()
@@ -350,11 +396,12 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
     def openImageDialog(self): 
         options = QFileDialog.Options()
         fileName, _ = QFileDialog.getOpenFileName(
-            self, "aGrae GIS", "", "Todos los archivos (*);;Archivos separados por coma (*.csv)", options=options)
+            self, "aGrae GIS", "", "Todos los archivos (*);;PNG(*.png);;JPG(*.jpg)", options=options)
         if fileName:
             path = fileName.split('/')
             file = path[-1]
             self.icon_dist.setText(file)
+            self.iconDist = fileName
         else: 
             return False 
     
@@ -375,6 +422,7 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         dialog.expSignal.connect(self.popExpData)
         dialog.distSignal.connect(self.popDistData)
         dialog.cultSignal.connect(self.popCultData)
+        dialog.loteSignal.connect(self.popLoteData)
 
         # dialog.idDistribuidor.connect(self.popDist)
 
@@ -384,9 +432,11 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
         self.idPersona = data['id']
         self.agri_name.setText(data['nombre'])
 
-    def popExpData(self,data): 
+    def popExpData(self,data ): 
         self.idExplotacion = data['id']
         self.agri_exp.setText(data['nombre'])
+        self.line_exp_lote.setText(data['nombre'])
+        self.line_exp_lote_2.setText(data['nombre'])
     
     def popDistData(self,data): 
         self.idDistribuidor = data['id']
@@ -395,7 +445,15 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
     def popCultData(self,data):
         self.idCultivo = data['id']
         self.agri_cult.setText(data['nombre'])
+        self.line_cult_lote.setText(data['nombre'])
+
+    def popLoteData(self,data):
+        self.idLote = data['id']
+        self.line_nombre_lote.setText(data['nombre'])
+
     
+
+
     #! EXPLOTACION
     def onChangeExp(self,e): 
         # print(e)
@@ -540,9 +598,178 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
             group by e.idexplotacion,e.nombre,e.direccion 
             order by e.idexplotacion desc '''.format(param,param)
             self.tools.populateTable(sql, self.table_exp)
+    
+
+    #! LOTES
+
+    def onChangeLote(self,e):
+        combos = [self.combo_lote_nombre,self.combo_lote_cultivo,self.combo_lote_prod,self.combo_lote_regimen]
+        fields = [e.name() for e in e.fields()]
+        for c in combos:
+            c.setLayer(e)
+        
+        if 'NOMBRE' in fields:
+            self.combo_lote_nombre.setField('NOMBRE')
+        if 'CULTIVO' in fields:
+            self.combo_lote_cultivo.setField('CULTIVO')
+        if 'PRODUCCION' in fields:
+            self.combo_lote_prod.setField('PRODUCCION')
+        if 'REGIMEN' in fields:
+            self.combo_lote_regimen.setField('REGIMEN')
+            
+    def dataLote(self):        
+        param = self.search_lote.text()
+        if param == '':
+            sql = '''select lc.idlotecampania , l.nombre lote,ex.nombre explotacion, (case when sq1.parcelas >= 1 then coalesce(sq1.parcelas,0)::varchar(10) else 'No' end) parcelas, 
+            ca.fechasiembra, ca.fechacosecha, cu.nombre cultivo
+            from lote l
+            left join lotecampania lc on lc.idlote = l.idlote 
+            left join 
+                (select lc2.idlotecampania, count(*) parcelas from loteparcela lc2 group by idlotecampania ) as sq1 
+                on sq1.idlotecampania = lc.idlotecampania
+            left join campania ca on ca.idcampania = lc.idcampania
+            left join explotacion ex on ca.idexplotacion = ex.idexplotacion 
+            left join cultivo cu on cu.idcultivo = ca.idcultivo 
+            order by l.nombre, ex.nombre, cu.nombre, ca.fechasiembra asc'''
+            try:
+                self.tools.populateTable(sql, self.table_lote)
+            except IndexError as ie:
+                QgsMessageLog.logMessage("{}".format(ie), 'aGrae GIS', level=Qgis.Warning)
+                pass
+            except Exception as ex:
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=Qgis.Warning)
+        else:
+            sql = '''select lc.idlotecampania , l.nombre lote,ex.nombre explotacion, (case when sq1.parcelas >= 1 then coalesce(sq1.parcelas,0)::varchar(10) else 'No' end) parcelas, 
+            ca.fechasiembra, ca.fechacosecha, cu.nombre cultivo
+            from lote l
+            left join lotecampania lc on lc.idlote = l.idlote 
+            left join 
+                (select lc2.idlotecampania, count(*) parcelas from loteparcela lc2 group by idlotecampania ) as sq1 
+                on sq1.idlotecampania = lc.idlotecampania
+            left join campania ca on ca.idcampania = lc.idcampania
+            left join explotacion ex on ca.idexplotacion = ex.idexplotacion 
+            left join cultivo cu on cu.idcultivo = ca.idcultivo
+            where l.nombre ilike '%{}%' or ex.nombre ilike '%{}%'
+            order by l.nombre, ex.nombre, cu.nombre, ca.fechasiembra asc'''.format(param, param, param,param)
+            try:
+                # print(sql)
+                self.tools.populateTable(sql, self.table_lote)
+            except IndexError as ie:
+                QgsMessageLog.logMessage("{}".format(ie), 'aGrae GIS', level=Qgis.Critical)
+                pass
+            except Exception as ex:
+                QgsMessageLog.logMessage("{}".format(ex), 'aGrae GIS', level=Qgis.Warning)
+        
+            
+
+    def crearLoteFromFile(self):
+        lyr = self.combo_lote_layer.currentLayer()
+
+        field_nombre = self.combo_lote_nombre.currentField()
+        field_cultivo = self.combo_lote_cultivo.currentField()
+        field_produccion = self.combo_lote_prod.currentField()
+        field_regimen = self.combo_lote_regimen.currentField()
+        moneda = self.combo_moneda.currentText()
        
+        cultivos = list(set([e[field_cultivo] for e in lyr.getFeatures()]))
+
+        exp_cultivos = ''
+        for c in cultivos:
+            exp_cultivos = exp_cultivos + """ '{}' ,""".format(c)
+        exp_cultivos = exp_cultivos[:-1]
+
+        with self.conn.cursor() as cur:
+            sql_cultivos = 'select nombre , idcultivo  from public.cultivo where nombre in ({})'.format(exp_cultivos)
+            cur.execute(sql_cultivos)
+            data_cultivo = cur.fetchall()
+    
+        
+        for f in lyr.getFeatures():
+            lote_nombre = str(f[field_nombre]).upper()
+            lote_cultivo = self.getIdCultivo(data_cultivo,f[field_cultivo])
+            lote_produccion = f[field_produccion]
+            lote_regimen = self.getIdRegimen(f[field_regimen])
+            try:
+                self.createLote(self.idExplotacion,lote_nombre,lote_cultivo,lote_regimen,lote_produccion,moneda)
+                iface.messageBar().pushMessage("aGrae GIS", "Lote {} creado correctamente.".format(lote_nombre), level=Qgis.Success)
+            except Exception as ex:
+                iface.messageBar().pushMessage("Error", "{}".format(ex), level=Qgis.Critical)
+                QgsMessageLog.logMessage('{}'.format(ex), 'aGrae GIS', level=Qgis.Critical)
+                # break
+    def getIdCultivo(self,data,name):
+        for e in data:
+            if e[0] == name:
+                return str(e[1])
+    def getIdRegimen(self,name):
+        regimen = {
+            'SECANO': 1,
+            'SEMI-REGADIO' : 2,
+            'REGADIO' : 3
+        }
+        
+        # print(name)
+        return regimen[name]    
+    def createLote(self,
+                  id_explotacion:int,
+                  lote_nombre:str,
+                  id_cultivo:int,
+                  id_regimen:int,
+                  produccion:int,
+                  moneda:str):
+        sql_crear_lote = "INSERT INTO  public.lote(nombre) values('{}') ".format(lote_nombre)
+
+        sql_crear_campania = '''
+        INSERT INTO  public.campania(idexplotacion,idcultivo,regimen,prod_esperada,unidadesprecio) 
+        VALUES({}, {},{}, {},'{}');'''.format(id_explotacion,id_cultivo,id_regimen,produccion,moneda)
+
+        sql_crear_lotecampania = '''
+        INSERT INTO public.lotecampania(idlote,idcampania) 
+        SELECT ql.idlote, qc.idcampania FROM (SELECT idlote FROM public.lote WHERE nombre = '{}' order by idlote desc limit 1) as ql, 
+        (select idcampania from campania order by idcampania desc limit 1) as qc; '''.format(lote_nombre) 
+
+        with self.conn.cursor() as cur:
+            #! CREAR LOTE
+            try:
+                # print(sql_crear_lote) 
+                cur.execute(sql_crear_lote)
+                self.conn.commit()
+                QgsMessageLog.logMessage("Lote {} Creado Correctamente".format(lote_nombre), 'aGrae GIS', level=Qgis.Info)
+                # raise Exception('Lote {} ya existe en la base de datos, no se pudo crear'.format(lote_nombre))
+
+            except errors.lookup('23505'):
+                self.conn.rollback()
+                raise Exception('Lote {} ya existe en la base de datos, no se pudo crear. Intentelo de forma manual.'.format(lote_nombre))
+            try:
+                cur.execute(sql_crear_campania)
+                self.conn.commit()
+                QgsMessageLog.logMessage("Campaña para el Lote {} creada Correctamente".format(lote_nombre), 'aGrae GIS', level=Qgis.Info)
+            except:
+                self.conn.rollback()
+                raise Exception('No se pudo crear la campaña para el Lote {}, intentelo de forma manual.'.format(lote_nombre))
+            try:
+                cur.execute(sql_crear_lotecampania)
+                self.conn.commit()
+                QgsMessageLog.logMessage("Campaña asociada correctamente al Lote {}".format(lote_nombre), 'aGrae GIS', level=Qgis.Info)
+            except:
+                self.conn.rollback()
+                raise Exception('No se pudo asociar la campa;a al Lote {}, intentelo de forma manual.'.format(lote_nombre))
+            
+
+
     
     #! DISTRIBUIDOR
+
+    def getImage(self,path):
+        try:
+            QgsMessageLog.logMessage("Procesando Imagen".format(), 'aGrae GIS', Qgis.Info)
+            ima = Image.open(path)
+            with BytesIO() as f: 
+                ima.save(f,format='PNG')
+                return psycopg2.Binary(f.getvalue())
+        
+        except IOError:
+            sys.exit(1)
+
     def onChangeDist(self,e): 
         # print(e)
         if e == 0: 
@@ -611,6 +838,7 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
     def createDistribuidor(self): 
         with self.conn.cursor() as cursor: 
             try: 
+                # image = open(self.iconDist,"rb").read()
                 CIF = self.cif_dist.text()
                 NOMBRE = self.name_dist.text()
                 CONTACTO = self.contact_dist.text()
@@ -620,12 +848,12 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
                 TELEFONO = self.phone_dist.text()
                 EMAIL = self.email_dist.text()
                 FECHAINICIO = self.date_start.date().toString("dd/MM/yyyy")
-                sql = ''' insert into distribuidor(cif,personacontacto,icono,telefono,email,fechainicio,direccionfiscal,direccionenvio,nombre) 
-                values('{}','{}','{}','{}','{}','{}','{}','{}','{}') '''.format(CIF.upper(),CONTACTO.upper(),ICONO,TELEFONO,EMAIL,FECHAINICIO,DIRECCIONFISCAL,DIRECCIOENVIO,NOMBRE.upper())
+                bin = self.getImage(self.iconDist)
+                sql = ''' insert into distribuidor(cif,personacontacto,icono,telefono,email,fechainicio,direccionfiscal,direccionenvio,nombre,imagen) 
+                values('{}','{}','{}','{}','{}','{}','{}','{}','{}') '''.format(CIF.upper(),CONTACTO.upper(),ICONO,TELEFONO,EMAIL,FECHAINICIO,DIRECCIONFISCAL,DIRECCIOENVIO,NOMBRE.upper(),bin)
                 cursor.execute(sql)
                 self.conn.commit()
                 QMessageBox.about(self, "", "Datos Guardados Correctamente")
-                # print(sql)
                 self.cif_dist.clear()
                 self.name_dist.clear()
                 self.contact_dist.clear()
@@ -635,6 +863,7 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
                 self.phone_dist.clear()
                 self.email_dist.clear()
                 self.date_start.setDate(QDate.currentDate())
+
                 
 
             except Exception as ex: 
@@ -667,25 +896,28 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
                 QMessageBox.about(self, "aGrae GIS:", "Ocurrio un Error, revisar el panel de registros.".format())
                 self.conn.rollback()
 
-    def updateDistribuidor(self):
+    def updateDistribuidor(self):                
         CIF = self.cif_dist.text()
         NOMBRE = self.name_dist.text()
         CONTACTO = self.contact_dist.text()
         ICONO = self.icon_dist.text()
-        DIRECCIONFISCAL = self.dir_fisc_dist.text()
-        DIRECCIOENVIO = self.dir_env_dist.text()
+        DIRECCIONFISCAL = self.dir_fisc_dist.toPlainText()
+        DIRECCIOENVIO = self.dir_env_dist.toPlainText()
         TELEFONO = self.phone_dist.text()
         EMAIL = self.email_dist.text()
         FECHAINICIO = self.date_start.date().toString("dd/MM/yyyy")
+        bin = self.getImage(self.iconDist)
 
         with self.conn.cursor() as cursor: 
             try: 
                 sql = '''
                 UPDATE public.distribuidor
-                SET cif='{}', personacontacto='{}', icono='{}', telefono='{}', email='{}', fechainicio='{}', direccionfiscal='{}', direccionenvio='{}', nombre='{}'
+                SET cif='{}', personacontacto='{}', icono='{}', telefono='{}', email='{}', fechainicio='{}', direccionfiscal='{}', direccionenvio='{}', nombre='{}',imagen={}
                 WHERE iddistribuidor={};
-                '''.format(CIF.upper(),CONTACTO.upper(),ICONO, TELEFONO, EMAIL, FECHAINICIO, DIRECCIONFISCAL, DIRECCIOENVIO, NOMBRE.upper() ,self.idDistribuidor)
+                '''.format(CIF.upper(),CONTACTO.upper(),ICONO, TELEFONO, EMAIL, FECHAINICIO, DIRECCIONFISCAL, DIRECCIOENVIO, NOMBRE.upper() , bin, self.idDistribuidor)
                 cursor.execute(sql)
+                sql = '{}'.format(bin)
+                print(sql)
                 self.conn.commit() 
 
                 QgsMessageLog.logMessage("Distribuidor {} actualizado correctamente".format(NOMBRE.upper()), 'aGrae GIS', level=3)
@@ -1435,17 +1667,6 @@ class gestionDatosDialog(QtWidgets.QDialog, agraeGestionDatos_):
             for e in data:
                 d[e['camp']] = {}
 
-               
-
-                
-
-            
-            
-
-
-
-       
-
 
 class datosDialog(QtWidgets.QDialog, agraeDatos_):
     closingPlugin = pyqtSignal()
@@ -1453,6 +1674,7 @@ class datosDialog(QtWidgets.QDialog, agraeDatos_):
     perSignal = pyqtSignal(dict)
     distSignal = pyqtSignal(dict)
     cultSignal = pyqtSignal(dict)
+    loteSignal = pyqtSignal(dict)
 
 
 
@@ -1467,6 +1689,7 @@ class datosDialog(QtWidgets.QDialog, agraeDatos_):
         self.icons_path = self.utils.iconsPath()
 
         self.completerExp = self.dataAuto('select nombre from public.explotacion')
+        self.completerLote = self.dataAuto('select nombre from public.lote')
         self.completerDist = self.dataAuto('select cif,nombre,personacontacto from public.distribuidor')
         self.completerPer = self.dataAuto('select nombre, apellidos from public.persona')
         self.completerCult = self.dataAuto('select nombre from public.cultivo')
@@ -1478,6 +1701,7 @@ class datosDialog(QtWidgets.QDialog, agraeDatos_):
         self.dataPer()
         self.dataDist()
         self.dataCult()
+        self.dataLote()
         self.UIComponents()
         
     def closeEvent(self, event):
@@ -1492,6 +1716,7 @@ class datosDialog(QtWidgets.QDialog, agraeDatos_):
         self.table_exp.doubleClicked.connect(self.expDoubleClicked)
         self.table_dist.doubleClicked.connect(self.distDoubleClicked)
         self.table_cult.doubleClicked.connect(self.cultDoubleClicked)
+        self.table_lote.doubleClicked.connect(self.loteDoubleClicked)
 
 
 
@@ -1510,6 +1735,14 @@ class datosDialog(QtWidgets.QDialog, agraeDatos_):
         line_buscar_action = self.search_exp.addAction(
             QIcon(self.icons_path['search_icon_path']), self.search_exp.TrailingPosition)
         line_buscar_action.triggered.connect(self.dataExp)
+        
+        self.search_lote.setCompleter(self.completerLote)
+        self.search_lote.returnPressed.connect(self.dataLote)
+        self.search_lote.textChanged.connect(self.dataLote)
+        self.search_lote.setClearButtonEnabled(True)
+        line_buscar_action = self.search_lote.addAction(
+            QIcon(self.icons_path['search_icon_path']), self.search_exp.TrailingPosition)
+        line_buscar_action.triggered.connect(self.dataLote)
         
         self.search_dist.setCompleter(self.completerDist)
         self.search_dist.returnPressed.connect(self.dataDist)
@@ -1534,7 +1767,9 @@ class datosDialog(QtWidgets.QDialog, agraeDatos_):
         self.table_cult.setColumnHidden(0,True)
 
 
-    
+        
+
+
     def dataAuto(self,sql:str) -> list:
         cursor = self.conn.cursor()
         cursor.execute(sql)
@@ -1649,6 +1884,35 @@ class datosDialog(QtWidgets.QDialog, agraeDatos_):
             except Exception as ex:
                 print(ex)
 
+    def dataLote(self):
+        param = self.search_lote.text()
+        # print(param)
+        if param == '':
+            sql = ''' SELECT idlote, nombre
+            FROM public.lote
+            ORDER BY nombre;
+            '''
+            try:
+                self.tools.populateTable(sql, self.table_lote)
+            except IndexError as ie:
+                pass
+            except Exception as ex:
+                print(ex)
+        else:
+            sql = ''' SELECT idlote, nombre
+            FROM public.lote 
+            where nombre ilike '%{}%'
+            ORDER BY nombre '''.format(param )
+            try:
+                # print(sql)
+                self.tools.populateTable(sql, self.table_lote)
+            except IndexError as ie:
+                # print(ie)
+                pass
+            except Exception as ex:
+                print(ex)
+
+
     def perDoubleClicked(self): 
         row = self.table_per.currentRow()
         id = int(self.table_per.item(row,0).text())
@@ -1706,6 +1970,22 @@ class datosDialog(QtWidgets.QDialog, agraeDatos_):
 
         self.close()
 
+    def loteDoubleClicked(self):
+        row = self.table_lote.currentRow()
+        id = int(self.table_lote.item(row,0).text())
+        nombre = str(self.table_lote.item(row,1).text())
+        data = {
+            'id' : id,
+            'nombre' : nombre
+
+        }
+        self.loteSignal.emit(data)
+
+
+        self.close()
+    
+
+   
 class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
     closingPlugin = pyqtSignal()
     getIdExp = pyqtSignal(list)
@@ -1759,6 +2039,8 @@ class expFindDialog(QtWidgets.QDialog, agraeExpDialog):
         line_buscar_action = self.lineEdit.addAction(
             QIcon(icons_path['search_icon_path']), self.lineEdit.TrailingPosition)
         line_buscar_action.triggered.connect(self.buscar)
+
+        self.lineEdit.textChanged.connect(self.buscar)
 
         self.tableWidget.setColumnHidden(0, True)
         # self.tableWidget.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
@@ -1957,6 +2239,9 @@ class cultivoFindDialog(QtWidgets.QDialog, agraeCultivoDialog):
         self.save_btn.setIconSize(QtCore.QSize(20, 20))
         self.save_btn.setToolTip('Editar Valores')
         self.save_btn.clicked.connect(lambda:  self.editionMode(self.tableWidget))
+
+        
+        self.tableWidget.doubleClicked.connect(self.selectIdCultivo)
         
             
        

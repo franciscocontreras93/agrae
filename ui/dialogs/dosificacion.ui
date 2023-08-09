@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>518</width>
-    <height>509</height>
+    <height>707</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,10 +16,10 @@
   <widget class="QGroupBox" name="groupBox">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>10</x>
      <y>20</y>
-     <width>471</width>
-     <height>151</height>
+     <width>491</width>
+     <height>261</height>
     </rect>
    </property>
    <property name="title">
@@ -30,50 +30,54 @@
      <rect>
       <x>20</x>
       <y>30</y>
-      <width>431</width>
-      <height>101</height>
+      <width>451</width>
+      <height>211</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>Seleccionar Capa Atlas:</string>
-       </property>
-      </widget>
-     </item>
      <item row="2" column="0">
       <widget class="QLabel" name="label_7">
        <property name="text">
-        <string> Clases:</string>
+        <string>Mapa base:</string>
        </property>
       </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QLabel" name="label_8">
-       <property name="text">
-        <string>Etiqueta</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QSpinBox" name="spin_clases"/>
      </item>
      <item row="1" column="0">
       <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Seleccionar Nombre de Atlas:</string>
+        <string>Nombre de Atlas:</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="3">
-      <widget class="QLineEdit" name="line_label"/>
+     <item row="1" column="1" colspan="2">
+      <widget class="QgsFieldComboBox" name="combo_atlas_field"/>
      </item>
-     <item row="0" column="1" colspan="3">
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>Metodo de Clasificacion</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Capa Atlas:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1" colspan="2">
+      <widget class="QComboBox" name="combo_methods">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1" colspan="2">
       <widget class="QgsMapLayerComboBox" name="combo_atlas_layer"/>
      </item>
-     <item row="1" column="1" colspan="3">
-      <widget class="QgsFieldComboBox" name="combo_atlas_field"/>
+     <item row="2" column="1" colspan="2">
+      <widget class="QComboBox" name="combo_basemap"/>
      </item>
     </layout>
    </widget>
@@ -81,10 +85,10 @@
   <widget class="QGroupBox" name="groupBox_2">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>180</y>
-     <width>471</width>
-     <height>131</height>
+     <x>10</x>
+     <y>300</y>
+     <width>491</width>
+     <height>171</height>
     </rect>
    </property>
    <property name="title">
@@ -95,30 +99,76 @@
      <rect>
       <x>20</x>
       <y>30</y>
-      <width>431</width>
-      <height>80</height>
+      <width>451</width>
+      <height>111</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout_2">
-     <item row="0" column="1">
-      <widget class="QgsMapLayerComboBox" name="combo_prees_layer"/>
+     <item row="2" column="1">
+      <widget class="QComboBox" name="combo_lbl_prees">
+       <item>
+        <property name="text">
+         <string>Seleccionar...</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>L/ha</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Kg/ha</string>
+        </property>
+       </item>
+      </widget>
      </item>
      <item row="1" column="0">
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>Seleccionar Campo de Volumen:</string>
+        <string>Campo de Volumen:</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QgsFieldComboBox" name="combo_prees_field"/>
+     <item row="2" column="2">
+      <widget class="QLabel" name="label_10">
+       <property name="text">
+        <string> Clases:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_9">
+       <property name="text">
+        <string>Unidades</string>
+       </property>
+      </widget>
      </item>
      <item row="0" column="0">
       <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>Seleccionar Capa Dosis Preescrita:</string>
+        <string>Capa Dosis Preescrita:</string>
        </property>
       </widget>
+     </item>
+     <item row="2" column="3">
+      <widget class="QSpinBox" name="spin_clases_prees">
+       <property name="minimum">
+        <number>3</number>
+       </property>
+       <property name="maximum">
+        <number>20</number>
+       </property>
+       <property name="value">
+        <number>5</number>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1" colspan="3">
+      <widget class="QgsFieldComboBox" name="combo_prees_field"/>
+     </item>
+     <item row="0" column="1" colspan="3">
+      <widget class="QgsMapLayerComboBox" name="combo_prees_layer"/>
      </item>
     </layout>
    </widget>
@@ -126,10 +176,10 @@
   <widget class="QGroupBox" name="groupBox_3">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>320</y>
-     <width>471</width>
-     <height>131</height>
+     <x>10</x>
+     <y>490</y>
+     <width>491</width>
+     <height>151</height>
     </rect>
    </property>
    <property name="title">
@@ -140,30 +190,76 @@
      <rect>
       <x>20</x>
       <y>30</y>
-      <width>431</width>
-      <height>80</height>
+      <width>451</width>
+      <height>101</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout_3">
-     <item row="0" column="1">
-      <widget class="QgsMapLayerComboBox" name="combo_apl_layer"/>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Capa Dosis Aplicada:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QComboBox" name="combo_lbl_applied">
+       <item>
+        <property name="text">
+         <string>Seleccionar...</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>L/ha</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Kg/ha</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_11">
+       <property name="text">
+        <string>Unidades</string>
+       </property>
+      </widget>
      </item>
      <item row="1" column="0">
       <widget class="QLabel" name="label_5">
        <property name="text">
-        <string>Seleccionar Campo de Volumen:</string>
+        <string>Campo de Volumen:</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QgsFieldComboBox" name="combo_apl_field"/>
+     <item row="2" column="3">
+      <widget class="QSpinBox" name="spin_clases_applied">
+       <property name="minimum">
+        <number>3</number>
+       </property>
+       <property name="maximum">
+        <number>20</number>
+       </property>
+       <property name="value">
+        <number>5</number>
+       </property>
+      </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_6">
+     <item row="2" column="2">
+      <widget class="QLabel" name="label_12">
        <property name="text">
-        <string>Seleccionar Capa Dosis Aplicada:</string>
+        <string> Clases:</string>
        </property>
       </widget>
+     </item>
+     <item row="0" column="1" colspan="3">
+      <widget class="QgsMapLayerComboBox" name="combo_apl_layer"/>
+     </item>
+     <item row="1" column="1" colspan="3">
+      <widget class="QgsFieldComboBox" name="combo_apl_field"/>
      </item>
     </layout>
    </widget>
@@ -171,8 +267,8 @@
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
-     <x>400</x>
-     <y>460</y>
+     <x>410</x>
+     <y>660</y>
      <width>93</width>
      <height>28</height>
     </rect>
