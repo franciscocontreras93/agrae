@@ -2,9 +2,11 @@ from io import BytesIO
 import sys
 from PIL import Image
 import os
+from itertools import zip_longest
+from .agrae_worker import Worker
 
 import psycopg2
-from PyQt5.QtCore import QDate,QSize, QVariant
+from PyQt5.QtCore import QDate,QSize, QVariant, QThreadPool
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import * 
@@ -4409,6 +4411,7 @@ class appliedLayerDialog(QtWidgets.QDialog,agraeAppliedLayerDialog):
         self.utils = AgraeUtils()
         self.tools = AgraeToolset()
         self.conn = self.utils.Conn()
+        self.threadpool = QThreadPool()
 
         
         self.UIComponents()
@@ -4419,12 +4422,21 @@ class appliedLayerDialog(QtWidgets.QDialog,agraeAppliedLayerDialog):
 
     def UIComponents(self):
         self.layer = self.combo_layer.currentLayer()
-        self.fields = [self.combo_date,self.combo_date_2,self.combo_product,self.combo_applied,self.combo_volumen]
+        self.fields = [self.combo_date,self.combo_date_2,self.combo_product,self.combo_applied,self.combo_volumen,self.combo_humedad]
         self.updateFields(self.layer)
         self.combo_layer.layerChanged.connect(self.updateFields)
         self.pushButton.clicked.connect(self.saveAppliedData)
-        self.pushButton_2.clicked.connect(self.saveRindesData)
+        self.pushButton_2.clicked.connect(self.WorkerSaveRindes)
 
+        
+        self.combo_product.setFilters(QgsFieldProxyModel.String)
+        self.combo_date.setFilters(QgsFieldProxyModel.Date)
+        self.combo_date_2.setFilters(QgsFieldProxyModel.Date)
+        self.combo_applied.setFilters(QgsFieldProxyModel.Numeric)
+        self.combo_volumen.setFilters(QgsFieldProxyModel.Numeric)
+        self.combo_humedad.setFilters(QgsFieldProxyModel.Numeric)
+
+        self.dateEdit.setDate(QDate.currentDate())
 
 
     def updateFields(self,l):
@@ -4470,13 +4482,22 @@ class appliedLayerDialog(QtWidgets.QDialog,agraeAppliedLayerDialog):
 
         # print(sql[:-2])
         pass
-        
+    
+    def WorkerSaveRindes(self):
+        self.tools.UserMessages('Guardando Informacion de Rindes')
+        # print('worker')
+        worker = Worker(self.saveRindesData)
+        worker.signals.finished.connect(lambda: self.tools.UserMessages('Informacion Guardada Correctamente',level=Qgis.Success))
+        self.threadpool.start(worker)
     
     def saveRindesData(self):
         date =  self.combo_date_2.currentField()
         volumen =  self.combo_volumen.currentField()
+        humedad =  self.combo_humedad.currentField()
+        date_muestreo = self.dateEdit.date().toString("dd/MM/yyyy")
         values = ''
-        base = '''INSERT INTO field.data_rindes(fecha, volumen, geom) VALUES\n'''
+        base = '''INSERT INTO field.data_rindes(fecha_archivo, volumen, humedad, fecha_muestreo, geom) VALUES\n'''
+        srid = self.layer.crs().authid().split(':')[1]
 
         for f in self.layer.getFeatures():
             try:
@@ -4485,20 +4506,26 @@ class appliedLayerDialog(QtWidgets.QDialog,agraeAppliedLayerDialog):
                 fecha = f[date]
             
             geom = f.geometry().asWkt()
-            values = values + '''('{}',{},st_geomFromText('{}')),\n'''.format(fecha,f[volumen],geom)
+            values = values + '''('{}',{},{},'{}',st_transform(st_geomFromText('{}',{}),4326) ),\n'''.format(fecha,f[volumen],f[humedad],date_muestreo,geom,srid)
         
         sql = base + values
+        # print(sql)
 
         with self.conn.cursor() as cursor:
             try:
                 cursor.execute(sql[:-2])
                 self.conn.commit()
-            except:
+            except Exception as ex:
+                print(ex)
                 self.conn.rollback()
         
         
         # print(sql)
         pass
+
+    def grouper(self,iterable, n, fillvalue=None):
+        args = [iter(iterable)] * n
+        return zip_longest(*args, fillvalue=fillvalue)
    
 
 

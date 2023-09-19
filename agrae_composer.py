@@ -258,7 +258,7 @@ class agraeComposer(QDialog,agraeComposerDialog):
             pc.page(l).setPageSize('A4', QgsLayoutItemPage.Orientation.Portrait)
 
 
-        tmpfile = self.plugin_dir + '/tools/templates/prescripcion_dev.qpt'
+        tmpfile = self.plugin_dir + '/tools/templates/prescripcion.qpt'
         with open(tmpfile) as f:
             template_content = f.read()
             

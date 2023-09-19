@@ -199,7 +199,11 @@ class AgraeUtils():
             'print': os.path.join(os.path.dirname(__file__), r'ui\icons\print-solid.svg'),
             'lgnd1': os.path.join(os.path.dirname(__file__), r'ui\img\lgnd1.svg'),
             'p1': os.path.join(os.path.dirname(__file__), r'ui\img\p1.svg'),
-            'co2': os.path.join(os.path.dirname(__file__), r'ui\img\co2.svg')
+            'co2': os.path.join(os.path.dirname(__file__), r'ui\img\co2.svg'),
+            'monitor': os.path.join(os.path.dirname(__file__), r'ui\icons\rindes.png'),
+            'regression': os.path.join(os.path.dirname(__file__), r'ui\icons\regression.svg'),
+            'humedad': os.path.join(os.path.dirname(__file__), r'ui\icons\humedad.png'),
+            'adjust': os.path.join(os.path.dirname(__file__), r'ui\icons\flask-solid.svg'),
         }
 
         return icons_path
@@ -302,7 +306,7 @@ class AgraeUtils():
             1-Warning
             2-Critical
             3-Success
-        """()
+        """
         QgsMessageLog.logMessage(f'{text}', 'aGrae GIS', level=level)
         if level == 2: 
             self.iface.messageBar().pushMessage('aGraes GIS', 'Ocurrio un Error, Revisa el panel de registro.', level=level, duration=5)      
@@ -381,9 +385,18 @@ class AgraeToolset():
         urlWithParams = 'url={}&{}'.format(url,options)
         return QgsRasterLayer(urlWithParams,name,'wms')
     
-    def UserMessages(self,text,duration=10,level=Qgis.Info):
+    def UserMessages(self,text,duration=10,level=Qgis.Info,alert=False,parent=None,):
+        """_summary_
+
+        Args:
+            text (_type_): _description_
+            duration (int, optional): _description_. Defaults to 10.
+            level (_type_, optional): _description_. Defaults to Qgis.Info. Qgis.Success . Qgis.Critical . Qgis.Warning
+        """        
         iface.messageBar().pushInfo("aGrae GIS", "{}".format(text))
         QgsMessageLog.logMessage('*---{}---*'.format(text), 'aGrae GIS', duration, level)
+        if alert:
+            QMessageBox.about(parent, 'aGrae GIS','{}'.format(text))
 
     def agraeComposer(self):
         lyr_atlas = QgsProject.instance().mapLayersByName()
@@ -646,11 +659,8 @@ class AgraeToolset():
                     where ls.id_campania = {idCampania} and ls.idexp = {idExp}
                     group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
                     order by ex.nombre, cu.nombre, ca.fechasiembra desc'''
-                    parent.btn_add_layer.setEnabled(False)
-                    try:
-                        parent.btn_chart.setEnabled(True)
-                    except:
-                        pass
+                    # parent.btn_add_layer.setEnabled(False)
+                   
                     
 
                 elif nombre != '' and status == False:
@@ -667,11 +677,7 @@ class AgraeToolset():
                     group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
                     order by ex.nombre, cu.nombre, ca.fechasiembra desc;                        
                     """
-                    parent.btn_reload.setEnabled(True)
-                    try:
-                        parent.btn_chart.setEnabled(True)
-                    except:
-                        pass
+                    
 
                 elif nombre == '' and status == True:
                     sqlQuery = f"""select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela,coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha, cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
@@ -687,11 +693,7 @@ class AgraeToolset():
                     group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
                     order ex.nombre, by cu.nombre, ca.fechasiembra desc
                     """
-                    parent.btn_reload.setEnabled(True)
-                    try:
-                        parent.btn_chart.setEnabled(True)
-                    except:
-                        pass
+                    
 
                 elif nombre != '' and status == True:
                     sqlQuery = f"""select lc.idlotecampania , ex.idexplotacion, l.nombre lote, ex.nombre explotacion,p.nombre parcela,coalesce(ca.fechasiembra::varchar,'Sin Datos') fechasiembra, coalesce(ca.fechacosecha::varchar,'Sin Datos') fechacosecha, cu.nombre cultivo, ca.prod_esperada, ls.biomasa, ls.residuo , cu.indice_cosecha, cu.contenidocosechac, cu.contenidoresiduoc 
@@ -708,8 +710,7 @@ class AgraeToolset():
                     group by lc.idlotecampania , ex.idexplotacion, l.nombre , ex.nombre, p.nombre , ca.fechasiembra , ca.fechacosecha , cu.nombre, ca.prod_esperada , ls.biomasa, ls.residuo, cu.indice_cosecha , cu.contenidocosechac, cu.contenidoresiduoc 
                     order by ex.nombre,cu.nombre, ca.fechasiembra desc 
                     """
-                    parent.btn_reload.setEnabled(True)
-                
+                    
                 
 
 
@@ -723,7 +724,7 @@ class AgraeToolset():
                         parent, "aGrae GIS:", "No existen registros con los parametros de busqueda")
                     parent.tableWidget.setRowCount(0)
                 else:
-                    parent.btn_add_layer.setEnabled(True)
+                    
                     # parent.btn_add_layer_2.setEnabled(True)
                     parent.sinceDateStatus = False
                     parent.untilDate.setEnabled(False)

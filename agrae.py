@@ -48,6 +48,7 @@ from .agrae_dockwidget import (
 
 from .agrae_dosificacion import agraeDosificacion
 from .agrae_composer import agraeComposer
+from .agrae_monitor import agraeRindesMonitor
 
 
 from .agrae_dialogs import ceapPrevDialog, verifyGeometryDialog, gestionDatosDialog, appliedLayerDialog
@@ -148,6 +149,7 @@ class agrae:
         self.appliedDataDialog = None
         self.dosisDialog = None
         self.preescripcionDialog = None
+        self.monitorDialog = None
 
         self.dataSuelo = None
         self.dataExtracciones = None
@@ -328,6 +330,13 @@ class agrae:
             status_tip=self.tr(u'Reporte de Dosififacion'),
             callback=self.runPreescripcion ,
             parent=self.iface.mainWindow())
+        icon = self.plugin_dir + "/ui/icons/rindes.png"
+        self.add_action(
+            icon,
+            text=self.tr(u'Monitor de Rendimiento'),
+            status_tip=self.tr(u'Monitor de Rendimiento'),
+            callback=self.runMonitor ,
+            parent=self.iface.mainWindow())
 
        
         self.add_action(
@@ -412,6 +421,10 @@ class agrae:
         self.preescripcionDialog.closingPlugin.disconnect(self.onClosePreescripcionDialog)
         self.preescripcionDialog = None
         
+        self.pluginIsActive = False
+    
+    def onCloseMonitorDialog(self):
+        self.monitorDialog.closingPlugin.disconnect(self.onCloseMonitorDialog)
         self.pluginIsActive = False
 
     def onCloseCeapDialog(self): 
@@ -896,20 +909,7 @@ class agrae:
             self.pluginIsActive = True
 
             if self.mainWindowDialog == None:
-                icons_path = {
-                    'search_icon_path': os.path.join(os.path.dirname(__file__), r'ui\icons\search.svg'),
-                    'add_layer_to_map': os.path.join(os.path.dirname(__file__), r'ui\icons\layer-add-o.svg')
-                }
-
-                
-                self.mainWindowDialog = agraeMainWidget()
-
-                
-
-                
-                # self.mainWindowDialog.btn_lote_update.setEnabled(False)
-                # self.mainWindowDialog.pushButton_2.clicked.connect(printMap)
-                
+                self.mainWindowDialog = agraeMainWidget()                
             self.mainWindowDialog.closingPlugin.connect(self.onClosePluginMain)
             self.mainWindowDialog.show()
         pass
@@ -1012,32 +1012,6 @@ class agrae:
             
             self.appliedDataDialog.closingPlugin.connect(self.onCloseAppliedDialog)
             self.appliedDataDialog.show()
-
-        # lyr = self.iface.activeLayer() 
-        # feat = [f for f in lyr.getSelectedFeatures()]
-        # ids = set([str(f[1]) for f in feat])
-        # values = '( ' + ', '.join(ids) + ' )'
-        # # print(values)
-
-        # sql = '''insert into public.reticulabase (geometria,idlotecampania)
-        #     with grid as (
-        #     select (st_squaregrid(10, st_transform(geometria,25830))).* 
-        #     from public.lotes 
-        #     where idlotecampania in {}
-        #     ) 
-        #     select st_transform(g.geom,4326) as geometria, l.idlotecampania from grid g
-        #     join public.lotes l on st_intersects(l.geometria , st_transform(g.geom,4326)) ;'''.format(values)
-        
-        # print(sql)
-
-        # with self.utils.conn().cursor() as cursor:
-
-
-            
-        
-
-        # self.tools.crearRindes()
-            
         pass
 
     def runDosis(self):
@@ -1062,4 +1036,12 @@ class agrae:
             
             self.preescripcionDialog.closingPlugin.connect(self.onClosePreescripcionDialog)
             self.preescripcionDialog.show()
+    
+    def runMonitor(self):
+
+        self.monitorDialog = agraeRindesMonitor()
+
+            
+        self.monitorDialog.closingPlugin.connect(self.onCloseMonitorDialog)
+        self.monitorDialog.show()
 

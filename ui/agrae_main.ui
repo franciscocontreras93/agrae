@@ -193,7 +193,7 @@
        <item row="4" column="0">
         <widget class="QPushButton" name="btn_chart">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="toolTip">
           <string>Añadir Lote al Mapa</string>
@@ -232,7 +232,7 @@
        <item row="0" column="0">
         <widget class="QPushButton" name="btn_add_layer">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="toolTip">
           <string>Añadir Lote al Mapa</string>
@@ -680,7 +680,7 @@
        <rect>
         <x>680</x>
         <y>80</y>
-        <width>61</width>
+        <width>95</width>
         <height>341</height>
        </rect>
       </property>

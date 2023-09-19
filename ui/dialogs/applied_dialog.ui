@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>578</width>
-    <height>335</height>
+    <height>362</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <x>10</x>
      <y>10</y>
      <width>551</width>
-     <height>311</height>
+     <height>341</height>
     </rect>
    </property>
    <property name="currentIndex">
@@ -63,11 +63,11 @@
        <x>20</x>
        <y>50</y>
        <width>551</width>
-       <height>261</height>
+       <height>251</height>
       </rect>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab_3">
       <attribute name="title">
@@ -144,9 +144,9 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>20</y>
+         <y>10</y>
          <width>511</width>
-         <height>191</height>
+         <height>201</height>
         </rect>
        </property>
        <property name="title">
@@ -158,26 +158,19 @@
           <x>20</x>
           <y>30</y>
           <width>471</width>
-          <height>141</height>
+          <height>151</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_3">
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_7">
-           <property name="text">
-            <string>Seleccionar Campo Volumen:</string>
-           </property>
-          </widget>
+         <item row="3" column="1">
+          <widget class="QgsFieldComboBox" name="combo_humedad"/>
          </item>
-         <item row="2" column="1">
+         <item row="5" column="1">
           <widget class="QPushButton" name="pushButton_2">
            <property name="text">
             <string>Guardar Datos Rindes</string>
            </property>
           </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QgsFieldComboBox" name="combo_date_2"/>
          </item>
          <item row="1" column="1">
           <widget class="QgsFieldComboBox" name="combo_volumen"/>
@@ -186,6 +179,37 @@
           <widget class="QLabel" name="label_5">
            <property name="text">
             <string>Seleccionar Campo Fecha</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QgsFieldComboBox" name="combo_date_2"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>Seleccionar Campo Humedad:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Seleccionar Campo Volumen:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>Ingresar Fecha de Muestreo:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QDateEdit" name="dateEdit">
+           <property name="calendarPopup">
+            <bool>true</bool>
            </property>
           </widget>
          </item>

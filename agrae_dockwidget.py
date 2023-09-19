@@ -1811,17 +1811,75 @@ class agraeMainWidget(QtWidgets.QMainWindow, agraeMainPanel):
                 join public.lotes ls on ls.idlotecampania = r.idlotecampania
                 where r.idlotecampania in ({});'''.format(query)
 
-                sql_grilla_rindes = ''' select distinct  
+                # sql_grilla_rindes = ''' select distinct  
+                # on (r.id) r.id,
+                # ls.lote,
+                # r.rinde as rinde,
+                # r.biomasa,
+                # r.ms_cosecha,
+                # r.ms_residuo,
+                # r.n_extraido,
+                # r.p_extraido,
+                # r.k_extraido,
+                # r.n_balance,
+                # r.p_balance,
+                # r.k_balance,
+                # r.nue,
+                # r.pue,
+                # r.kue,
+                # st_asText(r.geometria) as geom
+                # from monitor.monitor_rindes_2 r
+                # join public.lotes ls on ls.idlotecampania = r.idlotecampania 
+                # where r.idlotecampania in ({})'''.format(query)
+                sql_grilla_rindes = ''' with 
+                quant as (
+                select
+                r.idlotecampania ,
+                    percentile_cont(0.2) within group (order by r.rinde) as step1,  
+                    percentile_cont(0.4) within group (order by r.rinde) as step2,
+                    percentile_cont(0.6) within group (order by r.rinde) as step3,
+                    percentile_cont(0.8) within group (order by r.rinde) as step4
+                from monitor.monitor_rindes r where r.idlotecampania in ({})
+                group by r.idlotecampania),
+                monitor as (select distinct  
                 on (r.id) r.id,
+                r.idlotecampania,
                 ls.lote,
-                da.median as rinde,
+                r.rinde,
+                r.biomasa,
+                r.ms_cosecha,
+                r.ms_residuo,
+                r.n_extraido,
+                r.p_extraido,
+                r.k_extraido,
+                r.n_balance,
+                r.p_balance,
+                r.k_balance,
+                r.nue,
+                r.pue,
+                r.kue,
                 st_asText(r.geometria) as geom
-                from public.reticulabase r
-                join (select geom,
-                    percentile_cont(0.5) within group (order by volumen ) as median 
-                    from field.data_rindes da group by geom) as da on st_intersects(da.geom,r.geometria)
-                join public.lotes ls on ls.idlotecampania = r.idlotecampania
-                where r.idlotecampania in ({})'''.format(query)
+                from monitor.monitor_rindes r
+                join public.lotes ls on ls.idlotecampania = r.idlotecampania 
+                where r.idlotecampania in (select idlotecampania from quant)),
+                unidos as (select r.*,q.step1, q.step2, q.step3, q.step4 from monitor r join quant q on q.idlotecampania = r.idlotecampania)
+                select r.*,
+                (
+                    case 
+                        when r.rinde <= r.step1
+                        then 1
+                        when r.rinde > r.step1 and r.rinde <= r.step2
+                        then 2
+                        when r.rinde > r.step2 and r.rinde <= r.step3
+                        then 3
+                        when r.rinde > r.step3 and r.rinde <= r.step4
+                        then 4
+                        when r.rinde > r.step4
+                        then 5
+                    end	
+                ) as clase
+                from unidos r
+                '''.format(query)
 
                 dict_layers = {
                     'lotes' :{'sql':sql_lotes,'style': 'lote'},
@@ -3421,7 +3479,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
     def crearCampania(self):
         # self.tools.crearCampania(self)
         lote = str(self.line_lote_nombre.text()).upper()
-        idexp = self.idExp[0]
+        idexp = self.idExp
         idcult = self.idCultivo
         regimen = int(self.cmb_regimen.currentIndex())
         produccion = float(self.ln_produccion.text())
@@ -3537,7 +3595,7 @@ class loteFilterDialog(QtWidgets.QDialog, agraeLoteParcelaDialog):
                     QMessageBox.about(self, f"aGrae GIS:",f"Campaña creada y asociada correctamente")
                     cursor.execute(_sqlParcelas)
                     _idParcelas = [e[0] for e in cursor.fetchall()]
-                    # print(_idParcelas)
+                    print(_idParcelas)
                     cursor.execute(_sqlLotecampania)
                     _idLote =  cursor.fetchone()
                     _idLote = _idLote[0]
